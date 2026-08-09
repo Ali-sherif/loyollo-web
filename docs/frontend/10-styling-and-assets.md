@@ -1,17 +1,30 @@
 # Styling and Assets
 
-## Preserve
+## Decision
 
-- Tailwind CSS 4 design tokens in `src/styles.css`.
+**DECIDED:** Keep the current visual design. Migration is framework-only; no redesign.
+
+See [ADR-010](../architecture/decisions/ADR-010-style-and-template-parity.md).
+
+## Preserve exactly
+
+- Tailwind CSS 4 design tokens and global styles in `src/styles.css`.
 - Radix/shadcn primitives, class-variance-authority, `clsx`, and `tailwind-merge`.
-- Figtree visual identity, favicon, Lucide icons, and Lovable asset manifests during parity.
+- Figtree typography, brand navy/gold tokens, spacing, radii, and component look.
+- Lucide icons and current logo/sidebar/sign-in/sign-up variants.
+- Marketing and dashboard imagery currently referenced from `src/assets/*.asset.json`.
+- Leaflet map presentation and existing chart/UI chrome.
 
-## Change or verify
+## Must change for Next.js, without visual drift
 
 - Replace Vite CSS URL import with root layout CSS import.
-- Reassess `components.json` (`rsc:false`) and client directives component-by-component.
-- Use `next/font` only after visual and privacy parity is verified.
-- Decide whether external R2/CDN assets use `next/image`; configure remote patterns and Cloudflare image behavior if selected.
+- Audit `components.json` (`rsc: false`) and `"use client"` placement without restyling.
+- Vendor or re-host Lovable/CDN-backed assets so the UI no longer depends on Lovable hosting ([ADR-009](../architecture/decisions/ADR-009-lovable-withdrawal.md)).
+- Configure `next/image` remote patterns only if that path is chosen; default to current asset URLs/files until visual parity is confirmed.
 - Keep Leaflet CSS/client loading isolated.
 
-No visual redesign is part of migration.
+## Acceptance
+
+- No intentional color, typography, spacing, or layout redesign.
+- Side-by-side visual checks for marketing, auth, onboarding, and dashboard shells.
+- Broken-image scan after Lovable asset withdrawal.

@@ -2,8 +2,15 @@
 
 ```mermaid
 flowchart TD
-  Hosting[Hosting target] --> Node[Node and runtime]
+  LovableOut[Lovable withdrawal] --> Hosting[Hosting target]
+  LovableOut --> MessagingAdapter[Messaging adapter]
+  StyleParity[Style and template parity] --> VisualGates[Visual parity gates]
+  StyleParity --> TemplateModules[Template modules]
+  Hosting --> Node[Node and runtime]
   Hosting --> Adapter[Deployment adapter]
+  MessagingAdapter --> EmailProvider[Email provider]
+  MessagingAdapter --> SmsProvider[SMS provider]
+  TemplateModules --> MessagingAdapter
   NextVersion[Next.js version] --> AppRouter[App Router]
   NextVersion --> ReactVersion[React version]
   Node --> Dependencies[Dependency compatibility]
@@ -18,8 +25,10 @@ flowchart TD
   Rendering --> DataStrategy[Data strategy]
   Routes --> MigrationOrder[Migration order]
   DataStrategy --> Testing[Parity tests]
+  VisualGates --> Testing
   Hosting --> Cutover[Cutover and rollback]
+  MessagingAdapter --> Cutover
   Testing --> Cutover
 ```
 
-Resolve hosting, runtime, auth, and server boundaries before freezing route-level rendering decisions.
+Resolve hosting and the messaging adapter before freezing email route cutover. Style/template parity is already decided and must gate every migrated surface.

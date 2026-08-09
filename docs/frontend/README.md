@@ -24,8 +24,16 @@ flowchart LR
   Actions --> ServerLib
   Handlers --> ServerLib
   ServerLib --> Supabase
-  Handlers --> Email[Lovable Email API]
+  Handlers --> Messaging[Provider-agnostic messaging adapter]
+  Messaging --> Templates[Preserved email and SMS templates]
 ```
+
+## Locked constraints
+
+- Visual style parity: no redesign.
+- Preserve current email/SMS templates and personalization tokens.
+- Withdraw Lovable packages, `/lovable/*` routes, secrets, and host hooks.
+- Hosting and concrete email/SMS providers remain open.
 
 ## Documents
 
@@ -45,5 +53,6 @@ flowchart LR
 14. [Consolidated architecture](14-frontend-architecture.md)
 15. [Server-function mapping](15-server-function-mapping.md)
 16. [Dependency compatibility](16-dependency-compatibility.md)
+17. [Messaging templates](17-messaging-templates.md)
 
-**Next step:** approve or amend Critical ADRs. Do not create the Next.js application yet.
+**Next step:** approve hosting and email/SMS provider (or accept temporary risk with an adapter stub). Do not create the Next.js application yet.

@@ -38,11 +38,13 @@
 
 ## Server API routes
 
-| Preserved URL                  | Target                                     | Authentication                        |
-| ------------------------------ | ------------------------------------------ | ------------------------------------- |
-| `/lovable/email/auth/webhook`  | `app/lovable/email/auth/webhook/route.ts`  | Signed Lovable webhook                |
-| `/lovable/email/auth/preview`  | `app/lovable/email/auth/preview/route.ts`  | `LOVABLE_API_KEY` bearer              |
-| `/lovable/email/queue/process` | `app/lovable/email/queue/process/route.ts` | Service-role bearer; scheduled caller |
+Lovable withdrawal is decided. Do **not** preserve `/lovable/*` paths in the Next.js app. Keep behavior and templates; move to first-party APIs.
+
+| Current URL                    | Target URL                 | Authentication after withdrawal                       |
+| ------------------------------ | -------------------------- | ----------------------------------------------------- |
+| `/lovable/email/auth/webhook`  | `/api/email/auth/webhook`  | Signed webhook secret owned by the app (provider TBD) |
+| `/lovable/email/auth/preview`  | `/api/email/auth/preview`  | App-owned bearer/admin secret                         |
+| `/lovable/email/queue/process` | `/api/email/queue/process` | Service-role or app scheduler secret                  |
 
 `src/routes/__root.tsx` maps to root layout, global error/not-found files, and providers. `src/routes/onboarding.tsx` maps to the onboarding layout.
 
@@ -53,7 +55,7 @@ flowchart TD
   Root --> Onboarding[Onboarding layout]
   Root --> App[Protected application]
   Root --> Join[Public join programId]
-  Root --> Api[Lovable email Route Handlers]
+  Root --> Api[First-party email Route Handlers]
   App --> Customers[Customers customerId]
   App --> Branches[Branches branchId]
   App --> Campaigns[Campaigns campaignId]

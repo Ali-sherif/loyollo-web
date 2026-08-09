@@ -1,0 +1,4 @@
+ALTER TABLE public.branches
+  ADD COLUMN IF NOT EXISTS email TEXT,
+  ADD COLUMN IF NOT EXISTS phone TEXT,
+  ADD COLUMN IF NOT EXISTS manager_name TEXT;

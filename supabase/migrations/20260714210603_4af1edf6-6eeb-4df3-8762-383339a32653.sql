@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anyone can enroll into an existing program" ON public.customers;

@@ -1,0 +1,1 @@
+ALTER TABLE public.notification_preferences RENAME COLUMN campaign_completed TO campaign_created;

@@ -23,7 +23,17 @@ DECIDED
 
 ### Mapping guidance
 
-Do not mechanically convert TanStack Server Functions to Server Actions. Prefer:
+Do not mechanically convert TanStack Server Functions to Server Actions. Use this decision tree (authoritative detail and per-function rows: [server-function-mapping](../../frontend/15-server-function-mapping.md)):
+
+```text
+Old Server Function
+       │
+       ├── Backend business logic?     → Backend API
+       ├── UI-specific server operation? → Next.js Server Action
+       └── Needs server-side mediation?  → Next.js BFF
+```
+
+Prefer:
 
 - backend APIs / Supabase contracts for business logic and persistence,
 - server-only library functions when the frontend must orchestrate privileged calls without exposing secrets,
@@ -32,11 +42,11 @@ Do not mechanically convert TanStack Server Functions to Server Actions. Prefer:
 - Route Handlers only for BFF/proxy, public/external webhooks, scheduled workers, or other frontend-specific HTTP contracts,
 - direct client API/Supabase calls through the established client layer when intentionally relying on browser session and backend authorization (for example RLS).
 
-The authoritative per-function mapping remains [server-function-mapping](../../frontend/15-server-function-mapping.md) and must be revised to this boundary model before implementation.
+The per-function mapping in [15-server-function-mapping.md](../../frontend/15-server-function-mapping.md) is **DECIDED / APPROVED** against this backend-primary model for the frontend migration.
 
 ## Security
 
-Service-role and other privileged credentials must remain server-only. Public enrollment and similar privileged workflows need rate limiting, idempotency/concurrency review, and abuse monitoring before parity sign-off. Backend authorization remains authoritative ([ADR-005](ADR-005-authentication.md)).
+Service-role and other privileged credentials must remain server-only. Public enrollment and similar privileged workflows need rate limiting, idempotency/concurrency review, and abuse monitoring before parity sign-off. **Rate limiting for public signup/enrollment is DECIDED:** edge/server enforcement with HTTP 429 and frontend graceful handling ([ADR-012](ADR-012-public-enrollment-rate-limiting.md)). Backend authorization remains authoritative ([ADR-005](ADR-005-authentication.md)).
 
 ## Verification
 

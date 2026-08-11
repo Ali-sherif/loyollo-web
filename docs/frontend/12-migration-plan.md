@@ -16,7 +16,7 @@
 2. Production route map **APPROVED** (restructured App Router URLs in [02-route-migration.md](02-route-migration.md)).
 3. Email/SMS: **ACCEPTED RISK** with adapter stubs in `src/lib/server/messaging/` (no real provider until later).
 4. Canonical package manager selected: npm (`package-lock.json`; remove `bun.lock` at implementation start).
-5. Prove cookie/SSR session spike for auth.
+5. Prove cookie/SSR session spike for auth — **in progress / BLOCKED** ([auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)).
 6. Establish build, typecheck, lint, route smoke tests, visual parity checks, and email HTML diffs.
 
 ## Dependency-aware slices
@@ -32,7 +32,7 @@
 9. Protected shell and dashboard (RSC where session permits; TanStack Query for interactive server state).
 10. Customers and loyalty.
 11. Branches/maps (client islands for maps).
-12. Campaigns + queue worker via messaging contracts; preserve SMS channel content.
+12. Campaigns: UI + Backend API enqueue; **queue workers outside Next** ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)); messaging contracts; preserve SMS channel content.
 13. Analytics and settings/MFA/uploads/account deletion.
 14. Remove remaining Lovable packages/env references.
 15. SEO, performance, accessibility, visual, and messaging parity regression.

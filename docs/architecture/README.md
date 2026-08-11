@@ -16,7 +16,9 @@
 - **DECIDED:** App Router, rendering/caching, data/state, auth ownership, server/API boundaries, and project structure ([ADR-002](decisions/ADR-002-app-router.md) through [ADR-007](decisions/ADR-007-project-structure.md)).
 - **DECIDED:** Canonical package manager is npm (`package-lock.json`); remove `bun.lock` at implementation start.
 - **DECIDED:** Production route map approved and restructured — [02-route-migration.md](../frontend/02-route-migration.md).
-- **NEEDS INVESTIGATION / APPROVAL:** Cookie/SSR session spike, production runtime configuration, RLS/storage policy behavior, and queue scheduling.
+- **DECIDED:** RLS/storage for this migration — retain existing Lovable policies in Phase 1; Phase 2 custom Backend APIs own all data/storage access. See [ADR-011](decisions/ADR-011-rls-storage-strategy.md).
+- **NEEDS INVESTIGATION / APPROVAL:** Cookie/SSR session spike (**BLOCKED** — [spikes/auth-ssr-spike.md](spikes/auth-ssr-spike.md)), and remaining production runtime / cutover items.
+- **Go / No-Go:** **NO-GO** for migration implementation and root Next.js app creation until Critical checklist items are DECIDED/APPROVED or ACCEPTED RISK (D-28 not cleared).
 
 ## Critical decisions
 
@@ -30,10 +32,15 @@
 8. Deployment: [ADR-008](decisions/ADR-008-deployment.md)
 9. Lovable withdrawal: [ADR-009](decisions/ADR-009-lovable-withdrawal.md)
 10. Style and template parity: [ADR-010](decisions/ADR-010-style-and-template-parity.md)
+11. RLS / storage transitional strategy: [ADR-011](decisions/ADR-011-rls-storage-strategy.md)
+12. Public enrollment rate limiting: [ADR-012](decisions/ADR-012-public-enrollment-rate-limiting.md)
+13. Campaign / messaging background runtime: [ADR-013](decisions/ADR-013-campaign-messaging-runtime.md)
 
 ## Recommended decision order
 
-`Auth session/cookie spike → messaging adapter stubs (at implementation) → server-function mapping acceptance → migration slices`
+`Auth session/cookie spike → messaging adapter stubs (at implementation) → migration slices`
+
+(Server-function → Backend API / Server Action / BFF mapping is **DECIDED** — [15-server-function-mapping.md](../frontend/15-server-function-mapping.md).)
 
 ## Indices
 
@@ -41,4 +48,5 @@
 - [Decision dependencies](decision-dependencies.md)
 - [Deferred decisions](deferred-decisions.md)
 - [Pre-implementation checklist](pre-implementation-checklist.md)
+- [Spikes — Auth Cookie/SSR](spikes/auth-ssr-spike.md)
 - [Frontend blueprint](../frontend/README.md)

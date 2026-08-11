@@ -22,7 +22,7 @@ Supabase browser auth persists in localStorage, auto-refreshes, and drives `Auth
 | App Router pages/forms                      | No                                                     |
 | Server verification of current session      | No                                                     |
 | Cookie-based SSR session                    | UNKNOWN; likely configuration/adapter work, must prove |
-| RLS/schema                                  | No and out of scope                                    |
+| RLS/schema                                  | No for Phase 1 — retain existing policies ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md)); Phase 2 Backend APIs only |
 | Auth email webhook URLs                     | Configuration update at cutover, not contract redesign |
 
 ## Security gates

@@ -50,7 +50,7 @@ npm run format
 
 ### Environment variables
 
-Do not commit secrets. Typical names used by the app:
+Do not commit secrets. Canonical inventory (names + classification only): [`docs/deployment/env.md`](docs/deployment/env.md). Template: [`.env.example`](.env.example).
 
 | Name | Scope | Purpose |
 | --- | --- | --- |

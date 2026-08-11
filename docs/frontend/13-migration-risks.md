@@ -5,12 +5,12 @@
 | Critical | Authenticated RSC cannot access localStorage session                    | Cookie/SSR spike; Next route gates; retain client data path until proven |
 | Critical | Cross-user cache leakage                                                | No-store defaults; concurrent-user tests                                 |
 | Critical | Service-role exposure                                                   | `lib/server`, server-only guards, bundle inspection                      |
-| Critical | Public enrollment abuse/races                                           | Rate limit, idempotency/concurrency review, monitoring                   |
+| Critical | Public enrollment abuse/races                                           | Edge/server rate limit + HTTP 429 + frontend UX ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)); idempotency/concurrency review; monitoring |
 | Critical | No regression tests                                                     | Characterization/E2E baseline before migration                           |
 | Critical | Lovable withdrawal breaks email delivery                                | `lib/server/messaging` adapter + template parity before removing SDKs    |
 | Critical | Style drift during Next.js remount                                      | Visual parity gates; no redesign; side-by-side checks                    |
 | Critical | Next.js accidentally becomes a second backend                           | ADR-006 gate: business logic/persistence stay in existing backend        |
-| High     | Campaign work exceeds runtime limits                                    | Prefer backend/queue; BFF Route Handler only if justified                |
+| High     | Campaign work exceeds runtime limits                                    | Background processing outside Next ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)); Backend API enqueue only |
 | High     | Auth/campaign callers still hit `/lovable/email/*` after cutover        | First-party `/api/email/*` paths + caller/scheduler cutover checklist    |
 | High     | CDN/Lovable assets break after withdrawal                               | Vendor/re-host assets before removing manifests                          |
 | High     | Email/SMS provider undecided                                            | Mitigated: **ACCEPTED RISK** + adapter stubs; SMS fails explicitly until configured |

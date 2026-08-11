@@ -53,14 +53,18 @@ flowchart LR
 - App Router; native route typing; Metadata API; `error`/`not-found`/`loading` ([ADR-002](../architecture/decisions/ADR-002-app-router.md)).
 - Existing backend remains primary API; Route Handlers/Server Actions only when justified ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)).
 - Backend owns authz; Next.js route protection + session-aware rendering; cookies where applicable ([ADR-005](../architecture/decisions/ADR-005-authentication.md)).
+- Server-function mapping **DECIDED**: Backend API / Server Action / BFF tree ([15-server-function-mapping.md](15-server-function-mapping.md)).
 - RSC by default; small Client islands; static/SSR/ISR per route ([ADR-003](../architecture/decisions/ADR-003-rendering-strategy.md)).
 - Hybrid data fetching: RSC initial reads; TanStack Query for interactive server state ([ADR-004](../architecture/decisions/ADR-004-data-and-state.md)).
 - Thin `app/`; domain logic in `features/` ([ADR-007](../architecture/decisions/ADR-007-project-structure.md)).
 - Production route map **APPROVED** ([02-route-migration.md](02-route-migration.md)).
+- RLS/storage Phase 1 retain existing policies; Phase 2 Backend-only access **DECIDED** ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md)).
+- Public enrollment rate limits **DECIDED** ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)).
+- Campaign/messaging background runtime **DECIDED** — outside Next.js ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)).
 
 **Still required before coding**
 
-- Cookie/SSR session spike and remaining checklist Critical items.
+- Cookie/SSR session spike (**BLOCKED** — [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md); POC code removed — recreate isolated spike, then validate with service-role or confirmed test user) and remaining checklist Critical items.
 
 ## Documents
 
@@ -82,4 +86,6 @@ flowchart LR
 16. [Dependency compatibility](16-dependency-compatibility.md)
 17. [Messaging templates](17-messaging-templates.md)
 
-**Next step:** clear remaining Critical checklist items (auth cookie/SSR spike, parity baselines, cutover/rollback). Do not create the Next.js application yet.
+**Next step:** clear remaining Critical checklist items (auth cookie/SSR spike is **BLOCKED** pending credentials — see [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md); also parity baselines, cutover/rollback). Do not create the Next.js application yet.
+
+**Migration Go / No-Go:** **NO-GO**.

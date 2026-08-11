@@ -22,14 +22,14 @@
 
 ## Multi-model / multi-agent
 
-Multiple AI models may execute this plan. Rules and parallelization map: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md). **Do not** invent a second slice order. **Current parallel start:** slice 2 (required); optional second lane = slice 4 messaging stubs **or** D-28 spike ΓÇö not route ports (5+) until 2ΓÇô4 baselines exist.
+Multiple AI models may execute this plan. Rules and parallelization map: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md). **Do not** invent a second slice order. **Current parallel start:** slice 5 (marketing/legal); optional second lane = D-28 spike **or** auth email BFF (slice 6). Slices 1–4 baselines exist.
 
 ## Dependency-aware slices
 
 1. Foundation spike: Next 16.3.x, TypeScript 6.0.x, Node 24 / Vercel, Tailwind/assets parity, root layout, `error`/`not-found`/`loading`, Metadata API, environment validation. ΓÇö **done:** `src/app` (layout/page/error/not-found/loading), `next.config.ts`, `tsconfig.next.json`, `src/config/env.ts` (public + server), PostCSS/Tailwind via `src/styles.css`, `.nvmrc` 24 / `engines.node >=24`, scripts `dev:next` / `build:next` / `typecheck:next` (TanStack `dev`/`build` retained in-repo until retirement ΓÇö not production coexistence).
 2. Vendor/re-host assets currently tied to Lovable/CDN manifests. ΓÇö **done:** binaries under `src/assets/` (no `*.asset.json` / `__l5e`); OG at `public/og-image.png`; imports use local files; `npm run scan:assets` acceptance.
-3. Server infrastructure: backend/Supabase factories, secret isolation, auth proof (route protection + session-aware rendering), portable logging.
-4. Messaging skeleton under `src/lib/server/messaging/` that renders existing templates without Lovable SDKs or direct provider coupling.
+3. Server infrastructure: backend/Supabase factories, secret isolation, auth proof (route protection + session-aware rendering), portable logging. ΓÇö **done (scaffolding):** `@supabase/ssr` browser/server/admin factories; `src/proxy.ts` session refresh + `/app` coarse gate; `requireUser` / `getCurrentUser`; portable `logger`; D-28 remains **BLOCKED** until confirmed cookie session proven.
+4. Messaging skeleton under `src/lib/server/messaging/` that renders existing templates without Lovable SDKs or direct provider coupling. ΓÇö **done:** contracts + render + transport stubs (email refuses silently-success; SMS fails explicitly); auth templates under `templates/auth/` (legacy `src/lib/email-templates/*` re-exports); campaign personalize/HTML helpers.
 5. Static marketing/legal routes with visual and SEO metadata parity.
 6. Auth and recovery routes, including first-party auth email webhook/preview BFF handlers (not `/lovable/*`).
 7. Onboarding.

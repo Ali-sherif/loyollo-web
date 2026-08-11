@@ -21,4 +21,4 @@ Lead from documentation — do not invent a parallel plan:
 
 Do not remove TanStack/Lovable until production smoke + rollback window + explicit user approval. Critical checklist items are cleared (DECIDED or ACCEPTED RISK); D-28 cookie/SSR remains documented BLOCKED until proven after migration start.
 
-**Parallel agents start here:** slice 2 (vendor/re-host Lovable/CDN assets). Optional second lane: messaging stubs (slice 4) or D-28 auth spike — not slices 5+ routes until 2–4 baselines exist.
+**Parallel agents start here:** slice 5 (static marketing/legal). Optional second lane: D-28 auth cookie/SSR proof (needs credentials) or first-party `/api/email/*` BFF when doing auth (slice 6). Slices 1–4 baselines exist (foundation, assets, server infra scaffolding, messaging stubs).

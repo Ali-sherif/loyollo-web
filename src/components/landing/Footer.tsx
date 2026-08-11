@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, MapPin, Phone } from "lucide-react";
-import loyolloLogoWhite from "@/assets/loyollo-logo-white.svg.asset.json";
+import { hostedAssets } from "@/assets/hosted";
+
+const loyolloLogoWhite = hostedAssets.loyolloLogoWhite;
 
 type FooterLink = { label: string; href: string };
 

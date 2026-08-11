@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
-import iconAsset from "@/assets/loyollo-icon-white.svg.asset.json";
+import { hostedAssets } from "@/assets/hosted";
+
+const iconAsset = hostedAssets.loyolloIconWhite;
 
 export function CTA() {
   return (

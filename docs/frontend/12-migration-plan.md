@@ -18,12 +18,13 @@
 4. Canonical package manager selected: npm (`package-lock.json`; remove `bun.lock` at implementation start).
 5. Cookie/SSR session spike for auth — **ACCEPTED RISK** / remains **BLOCKED** until proven **after** migration start ([auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)).
 6. Characterization / visual / email baselines — **ACCEPTED RISK** minimal ([parity-baselines.md](../architecture/parity-baselines.md)).
-7. Go-live/cutover (D-23) — **DECIDED** ([cutover.md](../architecture/cutover.md)); pre-launch, no dual production frontends; rollback owner **ACCEPTED RISK** (not a GO gate).
+7. Asset vendoring — **DONE** (slice 2): `public/assets/`, `public/og/`, `src/assets/hosted.ts`.
+8. Go-live/cutover (D-23) — **DECIDED** ([cutover.md](../architecture/cutover.md)); pre-launch, no dual production frontends; rollback owner **ACCEPTED RISK** (not a GO gate).
 
 ## Dependency-aware slices
 
 1. Foundation spike: Next 16.3.x, TypeScript 6.0.x, Node 24 / Vercel, Tailwind/assets parity, root layout, `error`/`not-found`/`loading`, Metadata API, environment validation. — **done:** `src/app` (layout/page/error/not-found/loading), `next.config.ts`, `tsconfig.next.json`, `src/config/env.ts` (public + server), PostCSS/Tailwind via `src/styles.css`, `.nvmrc` 24 / `engines.node >=24`, scripts `dev:next` / `build:next` / `typecheck:next` (TanStack `dev`/`build` retained in-repo until retirement — not production coexistence).
-2. Vendor/re-host assets currently tied to Lovable/CDN manifests.
+2. Vendor/re-host assets currently tied to Lovable/CDN manifests. — **done:** 18 former `*.asset.json` binaries + OG preview under `public/assets/` and `public/og/`; URL map in `src/assets/hosted.ts`; TanStack/Next importers and metadata use local paths; Lovable CDN manifests removed.
 3. Server infrastructure: backend/Supabase factories, secret isolation, auth proof (route protection + session-aware rendering), portable logging.
 4. Messaging skeleton under `src/lib/server/messaging/` that renders existing templates without Lovable SDKs or direct provider coupling.
 5. Static marketing/legal routes with visual and SEO metadata parity.

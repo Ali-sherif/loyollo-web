@@ -18,7 +18,9 @@ import {
 
 
 
-import loyolloLogoWhite from "@/assets/loyollo-logo-white-sidebar.svg.asset.json";
+import { hostedAssets } from "@/assets/hosted";
+
+const loyolloLogoWhite = hostedAssets.loyolloLogoWhiteSidebar;
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

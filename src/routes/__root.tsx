@@ -98,8 +98,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Create and manage digital loyalty programs in minutes. Reward repeat customers, collect insights, and grow with a QR-based platform built for small businesses." },
       { property: "og:description", content: "Create and manage digital loyalty programs in minutes. Reward repeat customers, collect insights, and grow with a QR-based platform built for small businesses." },
       { name: "twitter:description", content: "Create and manage digital loyalty programs in minutes. Reward repeat customers, collect insights, and grow with a QR-based platform built for small businesses." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d23c0332-e946-41c7-9ad8-d715ab147903/id-preview-20c25e52--2c648ce2-4a61-45d6-a815-4d462b8f85c7.lovable.app-1782933086464.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d23c0332-e946-41c7-9ad8-d715ab147903/id-preview-20c25e52--2c648ce2-4a61-45d6-a815-4d462b8f85c7.lovable.app-1782933086464.png" },
+      { property: "og:image", content: "/og/og-preview.png" },
+      { name: "twitter:image", content: "/og/og-preview.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

@@ -5,7 +5,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { passwordFeedback } from "@/lib/password";
-import loyolloLogoSignup from "@/assets/loyollo-logo-signup.svg.asset.json";
+import { hostedAssets } from "@/assets/hosted";
+
+const loyolloLogoSignup = hostedAssets.loyolloLogoSignup;
 
 export const Route = createFileRoute("/change-password")({
   head: () => ({

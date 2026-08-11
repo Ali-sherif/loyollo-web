@@ -17,7 +17,9 @@ import avatar2 from "@/assets/avatar-2.jpg";
 import avatar3 from "@/assets/avatar-3.jpg";
 import avatar4 from "@/assets/avatar-4.jpg";
 import { useAuth } from "@/hooks/use-auth";
-import loyolloLogoSignin from "@/assets/loyollo-logo-signin.svg.asset.json";
+import { hostedAssets } from "@/assets/hosted";
+
+const loyolloLogoSignin = hostedAssets.loyolloLogoSignin;
 
 const avatars = [avatar1, avatar2, avatar3, avatar4];
 

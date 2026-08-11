@@ -2,8 +2,10 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import loyolloLogoSignup from "@/assets/loyollo-logo-signup.svg.asset.json";
-import newIllustration from "@/assets/jon-finance-man-and-more-money_1.svg.asset.json";
+import { hostedAssets } from "@/assets/hosted";
+
+const loyolloLogoSignup = hostedAssets.loyolloLogoSignup;
+const newIllustration = hostedAssets.jonFinanceIllustration;
 
 export const Route = createFileRoute("/verified")({
   head: () => ({

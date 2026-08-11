@@ -2,7 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import loyolloLogoSignup from "@/assets/loyollo-logo-signup.svg.asset.json";
+import { hostedAssets } from "@/assets/hosted";
+
+const loyolloLogoSignup = hostedAssets.loyolloLogoSignup;
 
 export const Route = createFileRoute("/verify")({
   validateSearch: (search: Record<string, unknown>) => ({

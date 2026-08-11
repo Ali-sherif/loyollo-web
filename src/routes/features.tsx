@@ -41,13 +41,15 @@ import {
   CalendarClock,
   Sparkles,
 } from "lucide-react";
-import iconAsset from "@/assets/loyollo-icon-white.svg.asset.json";
-import customerProfileImg from "@/assets/Customers.png.asset.json";
-import loyaltyProgramImg from "@/assets/Loyalty_Program.png.asset.json";
-import campaignBuilderImg from "@/assets/Campaigns.png.asset.json";
-import analyticsAsset from "@/assets/Analytics_-_Overview.png.asset.json";
-import branchesAsset from "@/assets/Branches.png.asset.json";
-import automationImg from "@/assets/Campaigns-2.png.asset.json";
+import { hostedAssets } from "@/assets/hosted";
+
+const iconAsset = hostedAssets.loyolloIconWhite;
+const customerProfileImg = hostedAssets.customers;
+const loyaltyProgramImg = hostedAssets.loyaltyProgram;
+const campaignBuilderImg = hostedAssets.campaigns;
+const analyticsAsset = hostedAssets.analyticsOverview;
+const branchesAsset = hostedAssets.branches;
+const automationImg = hostedAssets.campaigns2;
 
 export const Route = createFileRoute("/features")({
   head: () => ({

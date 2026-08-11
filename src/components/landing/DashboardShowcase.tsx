@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import dashboardHero from "@/assets/Dashboard-2.png.asset.json";
-import bgAsset from "@/assets/frame-7-bg.png.asset.json";
+import { hostedAssets } from "@/assets/hosted";
+
+const dashboardHero = hostedAssets.dashboard2;
+const bgAsset = hostedAssets.frame7Bg;
 
 export function DashboardShowcase() {
   return (

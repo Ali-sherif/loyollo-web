@@ -6,8 +6,10 @@ import { Footer } from "@/components/landing/Footer";
 import { CTA } from "@/components/landing/CTA";
 import { CountUp } from "@/components/landing/CountUp";
 import { Button } from "@/components/ui/button";
-import starbucksLogo from "@/assets/starbucks-logo.webp.asset.json";
-import timHortonsLogo from "@/assets/tim-hortons-logo.webp.asset.json";
+import { hostedAssets } from "@/assets/hosted";
+
+const starbucksLogo = hostedAssets.starbucksLogo;
+const timHortonsLogo = hostedAssets.timHortonsLogo;
 import {
   Store,
   Zap,

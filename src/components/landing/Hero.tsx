@@ -2,9 +2,9 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Check } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { CountUp } from "@/components/landing/CountUp";
-import dashboardHeroAsset from "@/assets/dashboard-hero.png.asset.json";
+import { hostedAssets } from "@/assets/hosted";
 
-const dashboardHero = dashboardHeroAsset.url;
+const dashboardHero = hostedAssets.dashboardHero.url;
 
 const stats = [
   { target: 250, label: "Businesses Served" },

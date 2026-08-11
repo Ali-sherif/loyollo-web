@@ -2,7 +2,7 @@
 
 Loyalty platform frontend for local businesses: marketing site, auth/onboarding, and authenticated dashboard for customers, loyalty programs, branches, campaigns, and analytics.
 
-This repository is currently a **TanStack Start** SSR app. Migration to **Next.js App Router** is planned and documented; implementation is not authorized until remaining gates are approved.
+This repository is currently a **TanStack Start** SSR app with an in-progress migration to **Next.js App Router**. Critical gates are **GO**; slices 1–2 are done (foundation + asset vendoring). TanStack remains the primary running app until route cutover.
 
 ## Current stack
 
@@ -33,13 +33,18 @@ Cloudflare Workers via OpenNext/`workerd` remains a secondary option and require
 ## Quick start
 
 ```bash
-# Install (npm and Bun lockfiles both exist; pick one and stick to it)
+# Install (canonical: npm / package-lock.json)
 npm install
 
-# Development
+# TanStack development (current primary app)
 npm run dev
 
-# Production build / preview
+# Next.js foundation (migration)
+npm run dev:next
+npm run build:next
+npm run typecheck:next
+
+# TanStack production build / preview
 npm run build
 npm run preview
 
@@ -79,7 +84,7 @@ src/
 ├── integrations/supabase/  # browser + server clients, types
 ├── lib/                    # server functions, email templates, utilities
 ├── data/                   # static domain data
-├── assets/                 # images / asset manifests
+├── assets/                 # local SVGs + hosted.ts URL map (binaries in public/assets)
 └── styles.css              # Tailwind tokens and global styles
 ```
 
@@ -98,21 +103,13 @@ Route conventions: see [`src/routes/README.md`](src/routes/README.md).
 
 ## Architecture decisions (summary)
 
-**DECIDED**
+**DECIDED** (see `docs/architecture/` — ADRs 001–013)
 
 - Withdraw Lovable packages, `/lovable/*` routes, secrets, and host hooks.
 - Keep visual design and email/SMS message content (no redesign).
 - Host on Vercel initially; pin Next 16.3.x / React 19.2.x / TypeScript 6.0.x / Node 24 LTS.
 - Messaging templates and transport live under `src/lib/server/messaging/`; features use provider-agnostic contracts only.
-
-**PROPOSED**
-
-- App Router; review route inventory and approve a production URL map before freeze.
-- Existing backend remains the primary API; Next.js is not a backend replacement.
-- Route Handlers / Server Actions only for clear BFF or frontend-specific needs.
-- Backend owns authorization; Next.js owns route protection, session-aware rendering, and redirects.
-- Server Components by default; small Client islands; hybrid data fetching (RSC + TanStack Query).
-- Thin `app/` + domain `features/` structure.
+- App Router, backend-primary API boundary, RSC + Query hybrid, thin `app/` — approved.
 
 Full ADRs: [`docs/architecture/`](docs/architecture/README.md).
 
@@ -132,21 +129,19 @@ Full ADRs: [`docs/architecture/`](docs/architecture/README.md).
 | Script | Description |
 | --- | --- |
 | `npm run dev` | Vite/TanStack Start development server |
-| `npm run build` | Production build |
+| `npm run build` | TanStack production build |
 | `npm run build:dev` | Development-mode build |
-| `npm run preview` | Preview production build |
+| `npm run preview` | Preview TanStack production build |
+| `npm run dev:next` | Next.js development server |
+| `npm run build:next` | Next.js production build |
+| `npm run start:next` | Serve Next.js production build |
+| `npm run typecheck:next` | Typecheck Next.js project |
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier write |
 
 ## Migration status
 
-Documentation only. Do **not** scaffold the Next.js app until:
-
-- Proposed ADRs 002–007 are approved (or accepted risk)
-- Production route map is approved
-- Package manager is chosen
-- Cookie/SSR auth spike is proven (or transitional path accepted)
-- Email/SMS provider is chosen (or adapter stub accepted)
+**GO** — Critical gates cleared. Slices **1** (foundation) and **2** (asset vendoring) are done. Next: slice **3** (server infra + auth cookie/SSR proof). See [`docs/frontend/12-migration-plan.md`](docs/frontend/12-migration-plan.md). D-28 remains open until PASSED.
 
 ## License
 

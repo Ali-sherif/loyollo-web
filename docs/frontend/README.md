@@ -65,7 +65,7 @@ flowchart LR
 **ACCEPTED RISK (remain open in docs)**
 
 - Cookie/SSR session spike (**BLOCKED** until PASSED after migration start — [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)); prove during foundation / server-infra / auth with service-role or confirmed test user.
-- Minimal parity baselines ([parity-baselines.md](../architecture/parity-baselines.md)); asset vendoring in slice 2; env confirm at Vercel deploy; rollback owner not a GO gate.
+- Minimal parity baselines ([parity-baselines.md](../architecture/parity-baselines.md)); asset vendoring **DONE (slice 2)**; env confirm at Vercel deploy; rollback owner not a GO gate.
 
 **DECIDED (go-live / cutover)**
 
@@ -91,6 +91,6 @@ flowchart LR
 16. [Dependency compatibility](16-dependency-compatibility.md)
 17. [Messaging templates](17-messaging-templates.md)
 
-**Next step:** slice 2 — Vendor/re-host Lovable/CDN assets (`src/assets/*.asset.json` + CDN URLs); broken-image scan at acceptance. Prove D-28 cookie/SSR session during server-infra / auth; keep [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md) open until PASSED.
+**Next step:** slice 3 — server infrastructure (backend/Supabase factories, secret isolation, auth cookie/SSR proof D-28); keep [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md) open until PASSED.
 
 **Migration Go / No-Go:** **GO**.

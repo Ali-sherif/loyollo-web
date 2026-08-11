@@ -36,18 +36,18 @@ Switch models freely **between** roles or slices. Do not switch mid-slice withou
 | 2 | Vendor/re-host Lovable/CDN assets | **Done** |
 | 3 | Server infrastructure + auth proof (D-28) | **Done (scaffolding)** — cookie/SSR proof still **BLOCKED** (D-28) |
 | 4 | Messaging skeleton (`src/lib/server/messaging/`) | **Done** (stubs; no real provider) |
-| 5+ | Routes / domains | **Primary next** — one domain slice per agent max; start with static marketing/legal (slice 5) |
+| 5+ | Routes / domains | **Done (ported)** — Next is default `npm run dev` / `npm run build`; TanStack kept as `dev:tanstack` until retirement approval |
 
 **Forbidden parallel pairs:** two agents on the same route tree; redesign + migration; Lovable deletion + active feature ports.
 
 ## Where parallel agents start now
 
-1. **Lead:** confirm GO from [pre-implementation-checklist.md](pre-implementation-checklist.md) and cite [12-migration-plan.md](../frontend/12-migration-plan.md).
-2. **Implementer A (required):** **slice 5** — static marketing/legal routes with visual + SEO metadata parity.
-3. **Implementer B (optional):** D-28 cookie/SSR proof (needs `SUPABASE_SERVICE_ROLE_KEY` or confirmed `SPIKE_TEST_*`; do not fake PASS) **or** first-party email BFF stubs under `/api/email/*` when touching auth (slice 6).
-4. **Reviewer:** after each PR, check parity + ADR compliance; no new architecture.
+1. **Lead:** production smoke on Vercel + confirm env UI values ([docs/deployment/env.md](../deployment/env.md)).
+2. **Optional:** D-28 cookie/SSR proof (needs credentials; do not fake PASS).
+3. **Do not** delete TanStack/Lovable packages or `src/routes` until smoke + rollback window + **explicit user approval**.
+4. **Reviewer:** visual/messaging parity vs TanStack source; ADR compliance.
 
-Slices 1–4 baselines exist. Domain route ports (5+) may proceed one slice / one owner at a time.
+Route port slices 5–13 are in the Next App Router tree. Default scripts point at Next; TanStack remains in-repo via `dev:tanstack` / `build:tanstack`.
 
 ## Handoff checklist (every agent turn)
 

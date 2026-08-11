@@ -2,14 +2,7 @@
 
 import { Link, useNavigate, useRouterState } from "@/lib/navigation";
 import * as React from "react";
-import {
-  MapPin,
-  MapPinned,
-  Globe,
-  Users,
-  Receipt,
-  ChevronDown,
-} from "lucide-react";
+import { MapPin, MapPinned, Globe, Users, Receipt, ChevronDown } from "lucide-react";
 import { z } from "zod";
 import { useAuth } from "@/hooks/use-auth";
 import { getAuthSupabase } from "@/integrations/supabase/auth-client";
@@ -20,20 +13,13 @@ const CURRENT_STEP = 1;
 
 const schema = z.object({
   num_locations: z.string().min(1, "Select a number of locations"),
-  main_location: z
-    .string()
-    .trim()
-    .min(1, "Enter your main business location")
-    .max(120),
+  main_location: z.string().trim().min(1, "Enter your main business location").max(120),
   website: z
     .string()
     .trim()
     .max(200)
     .optional()
-    .refine(
-      (v) => !v || /^(https?:\/\/)?[^\s]+\.[^\s]+$/.test(v),
-      "Enter a valid website URL",
-    ),
+    .refine((v) => !v || /^(https?:\/\/)?[^\s]+\.[^\s]+$/.test(v), "Enter a valid website URL"),
   avg_customers_per_day: z.string().min(1, "Select an average"),
   avg_cheque_per_day: z
     .string()
@@ -85,7 +71,9 @@ function OnboardingIndexPage() {
     (async () => {
       const { data } = await getAuthSupabase()
         .from("profiles")
-        .select("onboarding_completed, num_locations, main_location, website, avg_customers_per_day, avg_cheque_per_day, cheque_currency")
+        .select(
+          "onboarding_completed, num_locations, main_location, website, avg_customers_per_day, avg_cheque_per_day, cheque_currency",
+        )
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
@@ -100,7 +88,9 @@ function OnboardingIndexPage() {
           website: data.website ?? prev.website,
           avg_customers_per_day: data.avg_customers_per_day ?? prev.avg_customers_per_day,
           avg_cheque_per_day:
-            data.avg_cheque_per_day != null ? String(data.avg_cheque_per_day) : prev.avg_cheque_per_day,
+            data.avg_cheque_per_day != null
+              ? String(data.avg_cheque_per_day)
+              : prev.avg_cheque_per_day,
           cheque_currency: data.cheque_currency ?? prev.cheque_currency,
         }));
       }
@@ -278,25 +268,18 @@ function OnboardingIndexPage() {
                     label="Average Customers Per Day"
                     icon={<Users className="h-4 w-4" />}
                     value={form.avg_customers_per_day}
-                    onChange={(v) =>
-                      setForm((f) => ({ ...f, avg_customers_per_day: v }))
-                    }
+                    onChange={(v) => setForm((f) => ({ ...f, avg_customers_per_day: v }))}
                     options={CUSTOMER_OPTIONS}
                     error={errors.avg_customers_per_day}
                   />
                   <div className="flex flex-1 flex-col gap-1">
-                    <label
-                      htmlFor="avg_cheque_per_day"
-                      className="sr-only"
-                    >
+                    <label htmlFor="avg_cheque_per_day" className="sr-only">
                       Average Cheque Per Day
                     </label>
                     <div
                       className={
                         "flex h-[53px] items-center gap-2 rounded-[12px] border bg-[#fafafa] px-4 " +
-                        (errors.avg_cheque_per_day
-                          ? "border-red-500"
-                          : "border-[#d7ddea]")
+                        (errors.avg_cheque_per_day ? "border-red-500" : "border-[#d7ddea]")
                       }
                     >
                       <Receipt className="h-4 w-4 text-[#a3a3a3]" aria-hidden />
@@ -369,18 +352,14 @@ function OnboardingIndexPage() {
                       : "bg-[#feb602] text-white hover:bg-[#e29f00]")
                   }
                 >
-                  <span className="min-h-[36px] leading-9">
-                    {saving ? "Saving…" : "Next"}
-                  </span>
+                  <span className="min-h-[36px] leading-9">{saving ? "Saving…" : "Next"}</span>
                 </button>
               </div>
             </form>
           </div>
 
           <div className="flex items-center justify-center py-2">
-            <p className="text-base text-[#737373]">
-              *Your data stays private and encrypted.
-            </p>
+            <p className="text-base text-[#737373]">*Your data stays private and encrypted.</p>
           </div>
         </section>
       </div>
@@ -401,7 +380,16 @@ type TextFieldProps = {
   fullWidth?: boolean;
 };
 
-function TextField({ id, label, placeholder, icon, value, onChange, error, fullWidth }: TextFieldProps) {
+function TextField({
+  id,
+  label,
+  placeholder,
+  icon,
+  value,
+  onChange,
+  error,
+  fullWidth,
+}: TextFieldProps) {
   return (
     <div className={fullWidth ? "flex w-full flex-col gap-1" : "flex flex-1 flex-col gap-1"}>
       <label htmlFor={id} className="sr-only">
@@ -492,6 +480,5 @@ function SelectField({ id, label, icon, value, onChange, options, error }: Selec
     </div>
   );
 }
-
 
 export default OnboardingIndexPage;

@@ -24,40 +24,40 @@
 
 ## Approved production route map
 
-| Approved URL                         | App Router path (under `src/app`)                         | Legacy URL                      | Access           | Domain     | Rendering                    | Notes                                      |
-| ------------------------------------ | --------------------------------------------------------- | ------------------------------- | ---------------- | ---------- | ---------------------------- | ------------------------------------------ |
-| `/`                                  | `(marketing)/page.tsx`                                    | `/`                             | Public           | Marketing  | Static                       | Root metadata                              |
-| `/about`                             | `(marketing)/about/page.tsx`                              | `/about`                        | Public           | Marketing  | Static                       |                                            |
-| `/features`                          | `(marketing)/features/page.tsx`                           | `/features`                     | Public           | Marketing  | Static + client island       | IntersectionObserver                       |
-| `/pricing`                           | `(marketing)/pricing/page.tsx`                            | `/pricing`                      | Public           | Marketing  | Static + client island       | Auth-aware navigation                      |
-| `/guide`                             | `(marketing)/guide/page.tsx`                              | `/guide`                        | Public           | Marketing  | Static                       | Illustrations                              |
-| `/contact`                           | `(marketing)/contact/page.tsx`                            | `/contact`                      | Public           | Marketing  | Static + client island       | Map; form is placeholder                   |
-| `/legal/terms`                       | `legal/terms/page.tsx`                                    | `/terms`                        | Public           | Legal      | Static                       | Grouped under `/legal`                     |
-| `/legal/privacy`                     | `legal/privacy/page.tsx`                                  | `/privacy`                      | Public           | Legal      | Static                       | Grouped under `/legal`                     |
-| `/auth/sign-in`                      | `auth/sign-in/page.tsx`                                   | `/signin`                       | Public           | Auth       | Dynamic client form          | Redirect signed-in users                   |
-| `/auth/sign-up`                      | `auth/sign-up/page.tsx`                                   | `/signup`                       | Public           | Auth       | Dynamic client form          | Supabase signup                            |
-| `/auth/verify`                       | `auth/verify/page.tsx`                                    | `/verify`                       | Public           | Auth       | Dynamic client form          | OTP timers                                 |
-| `/auth/verified`                     | `auth/verified/page.tsx`                                  | `/verified`                     | Public           | Auth       | Dynamic                      | Post-verification                          |
-| `/auth/forgot-password`              | `auth/forgot-password/page.tsx`                           | `/forgot-password`              | Public           | Auth       | Dynamic client form          | Recovery redirect                          |
-| `/auth/reset-password`               | `auth/reset-password/page.tsx`                            | `/reset-password`               | Recovery session | Auth       | Dynamic client form          | Token/session handling                     |
-| `/onboarding`                        | `onboarding/page.tsx`                                     | `/onboarding`                   | Authenticated    | Onboarding | Dynamic                      | Nested `onboarding/layout.tsx`             |
-| `/onboarding/business-category`      | `onboarding/business-category/page.tsx`                   | `/onboarding/business-category` | Authenticated    | Onboarding | Dynamic                      | Preserve sequence                          |
-| `/onboarding/business-type`          | `onboarding/business-type/page.tsx`                       | `/onboarding/business-type`     | Authenticated    | Onboarding | Dynamic                      | Preserve sequence                          |
-| `/onboarding/plan`                   | `onboarding/plan/page.tsx`                                | `/onboarding/plan`              | Authenticated    | Onboarding | Dynamic                      | No real billing                            |
-| `/onboarding/success`                | `onboarding/success/page.tsx`                             | `/onboarding/success`           | Authenticated    | Onboarding | Dynamic                      | Completion gate                            |
-| `/app`                               | `app/(shell)/page.tsx`                                    | —                               | Authenticated    | Dashboard  | Dynamic/no-store             | Redirect to `/app/dashboard`               |
-| `/app/dashboard`                     | `app/(shell)/dashboard/page.tsx`                          | `/dashboard`                    | Authenticated    | Dashboard  | Dynamic/no-store             |                                            |
-| `/app/customers`                     | `app/(shell)/customers/page.tsx`                          | `/customers`                    | Authenticated    | Customers  | Dynamic/no-store             | CSV/browser APIs                           |
-| `/app/customers/[customerId]`        | `app/(shell)/customers/[customerId]/page.tsx`            | `/customers/$customerId`        | Authenticated    | Customers  | Dynamic/no-store             | Validate ownership                         |
-| `/app/loyalty`                       | `app/(shell)/loyalty/page.tsx`                            | `/loyalty-program`              | Authenticated    | Loyalty    | Dynamic/no-store             | QR/print/share; shortened path             |
-| `/app/branches`                      | `app/(shell)/branches/page.tsx`                           | `/branches`                     | Authenticated    | Branches   | Dynamic/no-store             | CRUD                                       |
-| `/app/branches/[branchId]`           | `app/(shell)/branches/[branchId]/page.tsx`               | `/branches/$branchId`           | Authenticated    | Branches   | Dynamic/no-store             | Map/client UI                              |
-| `/app/campaigns`                     | `app/(shell)/campaigns/page.tsx`                          | `/campaigns`                    | Authenticated    | Campaigns  | Dynamic/no-store             | Server send via messaging contracts        |
-| `/app/campaigns/[campaignId]`        | `app/(shell)/campaigns/[campaignId]/page.tsx`            | `/campaigns/$campaignId`        | Authenticated    | Campaigns  | Dynamic/no-store             | Validate ownership                         |
-| `/app/analytics`                     | `app/(shell)/analytics/page.tsx`                          | `/analytics`                    | Authenticated    | Analytics  | Dynamic/no-store             | Revenue placeholder                        |
-| `/app/settings`                      | `app/(shell)/settings/page.tsx`                           | `/settings`                     | Authenticated    | Settings   | Dynamic/no-store             | MFA/uploads/account delete                 |
-| `/app/settings/password`             | `app/(shell)/settings/password/page.tsx`                  | `/change-password`              | Authenticated    | Settings   | Dynamic                      | Nested under settings                      |
-| `/join/[programId]`                  | `join/[programId]/page.tsx`                              | `/join/$programId`              | Public           | Join       | Server initial + client form | Public mutation/rate limit                 |
+| Approved URL                    | App Router path (under `src/app`)             | Legacy URL                      | Access           | Domain     | Rendering                    | Notes                               |
+| ------------------------------- | --------------------------------------------- | ------------------------------- | ---------------- | ---------- | ---------------------------- | ----------------------------------- |
+| `/`                             | `(marketing)/page.tsx`                        | `/`                             | Public           | Marketing  | Static                       | Root metadata                       |
+| `/about`                        | `(marketing)/about/page.tsx`                  | `/about`                        | Public           | Marketing  | Static                       |                                     |
+| `/features`                     | `(marketing)/features/page.tsx`               | `/features`                     | Public           | Marketing  | Static + client island       | IntersectionObserver                |
+| `/pricing`                      | `(marketing)/pricing/page.tsx`                | `/pricing`                      | Public           | Marketing  | Static + client island       | Auth-aware navigation               |
+| `/guide`                        | `(marketing)/guide/page.tsx`                  | `/guide`                        | Public           | Marketing  | Static                       | Illustrations                       |
+| `/contact`                      | `(marketing)/contact/page.tsx`                | `/contact`                      | Public           | Marketing  | Static + client island       | Map; form is placeholder            |
+| `/legal/terms`                  | `legal/terms/page.tsx`                        | `/terms`                        | Public           | Legal      | Static                       | Grouped under `/legal`              |
+| `/legal/privacy`                | `legal/privacy/page.tsx`                      | `/privacy`                      | Public           | Legal      | Static                       | Grouped under `/legal`              |
+| `/auth/sign-in`                 | `auth/sign-in/page.tsx`                       | `/signin`                       | Public           | Auth       | Dynamic client form          | Redirect signed-in users            |
+| `/auth/sign-up`                 | `auth/sign-up/page.tsx`                       | `/signup`                       | Public           | Auth       | Dynamic client form          | Supabase signup                     |
+| `/auth/verify`                  | `auth/verify/page.tsx`                        | `/verify`                       | Public           | Auth       | Dynamic client form          | OTP timers                          |
+| `/auth/verified`                | `auth/verified/page.tsx`                      | `/verified`                     | Public           | Auth       | Dynamic                      | Post-verification                   |
+| `/auth/forgot-password`         | `auth/forgot-password/page.tsx`               | `/forgot-password`              | Public           | Auth       | Dynamic client form          | Recovery redirect                   |
+| `/auth/reset-password`          | `auth/reset-password/page.tsx`                | `/reset-password`               | Recovery session | Auth       | Dynamic client form          | Token/session handling              |
+| `/onboarding`                   | `onboarding/page.tsx`                         | `/onboarding`                   | Authenticated    | Onboarding | Dynamic                      | Nested `onboarding/layout.tsx`      |
+| `/onboarding/business-category` | `onboarding/business-category/page.tsx`       | `/onboarding/business-category` | Authenticated    | Onboarding | Dynamic                      | Preserve sequence                   |
+| `/onboarding/business-type`     | `onboarding/business-type/page.tsx`           | `/onboarding/business-type`     | Authenticated    | Onboarding | Dynamic                      | Preserve sequence                   |
+| `/onboarding/plan`              | `onboarding/plan/page.tsx`                    | `/onboarding/plan`              | Authenticated    | Onboarding | Dynamic                      | No real billing                     |
+| `/onboarding/success`           | `onboarding/success/page.tsx`                 | `/onboarding/success`           | Authenticated    | Onboarding | Dynamic                      | Completion gate                     |
+| `/app`                          | `app/(shell)/page.tsx`                        | —                               | Authenticated    | Dashboard  | Dynamic/no-store             | Redirect to `/app/dashboard`        |
+| `/app/dashboard`                | `app/(shell)/dashboard/page.tsx`              | `/dashboard`                    | Authenticated    | Dashboard  | Dynamic/no-store             |                                     |
+| `/app/customers`                | `app/(shell)/customers/page.tsx`              | `/customers`                    | Authenticated    | Customers  | Dynamic/no-store             | CSV/browser APIs                    |
+| `/app/customers/[customerId]`   | `app/(shell)/customers/[customerId]/page.tsx` | `/customers/$customerId`        | Authenticated    | Customers  | Dynamic/no-store             | Validate ownership                  |
+| `/app/loyalty`                  | `app/(shell)/loyalty/page.tsx`                | `/loyalty-program`              | Authenticated    | Loyalty    | Dynamic/no-store             | QR/print/share; shortened path      |
+| `/app/branches`                 | `app/(shell)/branches/page.tsx`               | `/branches`                     | Authenticated    | Branches   | Dynamic/no-store             | CRUD                                |
+| `/app/branches/[branchId]`      | `app/(shell)/branches/[branchId]/page.tsx`    | `/branches/$branchId`           | Authenticated    | Branches   | Dynamic/no-store             | Map/client UI                       |
+| `/app/campaigns`                | `app/(shell)/campaigns/page.tsx`              | `/campaigns`                    | Authenticated    | Campaigns  | Dynamic/no-store             | Server send via messaging contracts |
+| `/app/campaigns/[campaignId]`   | `app/(shell)/campaigns/[campaignId]/page.tsx` | `/campaigns/$campaignId`        | Authenticated    | Campaigns  | Dynamic/no-store             | Validate ownership                  |
+| `/app/analytics`                | `app/(shell)/analytics/page.tsx`              | `/analytics`                    | Authenticated    | Analytics  | Dynamic/no-store             | Revenue placeholder                 |
+| `/app/settings`                 | `app/(shell)/settings/page.tsx`               | `/settings`                     | Authenticated    | Settings   | Dynamic/no-store             | MFA/uploads/account delete          |
+| `/app/settings/password`        | `app/(shell)/settings/password/page.tsx`      | `/change-password`              | Authenticated    | Settings   | Dynamic                      | Nested under settings               |
+| `/join/[programId]`             | `join/[programId]/page.tsx`                   | `/join/$programId`              | Public           | Join       | Server initial + client form | Public mutation/rate limit          |
 
 `(marketing)` and `app/(shell)` are **route groups** (no extra URL segment). The `/app` URL segment comes from the `app/` folder that is not parenthesized.
 
@@ -65,47 +65,47 @@
 
 Lovable withdrawal is decided. Do **not** preserve `/lovable/*` paths. Keep behavior and templates under `src/lib/server/messaging/`; move to first-party APIs only where a BFF/frontend-specific server requirement exists ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)).
 
-| Approved URL                 | App Router path                              | Legacy URL                     | Authentication                                              |
-| ---------------------------- | -------------------------------------------- | ------------------------------ | ----------------------------------------------------------- |
-| `/api/email/auth/webhook`    | `api/email/auth/webhook/route.ts`            | `/lovable/email/auth/webhook`  | Signed webhook secret owned by the app (provider stub OK)   |
-| `/api/email/auth/preview`    | `api/email/auth/preview/route.ts`            | `/lovable/email/auth/preview`  | App-owned bearer/admin secret                               |
-| `/api/email/queue/process`   | `api/email/queue/process/route.ts`           | `/lovable/email/queue/process` | Service-role or app scheduler secret                        |
+| Approved URL               | App Router path                    | Legacy URL                     | Authentication                                            |
+| -------------------------- | ---------------------------------- | ------------------------------ | --------------------------------------------------------- |
+| `/api/email/auth/webhook`  | `api/email/auth/webhook/route.ts`  | `/lovable/email/auth/webhook`  | Signed webhook secret owned by the app (provider stub OK) |
+| `/api/email/auth/preview`  | `api/email/auth/preview/route.ts`  | `/lovable/email/auth/preview`  | App-owned bearer/admin secret                             |
+| `/api/email/queue/process` | `api/email/queue/process/route.ts` | `/lovable/email/queue/process` | Service-role or app scheduler secret                      |
 
 ## Structural modules
 
-| Role                         | App Router target                                                                 |
-| ---------------------------- | --------------------------------------------------------------------------------- |
-| `src/routes/__root.tsx`      | `src/app/layout.tsx` + root `error.tsx` / `not-found.tsx` / `loading.tsx` + providers |
-| `src/routes/onboarding.tsx`  | `src/app/onboarding/layout.tsx`                                                   |
-| Protected app chrome         | `src/app/app/(shell)/layout.tsx`                                                  |
-| Auth chrome (optional)       | `src/app/auth/layout.tsx`                                                         |
+| Role                        | App Router target                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------- |
+| `src/routes/__root.tsx`     | `src/app/layout.tsx` + root `error.tsx` / `not-found.tsx` / `loading.tsx` + providers |
+| `src/routes/onboarding.tsx` | `src/app/onboarding/layout.tsx`                                                       |
+| Protected app chrome        | `src/app/app/(shell)/layout.tsx`                                                      |
+| Auth chrome (optional)      | `src/app/auth/layout.tsx`                                                             |
 
 ## Legacy → approved redirect cheat sheet
 
 Optional for pre-launch: permanent redirects are only needed if a legacy host stayed public; otherwise retire the old host and ship the approved map only ([cutover.md](../architecture/cutover.md)).
 
-| Legacy                         | Approved                         |
-| ------------------------------ | -------------------------------- |
-| `/signin`                      | `/auth/sign-in`                  |
-| `/signup`                      | `/auth/sign-up`                  |
-| `/verify`                      | `/auth/verify`                   |
-| `/verified`                    | `/auth/verified`                 |
-| `/forgot-password`             | `/auth/forgot-password`          |
-| `/reset-password`              | `/auth/reset-password`           |
-| `/change-password`             | `/app/settings/password`         |
-| `/terms`                       | `/legal/terms`                   |
-| `/privacy`                     | `/legal/privacy`                 |
-| `/dashboard`                   | `/app/dashboard`                 |
-| `/customers`                   | `/app/customers`                 |
-| `/customers/:id`               | `/app/customers/[customerId]`    |
-| `/loyalty-program`             | `/app/loyalty`                   |
-| `/branches`                    | `/app/branches`                  |
-| `/branches/:id`                | `/app/branches/[branchId]`       |
-| `/campaigns`                   | `/app/campaigns`                 |
-| `/campaigns/:id`               | `/app/campaigns/[campaignId]`    |
-| `/analytics`                   | `/app/analytics`                 |
-| `/settings`                    | `/app/settings`                  |
-| `/lovable/email/*`             | `/api/email/*` (see API table)   |
+| Legacy             | Approved                       |
+| ------------------ | ------------------------------ |
+| `/signin`          | `/auth/sign-in`                |
+| `/signup`          | `/auth/sign-up`                |
+| `/verify`          | `/auth/verify`                 |
+| `/verified`        | `/auth/verified`               |
+| `/forgot-password` | `/auth/forgot-password`        |
+| `/reset-password`  | `/auth/reset-password`         |
+| `/change-password` | `/app/settings/password`       |
+| `/terms`           | `/legal/terms`                 |
+| `/privacy`         | `/legal/privacy`               |
+| `/dashboard`       | `/app/dashboard`               |
+| `/customers`       | `/app/customers`               |
+| `/customers/:id`   | `/app/customers/[customerId]`  |
+| `/loyalty-program` | `/app/loyalty`                 |
+| `/branches`        | `/app/branches`                |
+| `/branches/:id`    | `/app/branches/[branchId]`     |
+| `/campaigns`       | `/app/campaigns`               |
+| `/campaigns/:id`   | `/app/campaigns/[campaignId]`  |
+| `/analytics`       | `/app/analytics`               |
+| `/settings`        | `/app/settings`                |
+| `/lovable/email/*` | `/api/email/*` (see API table) |
 
 Unlisted marketing, onboarding, and join paths keep the same public URL.
 

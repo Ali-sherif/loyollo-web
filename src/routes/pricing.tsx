@@ -21,8 +21,7 @@ export const Route = createFileRoute("/pricing")({
       { property: "og:title", content: "Pricing — Loyalty" },
       {
         property: "og:description",
-        content:
-          "Starter, Growth, and Premium plans plus flexible email & SMS add-on packs.",
+        content: "Starter, Growth, and Premium plans plus flexible email & SMS add-on packs.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -62,23 +61,14 @@ function PackGroup({
   return (
     <div className="rounded-2xl border border-border bg-card p-8 shadow-[var(--shadow-soft)]">
       <div className="flex items-center gap-3">
-        <span
-          className={cn(
-            "grid h-10 w-10 place-items-center rounded-lg",
-            accentBg,
-            accentText,
-          )}
-        >
+        <span className={cn("grid h-10 w-10 place-items-center rounded-lg", accentBg, accentText)}>
           <Icon className="h-5 w-5" style={{ color: iconColor }} />
         </span>
         <h3 className="text-lg font-semibold text-navy-900">{title}</h3>
       </div>
       <ul className="mt-6 divide-y divide-border">
         {packs.map((p) => (
-          <li
-            key={p.name}
-            className="flex items-center justify-between gap-4 py-4"
-          >
+          <li key={p.name} className="flex items-center justify-between gap-4 py-4">
             <div>
               <p className="text-sm font-semibold text-navy-900">{p.name}</p>
               <p className="text-sm text-muted-foreground">{p.qty}</p>
@@ -104,12 +94,7 @@ function AddOnPacks() {
           description="Need more capacity? Top up email or SMS credits any time — no plan change required."
         />
         <div className="mt-14 grid gap-6 md:grid-cols-2">
-          <PackGroup
-            title="Email Add-on Packs"
-            icon={Mail}
-            packs={emailPacks}
-            accent="gold"
-          />
+          <PackGroup title="Email Add-on Packs" icon={Mail} packs={emailPacks} accent="gold" />
           <PackGroup
             title="SMS Add-on Packs"
             icon={MessageSquare}
@@ -122,14 +107,15 @@ function AddOnPacks() {
           <div className="max-w-xl">
             <h3 className="text-lg font-semibold text-navy-900">Need a custom plan?</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Talk to our team about tailored pricing, high-volume add-ons, or multi-location setups.
+              Talk to our team about tailored pricing, high-volume add-ons, or multi-location
+              setups.
             </p>
           </div>
           <Button
             variant="gold"
             size="lg"
             className="w-full gap-2 sm:w-auto"
-            onClick={() => window.location.href = "mailto:hello@loyalty.app"}
+            onClick={() => (window.location.href = "mailto:hello@loyalty.app")}
           >
             Contact us <ArrowRight className="h-4 w-4" />
           </Button>
@@ -207,7 +193,6 @@ function SocialProof() {
   );
 }
 
-
 function PricingHero() {
   return (
     <section
@@ -236,11 +221,9 @@ function PricingHero() {
           Simple&nbsp;Pricing&nbsp;for Growing Businesses
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-base text-navy-700 sm:text-lg">
-          Choose a plan that fits your business needs and start building
-          stronger customer relationships with a loyalty platform designed for
-          local businesses.
+          Choose a plan that fits your business needs and start building stronger customer
+          relationships with a loyalty platform designed for local businesses.
         </p>
-
       </div>
     </section>
   );

@@ -18,33 +18,19 @@ export function QrCodeIllustration({ className }: { className?: string }) {
       preserveAspectRatio="xMidYMid meet"
     >
       <title>
-        Illustration of a QR code with a place at checkout tag above it and a
-        scan me tag below, ready for customers to scan at checkout
+        Illustration of a QR code with a place at checkout tag above it and a scan me tag below,
+        ready for customers to scan at checkout
       </title>
 
       {/* Backdrop panel */}
-      <rect
-        x="0"
-        y="0"
-        width="600"
-        height="305"
-        rx="16"
-        fill="var(--navy-25)"
-      />
+      <rect x="0" y="0" width="600" height="305" rx="16" fill="var(--navy-25)" />
 
       {/* Soft accent blobs */}
       <circle cx="80" cy="80" r="70" fill="var(--gold-50)" opacity="0.85" />
       <circle cx="520" cy="240" r="60" fill="var(--success-50)" opacity="0.75" />
 
       {/* QR code shadow */}
-      <ellipse
-        cx="300"
-        cy="252"
-        rx="100"
-        ry="12"
-        fill="var(--navy-900)"
-        opacity="0.08"
-      />
+      <ellipse cx="300" cy="252" rx="100" ry="12" fill="var(--navy-900)" opacity="0.08" />
 
       {/* Place at checkout tag */}
       <g transform="translate(230 18)">

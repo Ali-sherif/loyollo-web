@@ -15,19 +15,12 @@ export function ChoosePlanIllustration({ className }: { className?: string }) {
       preserveAspectRatio="xMidYMid meet"
     >
       <title>
-        Illustration of a business owner selecting the Growth plan from three
-        subscription tier options
+        Illustration of a business owner selecting the Growth plan from three subscription tier
+        options
       </title>
 
       {/* Backdrop panel */}
-      <rect
-        x="0"
-        y="0"
-        width="600"
-        height="305"
-        rx="16"
-        fill="var(--navy-25)"
-      />
+      <rect x="0" y="0" width="600" height="305" rx="16" fill="var(--navy-25)" />
 
       {/* Soft accent blobs */}
       <circle cx="70" cy="60" r="60" fill="var(--gold-50)" opacity="0.9" />
@@ -91,14 +84,7 @@ export function ChoosePlanIllustration({ className }: { className?: string }) {
         />
         {/* "Most Popular" tag */}
         <g transform="translate(70 0)">
-          <rect
-            x="-38"
-            y="-11"
-            width="76"
-            height="22"
-            rx="11"
-            fill="var(--gold-500)"
-          />
+          <rect x="-38" y="-11" width="76" height="22" rx="11" fill="var(--gold-500)" />
           <text
             x="0"
             y="4"
@@ -140,14 +126,7 @@ export function ChoosePlanIllustration({ className }: { className?: string }) {
                 strokeLinejoin="round"
                 fill="none"
               />
-              <rect
-                x="20"
-                y="3"
-                width={[86, 70, 78][i]}
-                height="6"
-                rx="3"
-                fill="var(--navy-200)"
-              />
+              <rect x="20" y="3" width={[86, 70, 78][i]} height="6" rx="3" fill="var(--navy-200)" />
             </g>
           ))}
         </g>

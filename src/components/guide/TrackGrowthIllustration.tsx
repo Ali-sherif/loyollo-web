@@ -8,11 +8,7 @@
  * success / card / border) and matches the flat illustration style of the other
  * How It Works step graphics.
  */
-export function TrackGrowthIllustration({
-  className,
-}: {
-  className?: string;
-}) {
+export function TrackGrowthIllustration({ className }: { className?: string }) {
   return (
     <svg
       role="img"
@@ -23,19 +19,12 @@ export function TrackGrowthIllustration({
       preserveAspectRatio="xMidYMid meet"
     >
       <title>
-        Illustration of a business owner reviewing a rising customer loyalty
-        dashboard with a magnifying cursor on a key data point
+        Illustration of a business owner reviewing a rising customer loyalty dashboard with a
+        magnifying cursor on a key data point
       </title>
 
       {/* Backdrop panel */}
-      <rect
-        x="0"
-        y="0"
-        width="600"
-        height="305"
-        rx="16"
-        fill="var(--navy-25)"
-      />
+      <rect x="0" y="0" width="600" height="305" rx="16" fill="var(--navy-25)" />
 
       {/* Soft accent blobs */}
       <circle cx="70" cy="70" r="70" fill="var(--gold-50)" opacity="0.85" />
@@ -63,14 +52,8 @@ export function TrackGrowthIllustration({
           fill="none"
         />
         {/* Body / apron */}
-        <path
-          d="M14 118 V92 C14 76, 82 76, 82 92 V118 Z"
-          fill="var(--navy-700)"
-        />
-        <path
-          d="M28 118 V102 C28 94, 68 94, 68 102 V118 Z"
-          fill="var(--card)"
-        />
+        <path d="M14 118 V92 C14 76, 82 76, 82 92 V118 Z" fill="var(--navy-700)" />
+        <path d="M28 118 V102 C28 94, 68 94, 68 102 V118 Z" fill="var(--card)" />
         <rect x="32" y="94" width="32" height="4" rx="2" fill="var(--gold-500)" />
         <rect x="32" y="102" width="24" height="4" rx="2" fill="var(--navy-200)" />
         {/* Arm pointing at dashboard */}
@@ -97,21 +80,8 @@ export function TrackGrowthIllustration({
         />
 
         {/* Panel header */}
-        <rect
-          x="0"
-          y="0"
-          width="380"
-          height="44"
-          rx="14"
-          fill="var(--navy-900)"
-        />
-        <rect
-          x="0"
-          y="28"
-          width="380"
-          height="16"
-          fill="var(--navy-900)"
-        />
+        <rect x="0" y="0" width="380" height="44" rx="14" fill="var(--navy-900)" />
+        <rect x="0" y="28" width="380" height="16" fill="var(--navy-900)" />
         <circle cx="22" cy="22" r="7" fill="var(--gold-500)" />
         <circle cx="42" cy="22" r="7" fill="var(--navy-300)" />
         <circle cx="62" cy="22" r="7" fill="var(--success-500)" />
@@ -130,7 +100,14 @@ export function TrackGrowthIllustration({
 
         {/* KPI cards row */}
         <g transform="translate(20 58)">
-          <rect width="108" height="48" rx="10" fill="var(--navy-25)" stroke="var(--navy-100)" strokeWidth="1.5" />
+          <rect
+            width="108"
+            height="48"
+            rx="10"
+            fill="var(--navy-25)"
+            stroke="var(--navy-100)"
+            strokeWidth="1.5"
+          />
           <rect x="12" y="10" width="40" height="6" rx="3" fill="var(--navy-200)" />
           <text
             x="12"
@@ -157,7 +134,14 @@ export function TrackGrowthIllustration({
         </g>
 
         <g transform="translate(140 58)">
-          <rect width="108" height="48" rx="10" fill="var(--navy-25)" stroke="var(--navy-100)" strokeWidth="1.5" />
+          <rect
+            width="108"
+            height="48"
+            rx="10"
+            fill="var(--navy-25)"
+            stroke="var(--navy-100)"
+            strokeWidth="1.5"
+          />
           <rect x="12" y="10" width="50" height="6" rx="3" fill="var(--navy-200)" />
           <text
             x="12"
@@ -184,7 +168,14 @@ export function TrackGrowthIllustration({
         </g>
 
         <g transform="translate(260 58)">
-          <rect width="100" height="48" rx="10" fill="var(--gold-50)" stroke="var(--gold-200)" strokeWidth="1.5" />
+          <rect
+            width="100"
+            height="48"
+            rx="10"
+            fill="var(--gold-50)"
+            stroke="var(--gold-200)"
+            strokeWidth="1.5"
+          />
           <rect x="12" y="10" width="36" height="6" rx="3" fill="var(--gold-300)" />
           <text
             x="12"
@@ -211,14 +202,16 @@ export function TrackGrowthIllustration({
 
         {/* Chart card */}
         <g transform="translate(20 120)">
-          <rect width="340" height="80" rx="12" fill="var(--navy-25)" stroke="var(--navy-100)" strokeWidth="1.5" />
-          {/* Axis lines */}
-          <g
+          <rect
+            width="340"
+            height="80"
+            rx="12"
+            fill="var(--navy-25)"
             stroke="var(--navy-100)"
-            strokeWidth="1"
-            strokeLinecap="round"
-            fill="none"
-          >
+            strokeWidth="1.5"
+          />
+          {/* Axis lines */}
+          <g stroke="var(--navy-100)" strokeWidth="1" strokeLinecap="round" fill="none">
             <path d="M20 60 H320" />
             <path d="M20 60 V20" />
           </g>
@@ -324,13 +317,7 @@ export function TrackGrowthIllustration({
         <path d="M150 30 L152 36 L158 38 L152 40 L150 46 L148 40 L142 38 L148 36 Z" />
         <path d="M360 210 L362 216 L368 218 L362 220 L360 226 L358 220 L352 218 L358 216 Z" />
       </g>
-      <g
-        stroke="var(--gold-500)"
-        strokeWidth="2"
-        strokeLinecap="round"
-        fill="none"
-        opacity="0.8"
-      >
+      <g stroke="var(--gold-500)" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.8">
         <path d="M170 100 L178 96" />
         <path d="M390 190 L398 190" />
       </g>

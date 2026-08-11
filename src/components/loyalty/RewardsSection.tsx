@@ -210,10 +210,7 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
   async function handleDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await getAuthSupabase()
-      .from("rewards")
-      .delete()
-      .eq("id", deleteTarget.id);
+    const { error } = await getAuthSupabase().from("rewards").delete().eq("id", deleteTarget.id);
     setDeleting(false);
     if (error) {
       toast.error("Couldn't remove reward");
@@ -239,14 +236,11 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
     toast.success(next === "disabled" ? `${r.name} disabled` : `${r.name} enabled`);
   }
 
-
   const existingNames = React.useMemo(
     () => new Set(rewards.map((r) => r.name.toLowerCase())),
     [rewards],
   );
-  const availableTemplates = TEMPLATES.filter(
-    (t) => !existingNames.has(t.name.toLowerCase()),
-  );
+  const availableTemplates = TEMPLATES.filter((t) => !existingNames.has(t.name.toLowerCase()));
   const filteredRewards = rewards.filter((r) =>
     r.name.toLowerCase().includes(search.toLowerCase()),
   );
@@ -255,7 +249,6 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
   );
 
   const isConfigured = rewards.length > 0 && !showTemplates;
-
 
   return (
     <div className="flex flex-col gap-6">
@@ -327,144 +320,135 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
 
         {/* Grid */}
         <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {isConfigured
-            ? filteredRewards.map((r) => (
-                <article
-                  key={r.id}
-                  className="flex flex-col overflow-hidden rounded-[14px] border border-[#eef1f7] bg-white transition hover:border-[#d7ddea] hover:shadow-[0_2px_8px_rgba(10,13,18,0.06)]"
-                >
-                  <div className="flex items-start justify-between p-5">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fff9e6] text-[#b48800]">
-                      <IconFor name={r.icon} className="h-5 w-5" />
-                    </span>
-                    <StatusBadge status={r.status} />
-                  </div>
-                  <div className="flex flex-col gap-2 px-5">
-                    <h3 className="text-[16px] font-semibold text-[#0a152f]">
-                      {r.name}
-                    </h3>
-                    <p className="line-clamp-2 text-[14px] text-[#737373]">
-                      {r.description}
-                    </p>
-                  </div>
-                  <div className="mx-5 mt-4 border-t border-[#eef1f7]" />
-                  <div className="flex items-center gap-4 px-5 py-3 text-[14px] text-[#525252]">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Coins className="h-4 w-4 text-[#8698bb]" aria-hidden />
-                      {r.point_cost == null ? "Free" : `${r.point_cost.toLocaleString()} points`}
-                    </span>
-                    <span className="text-[#a3a3a3]">·</span>
-                    <span>{r.redeemed_count.toLocaleString()} redeemed</span>
-                  </div>
-                  <div className="mt-2 flex items-center gap-2 border-t border-[#eef1f7] bg-[#fafbfd] px-3 py-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditing(r);
-                        setDialogOpen(true);
-                      }}
-                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-medium text-[#0a152f] transition hover:bg-white"
-                    >
-                      <Pencil className="h-3.5 w-3.5" aria-hidden /> Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setStatsTarget(r)}
-                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-medium text-[#0a152f] transition hover:bg-white"
-                      aria-label={`Stats for ${r.name}`}
-                    >
-                      <BarChart3 className="h-3.5 w-3.5" aria-hidden /> Stats
-                    </button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          type="button"
-                          aria-label={`More actions for ${r.name}`}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[#8698bb] transition hover:bg-[#eef1f7] hover:text-[#0a152f] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60"
-                        >
-                          <MoreHorizontal className="h-4 w-4" aria-hidden />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuItem onSelect={() => navigate({ to: "/campaigns" })}>
-                          Send Campaign
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => void toggleStatus(r)}>
-                          {r.status === "disabled" ? "Enable" : "Disable"}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => setDeleteTarget(r)}
-                          className="text-red-600 focus:text-red-600"
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                  </div>
-                </article>
-              ))
-            : (
-              <>
-                {availableTemplates.map((t) => {
-                  const applying = applyingKey === t.key;
-                  return (
-                    <article
-                      key={t.key}
-                      className="flex flex-col overflow-hidden rounded-[14px] border border-[#eef1f7] bg-white transition hover:border-[#d7ddea] hover:shadow-[0_2px_8px_rgba(10,13,18,0.06)]"
-                    >
-                      <div className="flex items-start justify-between p-5">
-                        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fff9e6] text-[#b48800]">
-                          <IconFor name={t.icon} className="h-5 w-5" />
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-2 px-5">
-                        <h3 className="text-[16px] font-semibold text-[#0a152f]">
-                          {t.name}
-                        </h3>
-                        <p className="line-clamp-2 text-[14px] text-[#737373]">
-                          {t.description}
-                        </p>
-                      </div>
-                      <div className="mx-5 mt-4 border-t border-[#eef1f7]" />
-                      <div className="flex items-center gap-1.5 px-5 py-3 text-[14px] text-[#525252]">
-                        <Coins className="h-4 w-4 text-[#8698bb]" aria-hidden />
-                        {t.point_cost == null ? "Free" : `${t.point_cost.toLocaleString()} points`}
-                      </div>
-                      <div className="mt-auto border-t border-[#eef1f7] bg-[#fafbfd] p-4">
-                        <button
-                          type="button"
-                          onClick={() => void applyTemplate(t)}
-                          disabled={applying}
-                          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-[14px] font-semibold text-[#0a152f] ring-1 ring-[#d7ddea] transition hover:bg-[#0a152f] hover:text-white hover:ring-[#0a152f] disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {applying && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-                          Use Template
-                        </button>
-                      </div>
-                    </article>
-                  );
-                })}
-
-                <button
-                  type="button"
-                  onClick={openCreate}
-                  className="flex min-h-[257px] flex-col items-center justify-center gap-3 rounded-[14px] border-2 border-dashed border-[#d7ddea] bg-[#fafbfd] p-6 text-center transition hover:border-[#feb602] hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60"
-                >
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#8698bb] ring-1 ring-[#eef1f7]">
-                    <Plus className="h-6 w-6" aria-hidden />
+          {isConfigured ? (
+            filteredRewards.map((r) => (
+              <article
+                key={r.id}
+                className="flex flex-col overflow-hidden rounded-[14px] border border-[#eef1f7] bg-white transition hover:border-[#d7ddea] hover:shadow-[0_2px_8px_rgba(10,13,18,0.06)]"
+              >
+                <div className="flex items-start justify-between p-5">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fff9e6] text-[#b48800]">
+                    <IconFor name={r.icon} className="h-5 w-5" />
                   </span>
-                  <div>
-                    <p className="text-[16px] font-semibold text-[#0a152f]">
-                      Create your own rewards
-                    </p>
-                    <p className="mt-1 text-[14px] text-[#737373]">
-                      Build every reward exactly how you want.
-                    </p>
-                  </div>
-                </button>
-              </>
-            )}
+                  <StatusBadge status={r.status} />
+                </div>
+                <div className="flex flex-col gap-2 px-5">
+                  <h3 className="text-[16px] font-semibold text-[#0a152f]">{r.name}</h3>
+                  <p className="line-clamp-2 text-[14px] text-[#737373]">{r.description}</p>
+                </div>
+                <div className="mx-5 mt-4 border-t border-[#eef1f7]" />
+                <div className="flex items-center gap-4 px-5 py-3 text-[14px] text-[#525252]">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Coins className="h-4 w-4 text-[#8698bb]" aria-hidden />
+                    {r.point_cost == null ? "Free" : `${r.point_cost.toLocaleString()} points`}
+                  </span>
+                  <span className="text-[#a3a3a3]">·</span>
+                  <span>{r.redeemed_count.toLocaleString()} redeemed</span>
+                </div>
+                <div className="mt-2 flex items-center gap-2 border-t border-[#eef1f7] bg-[#fafbfd] px-3 py-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditing(r);
+                      setDialogOpen(true);
+                    }}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-medium text-[#0a152f] transition hover:bg-white"
+                  >
+                    <Pencil className="h-3.5 w-3.5" aria-hidden /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStatsTarget(r)}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-medium text-[#0a152f] transition hover:bg-white"
+                    aria-label={`Stats for ${r.name}`}
+                  >
+                    <BarChart3 className="h-3.5 w-3.5" aria-hidden /> Stats
+                  </button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={`More actions for ${r.name}`}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-full text-[#8698bb] transition hover:bg-[#eef1f7] hover:text-[#0a152f] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60"
+                      >
+                        <MoreHorizontal className="h-4 w-4" aria-hidden />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuItem onSelect={() => navigate({ to: "/campaigns" })}>
+                        Send Campaign
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => void toggleStatus(r)}>
+                        {r.status === "disabled" ? "Enable" : "Disable"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => setDeleteTarget(r)}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </article>
+            ))
+          ) : (
+            <>
+              {availableTemplates.map((t) => {
+                const applying = applyingKey === t.key;
+                return (
+                  <article
+                    key={t.key}
+                    className="flex flex-col overflow-hidden rounded-[14px] border border-[#eef1f7] bg-white transition hover:border-[#d7ddea] hover:shadow-[0_2px_8px_rgba(10,13,18,0.06)]"
+                  >
+                    <div className="flex items-start justify-between p-5">
+                      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#fff9e6] text-[#b48800]">
+                        <IconFor name={t.icon} className="h-5 w-5" />
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-2 px-5">
+                      <h3 className="text-[16px] font-semibold text-[#0a152f]">{t.name}</h3>
+                      <p className="line-clamp-2 text-[14px] text-[#737373]">{t.description}</p>
+                    </div>
+                    <div className="mx-5 mt-4 border-t border-[#eef1f7]" />
+                    <div className="flex items-center gap-1.5 px-5 py-3 text-[14px] text-[#525252]">
+                      <Coins className="h-4 w-4 text-[#8698bb]" aria-hidden />
+                      {t.point_cost == null ? "Free" : `${t.point_cost.toLocaleString()} points`}
+                    </div>
+                    <div className="mt-auto border-t border-[#eef1f7] bg-[#fafbfd] p-4">
+                      <button
+                        type="button"
+                        onClick={() => void applyTemplate(t)}
+                        disabled={applying}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-[14px] font-semibold text-[#0a152f] ring-1 ring-[#d7ddea] transition hover:bg-[#0a152f] hover:text-white hover:ring-[#0a152f] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {applying && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+                        Use Template
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={openCreate}
+                className="flex min-h-[257px] flex-col items-center justify-center gap-3 rounded-[14px] border-2 border-dashed border-[#d7ddea] bg-[#fafbfd] p-6 text-center transition hover:border-[#feb602] hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#8698bb] ring-1 ring-[#eef1f7]">
+                  <Plus className="h-6 w-6" aria-hidden />
+                </span>
+                <div>
+                  <p className="text-[16px] font-semibold text-[#0a152f]">
+                    Create your own rewards
+                  </p>
+                  <p className="mt-1 text-[14px] text-[#737373]">
+                    Build every reward exactly how you want.
+                  </p>
+                </div>
+              </button>
+            </>
+          )}
         </div>
 
         {loading && (
@@ -494,7 +478,6 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
               Export
             </button>
           )}
-
         </div>
 
         {rewards.length === 0 ? (
@@ -507,9 +490,7 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
               loading="lazy"
               className="h-[110px] w-auto"
             />
-            <p className="mt-4 text-[20px] font-bold text-[#0a152f]">
-              No Rewards Created Yet!
-            </p>
+            <p className="mt-4 text-[20px] font-bold text-[#0a152f]">No Rewards Created Yet!</p>
             <p className="mt-2 max-w-[560px] text-[14px] leading-[1.4] text-[#737373]">
               Rewards performance will appear here once customers start redeeming them
             </p>
@@ -565,7 +546,9 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
                       <td className="px-4 py-4 text-[#525252]">
                         {r.monthly_limit == null ? "Unlimited" : `${r.monthly_limit}/month`}
                       </td>
-                      <td className="px-4 py-4"><StatusBadge status={r.status} /></td>
+                      <td className="px-4 py-4">
+                        <StatusBadge status={r.status} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -574,7 +557,6 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
           </div>
         )}
       </section>
-
 
       <RewardDialog
         open={dialogOpen}
@@ -589,15 +571,13 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
         }}
       />
 
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(o) => !o && setDeleteTarget(null)}
-      >
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this reward?</AlertDialogTitle>
             <AlertDialogDescription>
-              "{deleteTarget?.name}" will be permanently removed. Customers won't be able to redeem it anymore.
+              "{deleteTarget?.name}" will be permanently removed. Customers won't be able to redeem
+              it anymore.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -635,7 +615,6 @@ function StatusBadge({ status }: { status: string }) {
     paused: { bg: "#F3F4F6", text: "#525252", label: "Paused", dot: "#8698bb" },
     disabled: { bg: "#F3F4F6", text: "#525252", label: "Disabled", dot: "#8698bb" },
     low_stock: { bg: "#FEF3C7", text: "#92400E", label: "Low Stock", dot: "#D97706" },
-
   };
   const s = map[status] ?? map.live;
   return (
@@ -682,9 +661,7 @@ function RewardDialog({
       setIsFree(editing.point_cost == null);
       setPointCost(editing.point_cost == null ? "" : String(editing.point_cost));
       setUnlimited(editing.monthly_limit == null);
-      setMonthlyLimit(
-        editing.monthly_limit == null ? "" : String(editing.monthly_limit),
-      );
+      setMonthlyLimit(editing.monthly_limit == null ? "" : String(editing.monthly_limit));
       setStatus(editing.status);
     } else {
       setName("");
@@ -897,11 +874,7 @@ async function exportPerformancesPdf(rows: Reward[]) {
     doc.text("Reward Performances", 40, 48);
     doc.setFontSize(10);
     doc.setTextColor(115);
-    doc.text(
-      `Generated ${new Date().toLocaleString()}`,
-      40,
-      66,
-    );
+    doc.text(`Generated ${new Date().toLocaleString()}`, 40, 66);
     autoTable(doc, {
       startY: 84,
       head: [["Reward", "Point cost", "Redeemed", "Monthly Limit", "Status"]],
@@ -977,9 +950,7 @@ function RewardStatsDialog({
               <div className="flex flex-col gap-2 rounded-[12px] border border-[#d8f3e3] bg-[#effaf4] p-4">
                 <div className="flex items-center gap-1">
                   <TrendingUp className="h-5 w-5 text-[#267a4d]" aria-hidden />
-                  <p className="text-[16px] font-semibold text-[#0a152f]">
-                    High Performing Reward
-                  </p>
+                  <p className="text-[16px] font-semibold text-[#0a152f]">High Performing Reward</p>
                 </div>
                 <p className="text-[14px] text-[#525252]">
                   This reward is redeemed more often than your average reward.
@@ -1041,26 +1012,14 @@ function RewardStatsDialog({
   );
 }
 
-function StatTile({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-}) {
+function StatTile({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-2 rounded-[12px] border border-[#d7ddea] bg-white p-4">
       <div className="flex items-center gap-4">
         <p className="flex-1 text-[14px] text-[#737373]">{label}</p>
         {icon}
       </div>
-      <p className="text-[20px] font-semibold leading-none text-[#0a152f]">
-        {value}
-      </p>
+      <p className="text-[20px] font-semibold leading-none text-[#0a152f]">{value}</p>
     </div>
   );
 }
-
-

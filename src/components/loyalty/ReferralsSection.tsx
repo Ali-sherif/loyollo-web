@@ -94,7 +94,9 @@ export function ReferralsSection({ programId, ensureProgramSaved }: Props) {
   }, [load]);
 
   async function persist(
-    patch: Partial<Pick<Settings, "enabled" | "referrer_bonus_points" | "new_customer_discount_pct">>,
+    patch: Partial<
+      Pick<Settings, "enabled" | "referrer_bonus_points" | "new_customer_discount_pct">
+    >,
     kind: "toggle" | "bonus" | "discount",
   ) {
     const pid = await ensureProgramSaved();
@@ -186,9 +188,7 @@ export function ReferralsSection({ programId, ensureProgramSaved }: Props) {
       <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">
-              Referral Rewards
-            </h2>
+            <h2 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">Referral Rewards</h2>
             <p className="mt-1 text-[14px] text-[#525252]">
               Reward customers for bringing their friends
             </p>
@@ -296,9 +296,7 @@ export function ReferralsSection({ programId, ensureProgramSaved }: Props) {
       <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">
-              Top referrers
-            </h2>
+            <h2 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">Top referrers</h2>
             <p className="mt-1 text-[14px] text-[#525252]">
               Customers driving the most new sign-ups
             </p>
@@ -315,46 +313,46 @@ export function ReferralsSection({ programId, ensureProgramSaved }: Props) {
 
         <div className="mt-4 overflow-x-auto rounded-[12px] border border-[#eef1f7]">
           <div className="min-w-[520px]">
-          <div className="grid grid-cols-[80px_1fr_120px_140px] items-center gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold uppercase tracking-wide text-[#5d74a2]">
-            <div>Rank</div>
-            <div>Customer</div>
-            <div>Referrals</div>
-            <div>Reward Earned</div>
-          </div>
-          {TOP_REFERRERS.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-              <p className="text-[14px] font-medium text-[#0a152f]">
-                No referrals yet
-              </p>
-              <p className="text-[13px] text-[#737373]">
-                Once customers start referring friends, your top referrers will appear here.
-              </p>
+            <div className="grid grid-cols-[80px_1fr_120px_140px] items-center gap-3 bg-[#f8fafc] px-4 py-3 text-[12px] font-semibold uppercase tracking-wide text-[#5d74a2]">
+              <div>Rank</div>
+              <div>Customer</div>
+              <div>Referrals</div>
+              <div>Reward Earned</div>
             </div>
-          ) : (
-            TOP_REFERRERS.map((r) => (
-              <div
-                key={r.rank}
-                className="grid grid-cols-[80px_1fr_120px_140px] items-center gap-3 border-t border-[#eef1f7] px-4 py-3"
-              >
-                <div className="text-[14px] font-semibold text-[#0a152f]">#{r.rank}</div>
-                <div className="flex items-center gap-3">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#eef1f7] text-[12px] font-semibold text-[#344f89]">
-                    {r.initials}
-                  </span>
-                  <div className="min-w-0">
-                    <div className="truncate text-[14px] font-semibold text-[#0a152f]">{r.name}</div>
-                    <div className="truncate text-[12px] text-[#737373]">{r.email}</div>
+            {TOP_REFERRERS.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
+                <p className="text-[14px] font-medium text-[#0a152f]">No referrals yet</p>
+                <p className="text-[13px] text-[#737373]">
+                  Once customers start referring friends, your top referrers will appear here.
+                </p>
+              </div>
+            ) : (
+              TOP_REFERRERS.map((r) => (
+                <div
+                  key={r.rank}
+                  className="grid grid-cols-[80px_1fr_120px_140px] items-center gap-3 border-t border-[#eef1f7] px-4 py-3"
+                >
+                  <div className="text-[14px] font-semibold text-[#0a152f]">#{r.rank}</div>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#eef1f7] text-[12px] font-semibold text-[#344f89]">
+                      {r.initials}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="truncate text-[14px] font-semibold text-[#0a152f]">
+                        {r.name}
+                      </div>
+                      <div className="truncate text-[12px] text-[#737373]">{r.email}</div>
+                    </div>
+                  </div>
+                  <div className="text-[14px] text-[#424242]">{r.referrals}</div>
+                  <div>
+                    <span className="inline-flex rounded-full bg-[#effaf4] px-2.5 py-1 text-[12px] font-semibold text-[#44b678]">
+                      {r.rewardPoints.toLocaleString()} pts
+                    </span>
                   </div>
                 </div>
-                <div className="text-[14px] text-[#424242]">{r.referrals}</div>
-                <div>
-                  <span className="inline-flex rounded-full bg-[#effaf4] px-2.5 py-1 text-[12px] font-semibold text-[#44b678]">
-                    {r.rewardPoints.toLocaleString()} pts
-                  </span>
-                </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -383,9 +381,7 @@ export function ReferralsSection({ programId, ensureProgramSaved }: Props) {
             <ArrowDown className="h-5 w-5 text-[#a3a3a3]" aria-hidden />
             <div className="w-full rounded-[16px] border border-[#d7ddea] p-4">
               <UserPlus className="h-6 w-6 text-[#feb602]" aria-hidden />
-              <h3 className="mt-3 text-[14px] font-semibold text-[#0a152f]">
-                Friend signs up
-              </h3>
+              <h3 className="mt-3 text-[14px] font-semibold text-[#0a152f]">Friend signs up</h3>
               <p className="mt-1 text-[12px] text-[#737373]">
                 New customer joins using the referral code.
               </p>
@@ -393,9 +389,7 @@ export function ReferralsSection({ programId, ensureProgramSaved }: Props) {
             <ArrowDown className="h-5 w-5 text-[#a3a3a3]" aria-hidden />
             <div className="w-full rounded-[16px] border border-[#d7ddea] p-4">
               <ShoppingBag className="h-6 w-6 text-[#44b678]" aria-hidden />
-              <h3 className="mt-3 text-[14px] font-semibold text-[#0a152f]">
-                First purchase made
-              </h3>
+              <h3 className="mt-3 text-[14px] font-semibold text-[#0a152f]">First purchase made</h3>
               <p className="mt-1 text-[12px] text-[#737373]">
                 Referral is confirmed once they complete a visit.
               </p>
@@ -403,9 +397,7 @@ export function ReferralsSection({ programId, ensureProgramSaved }: Props) {
             <ArrowDown className="h-5 w-5 text-[#a3a3a3]" aria-hidden />
             <div className="w-full rounded-[16px] border border-[#d7ddea] p-4">
               <Gift className="h-6 w-6 text-[#344f89]" aria-hidden />
-              <h3 className="mt-3 text-[14px] font-semibold text-[#0a152f]">
-                Both are rewarded
-              </h3>
+              <h3 className="mt-3 text-[14px] font-semibold text-[#0a152f]">Both are rewarded</h3>
               <p className="mt-1 text-[12px] text-[#737373]">
                 Referrer and friend both receive their bonus automatically
               </p>

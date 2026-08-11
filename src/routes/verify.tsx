@@ -106,9 +106,7 @@ function VerifyPage() {
       }
       if (result.rateLimited) {
         setStatus("error");
-        setMessage(
-          "You've requested this recently — please wait a moment before trying again.",
-        );
+        setMessage("You've requested this recently — please wait a moment before trying again.");
         startCooldown(RESEND_SECONDS);
         return;
       }
@@ -124,25 +122,18 @@ function VerifyPage() {
     }
   }
 
-
   return (
     <div className="bg-[#eef1f7] p-3 sm:p-6 lg:p-12">
       <div className="mx-auto flex w-full max-w-[720px] flex-col items-center justify-center gap-10 rounded-[40px] bg-[#eef1f7] px-6 py-10 sm:px-12 lg:px-20 lg:py-12">
         {/* Logo */}
-        <img
-          src={loyolloLogoSignup}
-          alt="Loyollo"
-          className="h-8 w-auto md:h-10"
-        />
+        <img src={loyolloLogoSignup} alt="Loyollo" className="h-8 w-auto md:h-10" />
 
         {/* Heading */}
         <div className="w-full text-center">
           <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-[#fff9e6]">
             <ShieldCheck className="h-7 w-7 text-[#feb602]" />
           </div>
-          <h1 className="text-2xl font-bold leading-[1.2] text-[#0a152f]">
-            Email Verification
-          </h1>
+          <h1 className="text-2xl font-bold leading-[1.2] text-[#0a152f]">Email Verification</h1>
           <p className="mt-2 text-base text-[#525252]">
             We sent a verification link to{" "}
             <span className="font-bold text-[#0a152f]">{displayEmail}</span>
@@ -178,9 +169,7 @@ function VerifyPage() {
             ) : remaining > 0 ? (
               <p className="text-center text-base text-[#0a152f]" aria-live="polite">
                 Resend in{" "}
-                <span className="text-[#feb602]">
-                  00:{remaining.toString().padStart(2, "0")}s
-                </span>
+                <span className="text-[#feb602]">00:{remaining.toString().padStart(2, "0")}s</span>
               </p>
             ) : (
               <button
@@ -200,7 +189,6 @@ function VerifyPage() {
           >
             Back to sign up
           </Link>
-
         </div>
       </div>
     </div>

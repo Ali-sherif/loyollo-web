@@ -96,17 +96,13 @@ export function requireSupabaseUrl(): string {
   if (serverEnv.SUPABASE_URL) {
     return serverEnv.SUPABASE_URL;
   }
-  throw new Error(
-    "Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_URL. See docs/deployment/env.md.",
-  );
+  throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_URL. See docs/deployment/env.md.");
 }
 
 export function requireServiceRoleKey(): string {
   const key = getServerEnv().SUPABASE_SERVICE_ROLE_KEY;
   if (!key) {
-    throw new Error(
-      "Missing SUPABASE_SERVICE_ROLE_KEY (server-only). See docs/deployment/env.md.",
-    );
+    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY (server-only). See docs/deployment/env.md.");
   }
   return key;
 }

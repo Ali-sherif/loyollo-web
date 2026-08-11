@@ -50,17 +50,14 @@ function timingSafeEqualString(a: string, b: string): boolean {
  * Renders preserved templates and enqueues via Supabase RPC (no Lovable SDK).
  */
 export async function POST(request: Request) {
-  const secret =
-    process.env.EMAIL_WEBHOOK_SECRET || process.env.LOVABLE_API_KEY;
+  const secret = process.env.EMAIL_WEBHOOK_SECRET || process.env.LOVABLE_API_KEY;
   if (!secret) {
     logger.error("email.auth.webhook.missing_secret");
     return Response.json({ error: "Server configuration error" }, { status: 500 });
   }
 
   const authHeader = request.headers.get("Authorization") ?? "";
-  const token = authHeader.startsWith("Bearer ")
-    ? authHeader.slice("Bearer ".length).trim()
-    : "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length).trim() : "";
   if (!token || !timingSafeEqualString(token, secret)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -98,10 +95,7 @@ export async function POST(request: Request) {
   const emailType = payload.data?.action_type as AuthEmailType | undefined;
   const EmailTemplate = emailType ? EMAIL_TEMPLATES[emailType] : undefined;
   if (!emailType || !EmailTemplate) {
-    return Response.json(
-      { error: `Unknown email type: ${emailType}` },
-      { status: 400 },
-    );
+    return Response.json({ error: `Unknown email type: ${emailType}` }, { status: 400 });
   }
 
   const recipient = payload.data?.email ?? "";

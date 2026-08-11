@@ -151,12 +151,17 @@ function CampaignDetailPage({ campaignId }: { campaignId: string }) {
     return (
       <DashboardShell firstName={firstName} onSignOut={signOut}>
         <div className="mx-auto max-w-[1140px] space-y-4">
-          <Link to="/campaigns" className="inline-flex items-center gap-1 text-sm text-[#525252] hover:text-[#0a152f]">
+          <Link
+            to="/campaigns"
+            className="inline-flex items-center gap-1 text-sm text-[#525252] hover:text-[#0a152f]"
+          >
             <ChevronLeft className="h-4 w-4" /> Back to campaigns
           </Link>
           <div className="rounded-[12px] bg-white p-8 text-center ring-1 ring-[#eef1f7]">
             <p className="text-[16px] font-semibold text-[#0a152f]">Campaign not found</p>
-            <p className="mt-1 text-[13px] text-[#737373]">It may have been deleted or you don't have access.</p>
+            <p className="mt-1 text-[13px] text-[#737373]">
+              It may have been deleted or you don't have access.
+            </p>
           </div>
         </div>
       </DashboardShell>
@@ -214,7 +219,9 @@ function CampaignDetailPage({ campaignId }: { campaignId: string }) {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
             <div className="min-w-0 flex-1 space-y-2">
               <div className="flex items-center gap-4">
-                <h1 className="min-w-0 flex-1 break-words text-[20px] font-semibold leading-tight text-[#0a152f] sm:text-[24px]">{campaign.name}</h1>
+                <h1 className="min-w-0 flex-1 break-words text-[20px] font-semibold leading-tight text-[#0a152f] sm:text-[24px]">
+                  {campaign.name}
+                </h1>
                 <button
                   type="button"
                   onClick={() => void toggleActive()}
@@ -433,12 +440,7 @@ function StatTile({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "rounded-[8px] border border-[#eef1f7] p-4",
-        className,
-      )}
-    >
+    <div className={cn("rounded-[8px] border border-[#eef1f7] p-4", className)}>
       <div className="flex items-center justify-between">
         <p className="text-[13px] text-[#737373]">{label}</p>
         <Icon className="h-4 w-4" color={color} />
@@ -447,6 +449,5 @@ function StatTile({
     </div>
   );
 }
-
 
 export default CampaignDetailPage;

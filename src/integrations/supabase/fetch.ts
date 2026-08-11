@@ -10,9 +10,7 @@ export function isNewSupabaseApiKey(value: string): boolean {
 export function createSupabaseFetch(supabaseKey: string): typeof fetch {
   return (input, init) => {
     const headers = new Headers(
-      typeof Request !== "undefined" && input instanceof Request
-        ? input.headers
-        : undefined,
+      typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
     );
 
     if (init?.headers) {

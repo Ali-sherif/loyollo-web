@@ -21,10 +21,7 @@ import { AddCustomerDialog, type CustomerFormData } from "./customers.index";
 
 export const Route = createFileRoute("/customers/$customerId")({
   head: () => ({
-    meta: [
-      { title: "Customer Profile — Loyalty" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "Customer Profile — Loyalty" }, { name: "robots", content: "noindex" }],
   }),
   component: CustomerProfilePage,
 });
@@ -186,13 +183,9 @@ function CustomerProfilePage() {
               />
             </div>
             <div>
-              <h1 className="text-[22px] font-semibold text-[#0a152f]">
-                {c.full_name}
-              </h1>
+              <h1 className="text-[22px] font-semibold text-[#0a152f]">{c.full_name}</h1>
               <p className="mt-1 text-[14px] text-[#525252]">
-                {[c.email, c.phone, `Member since ${memberSince}`]
-                  .filter(Boolean)
-                  .join("  •  ")}
+                {[c.email, c.phone, `Member since ${memberSince}`].filter(Boolean).join("  •  ")}
               </p>
             </div>
           </div>
@@ -224,7 +217,11 @@ function CustomerProfilePage() {
         <StatTile label="Total Points" value={c.points.toLocaleString()} icon={Sparkles} />
         <StatTile label="Total Visits" value={String(c.visits)} icon={TrendingUp} />
         <StatTile label="Rewards Redeemed" value={String(rewardsRedeemed)} icon={Gift} />
-        <StatTile label="Lifetime Value" value={`$${lifetimeValue.toLocaleString()}`} icon={Award} />
+        <StatTile
+          label="Lifetime Value"
+          value={`$${lifetimeValue.toLocaleString()}`}
+          icon={Award}
+        />
         <StatTile label="Referrals" value={String(referrals)} icon={UserPlus} />
       </section>
 
@@ -234,10 +231,7 @@ function CustomerProfilePage() {
         <div className="flex flex-col gap-4">
           {/* Customer Engagement */}
           <Panel>
-            <PanelHeader
-              title="Customer Engagement"
-              subtitle="Customer's visits Yearly"
-            />
+            <PanelHeader title="Customer Engagement" subtitle="Customer's visits Yearly" />
             <EmptyPanelBody
               icon={TrendingUp}
               text="No visit data yet. Engagement chart will appear once this customer starts checking in."
@@ -259,10 +253,7 @@ function CustomerProfilePage() {
                 </button>
               }
             />
-            <TableEmpty
-              columns={["Date", "Activity", "Points"]}
-              text="No transactions yet"
-            />
+            <TableEmpty columns={["Date", "Activity", "Points"]} text="No transactions yet" />
           </Panel>
 
           {/* Rewards History */}
@@ -291,15 +282,11 @@ function CustomerProfilePage() {
           {/* Loyalty Status */}
           <Panel>
             <div className="p-5">
-              <h3 className="text-[16px] font-semibold text-[#0a152f]">
-                Loyalty Status
-              </h3>
+              <h3 className="text-[16px] font-semibold text-[#0a152f]">Loyalty Status</h3>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-[13px] text-[#525252]">Current Tier</p>
-                  <p className="mt-1 text-[15px] font-semibold text-[#0a152f]">
-                    {tierLabel}
-                  </p>
+                  <p className="mt-1 text-[15px] font-semibold text-[#0a152f]">{tierLabel}</p>
                 </div>
                 <div>
                   <p className="text-[13px] text-[#525252]">Current Points</p>
@@ -310,10 +297,7 @@ function CustomerProfilePage() {
               </div>
               <div className="mt-4">
                 <div className="h-2 w-full overflow-hidden rounded-full bg-[#eef1f7]">
-                  <div
-                    className="h-full rounded-full bg-[#feb602]"
-                    style={{ width: "0%" }}
-                  />
+                  <div className="h-full rounded-full bg-[#feb602]" style={{ width: "0%" }} />
                 </div>
                 <p className="mt-2 text-[12px] text-[#525252]">
                   {/* TODO(feature): tier progression requires next-tier config */}
@@ -324,12 +308,10 @@ function CustomerProfilePage() {
                 <div className="flex items-start gap-2">
                   <Info className="mt-0.5 h-5 w-5 text-[#feb602]" aria-hidden />
                   <div>
-                    <p className="text-[14px] font-semibold text-[#0a152f]">
-                      Loyalty Insights
-                    </p>
+                    <p className="text-[14px] font-semibold text-[#0a152f]">Loyalty Insights</p>
                     <p className="mt-1 text-[13px] text-[#525252]">
-                      Personalized insights will appear as this customer racks up
-                      visits and redemptions.
+                      Personalized insights will appear as this customer racks up visits and
+                      redemptions.
                     </p>
                   </div>
                 </div>
@@ -340,16 +322,11 @@ function CustomerProfilePage() {
           {/* Customer Health */}
           <Panel>
             <div className="p-5">
-              <h3 className="text-[16px] font-semibold text-[#0a152f]">
-                Customer Health
-              </h3>
+              <h3 className="text-[16px] font-semibold text-[#0a152f]">Customer Health</h3>
               <div className="mt-4 rounded-xl bg-[#eef1f7] p-3">
                 <p className="text-[14px] font-medium text-[#0a152f]">—</p>
                 <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white">
-                  <div
-                    className="h-full rounded-full bg-[#22c55e]"
-                    style={{ width: "0%" }}
-                  />
+                  <div className="h-full rounded-full bg-[#22c55e]" style={{ width: "0%" }} />
                 </div>
                 <p className="mt-2 text-[12px] text-[#525252]">
                   {/* TODO(feature): health score not tracked */}
@@ -362,14 +339,10 @@ function CustomerProfilePage() {
           {/* Recent Activity */}
           <Panel>
             <div className="p-5">
-              <h3 className="text-[16px] font-semibold text-[#0a152f]">
-                Recent Activity
-              </h3>
+              <h3 className="text-[16px] font-semibold text-[#0a152f]">Recent Activity</h3>
               <div className="mt-4 flex flex-col items-center justify-center rounded-xl border border-dashed border-[#e5e7eb] p-6 text-center">
                 <Calendar className="h-6 w-6 text-[#9ca3af]" aria-hidden />
-                <p className="mt-2 text-[13px] text-[#525252]">
-                  No recent activity yet
-                </p>
+                <p className="mt-2 text-[13px] text-[#525252]">No recent activity yet</p>
               </div>
             </div>
           </Panel>
@@ -423,9 +396,7 @@ function PanelHeader({
     <div className="flex items-start justify-between p-5 pb-3">
       <div>
         <h3 className="text-[16px] font-semibold text-[#0a152f]">{title}</h3>
-        {subtitle ? (
-          <p className="mt-1 text-[13px] text-[#525252]">{subtitle}</p>
-        ) : null}
+        {subtitle ? <p className="mt-1 text-[13px] text-[#525252]">{subtitle}</p> : null}
       </div>
       {action ? <div className="mt-0.5">{action}</div> : null}
     </div>
@@ -452,23 +423,14 @@ function EmptyPanelBody({
   );
 }
 
-function TableEmpty({
-  columns,
-  text,
-}: {
-  columns: string[];
-  text: string;
-}) {
+function TableEmpty({ columns, text }: { columns: string[]; text: string }) {
   return (
     <div className="mx-5 mb-5 overflow-hidden rounded-xl border border-[#eef1f7]">
       <table className="w-full">
         <thead>
           <tr className="bg-[#f8faff]">
             {columns.map((col) => (
-              <th
-                key={col}
-                className="px-4 py-3 text-left text-[13px] font-medium text-[#525252]"
-              >
+              <th key={col} className="px-4 py-3 text-left text-[13px] font-medium text-[#525252]">
                 {col}
               </th>
             ))}

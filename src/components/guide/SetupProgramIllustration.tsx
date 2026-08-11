@@ -17,19 +17,12 @@ export function SetupProgramIllustration({ className }: { className?: string }) 
       preserveAspectRatio="xMidYMid meet"
     >
       <title>
-        Illustration of a business owner configuring a loyalty program on a
-        simple dashboard panel with reward tiers, a QR code, and a points counter
+        Illustration of a business owner configuring a loyalty program on a simple dashboard panel
+        with reward tiers, a QR code, and a points counter
       </title>
 
       {/* Backdrop panel */}
-      <rect
-        x="0"
-        y="0"
-        width="600"
-        height="305"
-        rx="16"
-        fill="var(--navy-25)"
-      />
+      <rect x="0" y="0" width="600" height="305" rx="16" fill="var(--navy-25)" />
 
       {/* Soft accent blobs */}
       <circle cx="540" cy="60" r="70" fill="var(--gold-50)" opacity="0.85" />
@@ -57,14 +50,8 @@ export function SetupProgramIllustration({ className }: { className?: string }) 
           fill="none"
         />
         {/* Body / apron */}
-        <path
-          d="M14 118 V92 C14 76, 82 76, 82 92 V118 Z"
-          fill="var(--navy-700)"
-        />
-        <path
-          d="M28 118 V102 C28 94, 68 94, 68 102 V118 Z"
-          fill="var(--card)"
-        />
+        <path d="M14 118 V92 C14 76, 82 76, 82 92 V118 Z" fill="var(--navy-700)" />
+        <path d="M28 118 V102 C28 94, 68 94, 68 102 V118 Z" fill="var(--card)" />
         <rect x="32" y="94" width="32" height="4" rx="2" fill="var(--gold-500)" />
         <rect x="32" y="102" width="24" height="4" rx="2" fill="var(--navy-200)" />
         {/* Arm pointing at panel */}
@@ -91,21 +78,8 @@ export function SetupProgramIllustration({ className }: { className?: string }) 
         />
 
         {/* Panel header */}
-        <rect
-          x="0"
-          y="0"
-          width="380"
-          height="44"
-          rx="14"
-          fill="var(--navy-900)"
-        />
-        <rect
-          x="0"
-          y="28"
-          width="380"
-          height="16"
-          fill="var(--navy-900)"
-        />
+        <rect x="0" y="0" width="380" height="44" rx="14" fill="var(--navy-900)" />
+        <rect x="0" y="28" width="380" height="16" fill="var(--navy-900)" />
         <circle cx="22" cy="22" r="7" fill="var(--gold-500)" />
         <circle cx="42" cy="22" r="7" fill="var(--navy-300)" />
         <circle cx="62" cy="22" r="7" fill="var(--success-500)" />
@@ -124,23 +98,32 @@ export function SetupProgramIllustration({ className }: { className?: string }) 
 
         {/* Program name field */}
         <g transform="translate(20 58)">
-          <rect width="220" height="38" rx="8" fill="var(--navy-25)" stroke="var(--navy-100)" strokeWidth="1.5" />
+          <rect
+            width="220"
+            height="38"
+            rx="8"
+            fill="var(--navy-25)"
+            stroke="var(--navy-100)"
+            strokeWidth="1.5"
+          />
           <rect x="12" y="11" width="90" height="8" rx="4" fill="var(--navy-200)" />
           <rect x="110" y="11" width="86" height="8" rx="4" fill="var(--gold-300)" />
           {/* cursor */}
           <rect x="200" y="10" width="2" height="14" rx="1" fill="var(--gold-500)">
-            <animate
-              attributeName="opacity"
-              values="1;0;1"
-              dur="1.1s"
-              repeatCount="indefinite"
-            />
+            <animate attributeName="opacity" values="1;0;1" dur="1.1s" repeatCount="indefinite" />
           </rect>
         </g>
 
         {/* Points counter / progress bar */}
         <g transform="translate(20 108)">
-          <rect width="220" height="44" rx="8" fill="var(--navy-25)" stroke="var(--navy-100)" strokeWidth="1.5" />
+          <rect
+            width="220"
+            height="44"
+            rx="8"
+            fill="var(--navy-25)"
+            stroke="var(--navy-100)"
+            strokeWidth="1.5"
+          />
           <text
             x="12"
             y="18"
@@ -154,7 +137,16 @@ export function SetupProgramIllustration({ className }: { className?: string }) 
           <g transform="translate(12 26)">
             <rect width="196" height="10" rx="5" fill="var(--navy-100)" />
             <rect width="140" height="10" rx="5" fill="var(--success-500)" />
-            <rect x="134" y="-5" width="20" height="20" rx="10" fill="var(--card)" stroke="var(--gold-500)" strokeWidth="2" />
+            <rect
+              x="134"
+              y="-5"
+              width="20"
+              height="20"
+              rx="10"
+              fill="var(--card)"
+              stroke="var(--gold-500)"
+              strokeWidth="2"
+            />
             <text
               x="144"
               y="8"
@@ -171,7 +163,14 @@ export function SetupProgramIllustration({ className }: { className?: string }) 
 
         {/* Reward tiers */}
         <g transform="translate(20 166)">
-          <rect width="220" height="34" rx="8" fill="var(--gold-50)" stroke="var(--gold-200)" strokeWidth="1.5" />
+          <rect
+            width="220"
+            height="34"
+            rx="8"
+            fill="var(--gold-50)"
+            stroke="var(--gold-200)"
+            strokeWidth="1.5"
+          />
           <circle cx="18" cy="17" r="9" fill="var(--gold-500)" />
           <text
             x="18"
@@ -201,7 +200,14 @@ export function SetupProgramIllustration({ className }: { className?: string }) 
 
         {/* QR code preview (stylized, not readable) */}
         <g transform="translate(260 58)">
-          <rect width="100" height="100" rx="10" fill="var(--card)" stroke="var(--navy-200)" strokeWidth="1.5" />
+          <rect
+            width="100"
+            height="100"
+            rx="10"
+            fill="var(--card)"
+            stroke="var(--navy-200)"
+            strokeWidth="1.5"
+          />
           {/* QR position markers */}
           <rect x="12" y="12" width="24" height="24" rx="4" fill="var(--navy-900)" />
           <rect x="16" y="16" width="16" height="16" rx="3" fill="var(--card)" />
@@ -256,8 +262,23 @@ export function SetupProgramIllustration({ className }: { className?: string }) 
 
         {/* Reward badge / stamp */}
         <g transform="translate(260 172)">
-          <circle cx="36" cy="34" r="30" fill="var(--card)" stroke="var(--gold-500)" strokeWidth="2" />
-          <circle cx="36" cy="34" r="24" fill="none" stroke="var(--gold-300)" strokeWidth="1.5" strokeDasharray="4 3" />
+          <circle
+            cx="36"
+            cy="34"
+            r="30"
+            fill="var(--card)"
+            stroke="var(--gold-500)"
+            strokeWidth="2"
+          />
+          <circle
+            cx="36"
+            cy="34"
+            r="24"
+            fill="none"
+            stroke="var(--gold-300)"
+            strokeWidth="1.5"
+            strokeDasharray="4 3"
+          />
           <path
             d="M36 20 L39 29 L48 29 L41 35 L44 44 L36 39 L28 44 L31 35 L24 29 L33 29 Z"
             fill="var(--gold-500)"

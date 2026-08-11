@@ -67,9 +67,7 @@ export function VisitsProgressSection({ programId, visitsRequired }: Props) {
   return (
     <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
       <div>
-        <h2 className="text-[20px] font-semibold leading-none text-[#0a152f]">
-          Visits Progress
-        </h2>
+        <h2 className="text-[20px] font-semibold leading-none text-[#0a152f]">Visits Progress</h2>
         <p className="mt-2 text-[14px] text-[#737373]">
           Monitor customer visits and launch targeted reminder campaigns.
         </p>
@@ -79,7 +77,8 @@ export function VisitsProgressSection({ programId, visitsRequired }: Props) {
         <div className="mt-6 flex items-center gap-2 rounded-[12px] border border-[#dbeafe] bg-[#eef1f7] p-4">
           <Info className="h-5 w-5 shrink-0 text-[#2563eb]" aria-hidden />
           <p className="text-[14px] leading-[1.4] text-[#2563eb]">
-            Businesses using automated reminders see up to 40% higher customer retention and stronger repeat revenue.
+            Businesses using automated reminders see up to 40% higher customer retention and
+            stronger repeat revenue.
           </p>
         </div>
       )}
@@ -104,11 +103,10 @@ export function VisitsProgressSection({ programId, visitsRequired }: Props) {
             loading="lazy"
             className="h-[110px] w-auto"
           />
-          <p className="mt-4 text-[20px] font-bold text-[#0a152f]">
-            No visit activity yet
-          </p>
+          <p className="mt-4 text-[20px] font-bold text-[#0a152f]">No visit activity yet</p>
           <p className="mt-2 max-w-[458px] text-[14px] leading-[1.4] text-[#737373]">
-            Once customers start earning stamps under this program, their progress will show here — with quick actions to nudge, remind, or reward them.
+            Once customers start earning stamps under this program, their progress will show here —
+            with quick actions to nudge, remind, or reward them.
           </p>
         </div>
       ) : (
@@ -125,9 +123,7 @@ export function VisitsProgressSection({ programId, visitsRequired }: Props) {
             >
               <div className="flex flex-1 items-center gap-2 px-4">
                 <ProgressBar value={r.progress} />
-                <span className="whitespace-nowrap text-[14px] text-[#737373]">
-                  {r.label}
-                </span>
+                <span className="whitespace-nowrap text-[14px] text-[#737373]">{r.label}</span>
               </div>
               <div className="flex-1 px-4 text-[14px] text-[#737373]">{r.count}</div>
               <div className="flex-1 px-4">
@@ -156,13 +152,8 @@ function ProgressBar({ value }: { value: number }) {
 
 function ActionLink({ action }: { action: ProgressRow["action"] }) {
   const label =
-    action === "view"
-      ? "View Members"
-      : action === "reminder"
-        ? "Send Reminder"
-        : "Send Campaign";
-  const color =
-    action === "view" ? "#44b678" : action === "reminder" ? "#feb602" : "#2a3f6e";
+    action === "view" ? "View Members" : action === "reminder" ? "Send Reminder" : "Send Campaign";
+  const color = action === "view" ? "#44b678" : action === "reminder" ? "#feb602" : "#2a3f6e";
   return (
     <button
       type="button"

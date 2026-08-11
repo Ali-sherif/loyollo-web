@@ -25,12 +25,15 @@ type AuthContextValue = {
   signOut: () => Promise<void>;
   resendVerification: (
     email: string,
-  ) => Promise<{ error: string | null; status?: number; code?: string; alreadyVerified?: boolean; rateLimited?: boolean }>;
+  ) => Promise<{
+    error: string | null;
+    status?: number;
+    code?: string;
+    alreadyVerified?: boolean;
+    rateLimited?: boolean;
+  }>;
 
-  verifyEmailOtp: (
-    email: string,
-    token: string,
-  ) => Promise<{ error: string | null }>;
+  verifyEmailOtp: (email: string, token: string) => Promise<{ error: string | null }>;
   resetPasswordForEmail: (email: string) => Promise<{ error: string | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: string | null }>;
 };
@@ -42,9 +45,12 @@ function friendlyError(error: AuthError | Error | null): string | null {
   const msg = (error.message || "").toLowerCase();
   if (msg.includes("invalid login") || msg.includes("invalid credentials"))
     return "Invalid email or password.";
-  if (msg.includes("email not confirmed"))
-    return "Please verify your email before signing in.";
-  if (msg.includes("already registered") || msg.includes("already been registered") || msg.includes("user already"))
+  if (msg.includes("email not confirmed")) return "Please verify your email before signing in.";
+  if (
+    msg.includes("already registered") ||
+    msg.includes("already been registered") ||
+    msg.includes("user already")
+  )
     return "An account with this email already exists.";
   if (msg.includes("rate limit") || msg.includes("too many"))
     return "Too many attempts. Please wait a moment and try again.";
@@ -52,8 +58,7 @@ function friendlyError(error: AuthError | Error | null): string | null {
     return "That code is invalid or has expired. Please request a new one.";
   if (msg.includes("network") || msg.includes("fetch"))
     return "Network error. Please check your connection and try again.";
-  if (msg.includes("password") && msg.includes("short"))
-    return "Password is too short.";
+  if (msg.includes("password") && msg.includes("short")) return "Password is too short.";
   return error.message || "Something went wrong. Please try again.";
 }
 

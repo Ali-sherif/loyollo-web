@@ -49,11 +49,7 @@ function ForgotPasswordPage() {
   return (
     <div className="bg-[#eef1f7] p-3 sm:p-6 lg:p-12">
       <div className="mx-auto flex w-full max-w-[720px] flex-col items-center justify-center gap-10 rounded-[40px] bg-[#eef1f7] px-6 py-10 sm:px-12 lg:px-20 lg:py-12">
-        <img
-          src={loyolloLogoSignup}
-          alt="Loyollo logo"
-          className="h-8 w-auto md:h-10"
-        />
+        <img src={loyolloLogoSignup} alt="Loyollo logo" className="h-8 w-auto md:h-10" />
 
         <div className="w-full text-center">
           <h1 className="text-2xl font-bold leading-[1.2] text-[#0a152f]">
@@ -67,9 +63,15 @@ function ForgotPasswordPage() {
         </div>
 
         {!sent && (
-          <form onSubmit={handleSubmit} noValidate className="flex w-full max-w-[560px] flex-col gap-5">
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="flex w-full max-w-[560px] flex-col gap-5"
+          >
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="fp-email" className="sr-only">Business email</label>
+              <label htmlFor="fp-email" className="sr-only">
+                Business email
+              </label>
               <div
                 className={`flex h-[53px] items-center gap-2 rounded-[12px] border bg-[#fafafa] px-4 ${
                   emailError ? "border-red-400" : "border-[#d7ddea]"
@@ -89,7 +91,9 @@ function ForgotPasswordPage() {
                 />
               </div>
               {emailError && (
-                <p role="alert" className="text-sm text-red-500">{emailError}</p>
+                <p role="alert" className="text-sm text-red-500">
+                  {emailError}
+                </p>
               )}
             </div>
 

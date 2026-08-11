@@ -25,12 +25,7 @@ const LOOP_COLOR = "#20386B";
 function BlurEllipse({ className }: { className: string }) {
   // Reproduces Figma's Gaussian-blurred #4364B3 circle used top-left and bottom-right.
   return (
-    <svg
-      aria-hidden
-      viewBox="0 0 921 921"
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg aria-hidden viewBox="0 0 921 921" className={className} xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="onb-blur" x="0" y="0" width="921" height="921" filterUnits="userSpaceOnUse">
           <feGaussianBlur stdDeviation="150" />
@@ -132,7 +127,11 @@ export function OnboardingLeftPanelDecor() {
       />
 
       {/* Sparkles */}
-      <Spark size="lg" className="pointer-events-none absolute" style={{ left: 40, top: 31, transform: "scaleY(-1)" }} />
+      <Spark
+        size="lg"
+        className="pointer-events-none absolute"
+        style={{ left: 40, top: 31, transform: "scaleY(-1)" }}
+      />
       <Spark
         size="sm"
         className="pointer-events-none absolute"

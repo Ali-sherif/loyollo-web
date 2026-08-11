@@ -10,7 +10,6 @@ function useSearchParamsCompat(): Record<string, string | undefined> {
   return out;
 }
 
-
 import { Link, useNavigate, useRouterState } from "@/lib/navigation";
 import * as React from "react";
 import {
@@ -35,7 +34,6 @@ import { useAuth } from "@/hooks/use-auth";
 import loyolloLogoSignup from "@/assets/loyollo-logo-signup.svg";
 
 const avatars = [avatar1, avatar2, avatar3, avatar4];
-
 
 type FormState = {
   fullName: string;
@@ -113,8 +111,7 @@ function SignUpPage() {
     const fb = passwordFeedback(form.password);
     if (form.password.length === 0) e.password = "Password is required";
     else if (fb) e.password = fb;
-    if (form.confirmPassword !== form.password)
-      e.confirmPassword = "Passwords do not match";
+    if (form.confirmPassword !== form.password) e.confirmPassword = "Passwords do not match";
     if (!form.agreeTerms) e.agreeTerms = "You must accept the Terms & Conditions";
     if (!form.agreePrivacy) e.agreePrivacy = "You must accept the Privacy Policy";
     return e;
@@ -148,17 +145,11 @@ function SignUpPage() {
         {/* Left: form panel */}
         <div className="flex flex-1 flex-col items-center justify-center gap-10 rounded-[32px] bg-transparent px-6 py-10 sm:px-12 lg:px-20 lg:py-0">
           {/* Logo */}
-          <img
-            src={loyolloLogoSignup}
-            alt="Loyollo"
-            className="h-8 w-auto md:h-10"
-          />
+          <img src={loyolloLogoSignup} alt="Loyollo" className="h-8 w-auto md:h-10" />
 
           {/* Heading */}
           <div className="w-full text-center">
-            <h1 className="text-2xl font-bold leading-[1.2] text-[#0a152f]">
-              Create your account
-            </h1>
+            <h1 className="text-2xl font-bold leading-[1.2] text-[#0a152f]">Create your account</h1>
             <p className="mt-2 text-base text-[#525252]">
               Start building customer loyalty and growing your business
             </p>
@@ -217,7 +208,9 @@ function SignUpPage() {
                   } focus-within:border-[#feb602] focus-within:ring-2 focus-within:ring-[#feb602]/30`}
                 >
                   <div className="flex items-center gap-1">
-                    <span aria-hidden className="text-lg leading-none">🇨🇦</span>
+                    <span aria-hidden className="text-lg leading-none">
+                      🇨🇦
+                    </span>
                     <ChevronDown className="h-4 w-4 text-[#0a152f]" />
                   </div>
                   <div className="h-5 w-px bg-[#d7ddea]" />
@@ -256,31 +249,24 @@ function SignUpPage() {
                   autoComplete="new-password"
                   rightAction={{
                     label: showPw ? "Hide password" : "Show password",
-                    icon: showPw ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    ),
+                    icon: showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />,
                     onClick: () => setShowPw((s) => !s),
                   }}
                 />
                 <p
                   id="password-help"
                   aria-live="polite"
-                  className={`min-h-0 text-sm ${
-                    passwordValid ? "text-[#44b678]" : "text-red-500"
-                  }`}
+                  className={`min-h-0 text-sm ${passwordValid ? "text-[#44b678]" : "text-red-500"}`}
                 >
                   {errors.password
                     ? null
                     : liveFeedback
-                    ? liveFeedback
-                    : passwordValid
-                    ? "Strong password"
-                    : null}
+                      ? liveFeedback
+                      : passwordValid
+                        ? "Strong password"
+                        : null}
                 </p>
               </div>
-
 
               <Field
                 id="confirmPassword"
@@ -316,10 +302,7 @@ function SignUpPage() {
                 />
                 <span className="text-[#0a152f]">
                   I agree to the{" "}
-                  <a
-                    href="/terms"
-                    className="font-semibold text-[#2563eb] underline"
-                  >
+                  <a href="/terms" className="font-semibold text-[#2563eb] underline">
                     Terms &amp; Conditions
                   </a>
                 </span>
@@ -338,24 +321,23 @@ function SignUpPage() {
                 />
                 <span className="text-[#0a152f]">
                   I have read and accept the{" "}
-                  <a
-                    href="/privacy"
-                    className="font-semibold text-[#2563eb] underline"
-                  >
+                  <a href="/privacy" className="font-semibold text-[#2563eb] underline">
                     Privacy Policy
                   </a>
                   , including data collection and processing practices
                 </span>
               </label>
               {errors.agreePrivacy && (
-                <p className="-mt-3 text-sm text-red-500">
-                  {errors.agreePrivacy}
-                </p>
+                <p className="-mt-3 text-sm text-red-500">{errors.agreePrivacy}</p>
               )}
             </div>
 
             {submitError && (
-              <p role="alert" aria-live="polite" className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">
+              <p
+                role="alert"
+                aria-live="polite"
+                className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-600"
+              >
                 {submitError}
               </p>
             )}
@@ -372,10 +354,7 @@ function SignUpPage() {
 
             <p className="text-center text-base text-[#0a152f]">
               Have an account?{" "}
-              <Link
-                to="/signin"
-                className="font-semibold text-[#e29f00] underline"
-              >
+              <Link to="/signin" className="font-semibold text-[#e29f00] underline">
                 Sign in
               </Link>
             </p>
@@ -440,9 +419,7 @@ function SignUpPage() {
               </div>
 
               <div className="w-full rounded-[20px] bg-white/10 p-4 text-center">
-                <p className="text-[32px] font-bold leading-[1.2] text-white">
-                  +10K
-                </p>
+                <p className="text-[32px] font-bold leading-[1.2] text-white">+10K</p>
                 <p className="mt-3 text-base font-semibold text-[#eef1f7]">
                   <Users className="mr-1 inline h-4 w-4" />
                   Businesses
@@ -457,8 +434,8 @@ function SignUpPage() {
               The Smarter Way to Retain Customers
             </h2>
             <p className="mt-2 text-base text-[#eef1f7]/80">
-              Everything you need to manage loyalty programs, customer insights,
-              and rewards in one platform.
+              Everything you need to manage loyalty programs, customer insights, and rewards in one
+              platform.
             </p>
           </div>
         </div>
@@ -479,9 +456,7 @@ function StatCard({ icon, iconBg, delta, label, value }: StatCardProps) {
   return (
     <div className="rounded-[20px] bg-white/10 p-4">
       <div className="flex items-center justify-between">
-        <div className={`grid h-14 w-14 place-items-center rounded-full ${iconBg}`}>
-          {icon}
-        </div>
+        <div className={`grid h-14 w-14 place-items-center rounded-full ${iconBg}`}>{icon}</div>
         <div className="flex items-center gap-1 text-base font-semibold text-[#44b678]">
           {delta}
           <ArrowRight className="h-4 w-4 -rotate-45" />
@@ -536,9 +511,7 @@ function Field({
           error ? "border-red-400" : "border-[#d7ddea]"
         } focus-within:border-[#feb602] focus-within:ring-2 focus-within:ring-[#feb602]/30`}
       >
-        <span className="grid h-4 w-4 place-items-center text-[#737373]">
-          {icon}
-        </span>
+        <span className="grid h-4 w-4 place-items-center text-[#737373]">{icon}</span>
         <div className="h-5 w-px bg-[#d7ddea]" />
         <input
           id={id}
@@ -570,6 +543,5 @@ function Field({
     </div>
   );
 }
-
 
 export default SignUpPage;

@@ -153,8 +153,7 @@ export function AutomationsSection({ ownerId }: { ownerId: string }) {
     const q = search.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter(
-      (r) =>
-        r.name.toLowerCase().includes(q) || TYPE_META[r.type].label.toLowerCase().includes(q),
+      (r) => r.name.toLowerCase().includes(q) || TYPE_META[r.type].label.toLowerCase().includes(q),
     );
   }, [rows, search]);
 
@@ -291,9 +290,7 @@ export function AutomationsSection({ ownerId }: { ownerId: string }) {
                     <Icon className="h-5 w-5" color={meta.color} aria-hidden />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14px] font-semibold text-[#0a152f]">
-                      {row.name}
-                    </p>
+                    <p className="truncate text-[14px] font-semibold text-[#0a152f]">{row.name}</p>
                     <p className="mt-0.5 text-[12px] text-[#737373]">{meta.label}</p>
                   </div>
                   <div className="hidden items-center gap-2 sm:flex">
@@ -328,9 +325,7 @@ export function AutomationsSection({ ownerId }: { ownerId: string }) {
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40">
-                      <DropdownMenuItem onSelect={() => setEditTarget(row)}>
-                        Edit
-                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setEditTarget(row)}>Edit</DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onSelect={() => setDeleteTarget(row)}
@@ -439,9 +434,7 @@ function AutomationDialog({
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit automation" : "New automation"}</DialogTitle>
           <DialogDescription>
-            {isEdit
-              ? "Rename this automation."
-              : "Pick an automation type and give it a name."}
+            {isEdit ? "Rename this automation." : "Pick an automation type and give it a name."}
           </DialogDescription>
         </DialogHeader>
 

@@ -161,7 +161,11 @@ export function SetupCompleteDashboard({
       .filter((r) => r.redeemed_count > 0)
       .sort((a, b) => b.redeemed_count - a.redeemed_count);
     const totalR = withCount.reduce((s, r) => s + r.redeemed_count, 0);
-    if (totalR === 0) return { total: 0, slices: [] as { name: string; count: number; pct: number; color: string }[] };
+    if (totalR === 0)
+      return {
+        total: 0,
+        slices: [] as { name: string; count: number; pct: number; color: string }[],
+      };
     const palette = ["#44b678", "#feb602", "#344f89", "#c8d1e4"];
     const top = withCount.slice(0, 3);
     const otherCount = withCount.slice(3).reduce((s, r) => s + r.redeemed_count, 0);
@@ -190,13 +194,10 @@ export function SetupCompleteDashboard({
   const atRiskList = React.useMemo(
     () =>
       customers
-        .filter(
-          (c) => c.last_activity_at && now - new Date(c.last_activity_at).getTime() > RISK_MS,
-        )
+        .filter((c) => c.last_activity_at && now - new Date(c.last_activity_at).getTime() > RISK_MS)
         .sort(
           (a, b) =>
-            new Date(a.last_activity_at!).getTime() -
-            new Date(b.last_activity_at!).getTime(),
+            new Date(a.last_activity_at!).getTime() - new Date(b.last_activity_at!).getTime(),
         )
         .slice(0, 3),
     [customers, now, RISK_MS],
@@ -301,7 +302,10 @@ export function SetupCompleteDashboard({
                     <div className="flex w-full flex-1 items-end">
                       <div
                         className="w-full rounded-t-md bg-[#0f1c3d]"
-                        style={{ height: `${(w.count / maxWeek) * 100}%`, minHeight: w.count > 0 ? 4 : 0 }}
+                        style={{
+                          height: `${(w.count / maxWeek) * 100}%`,
+                          minHeight: w.count > 0 ? 4 : 0,
+                        }}
                         aria-label={`${w.label}: ${w.count} new`}
                       />
                     </div>
@@ -328,7 +332,11 @@ export function SetupCompleteDashboard({
             </div>
           ) : (
             <div className="mt-4 flex flex-col items-center gap-6">
-              <Donut slices={redemptionBreakdown.slices} centerLabel={compact(redemptionBreakdown.total)} centerSub="Redeemed" />
+              <Donut
+                slices={redemptionBreakdown.slices}
+                centerLabel={compact(redemptionBreakdown.total)}
+                centerSub="Redeemed"
+              />
               <ul className="w-full space-y-2">
                 {redemptionBreakdown.slices.map((s) => (
                   <li key={s.name} className="flex items-center gap-3 text-[13px]">
@@ -352,12 +360,16 @@ export function SetupCompleteDashboard({
           <Card>
             <div className="flex items-start justify-between gap-3">
               <CardHeader title="Live Activity" subtitle="Last 24 hours" />
-              <button type="button" className="inline-flex items-center gap-1 text-[13px] font-medium text-[#344f89]">
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 text-[13px] font-medium text-[#344f89]"
+              >
                 View All <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
               </button>
             </div>
             <div className="mt-4 rounded-[12px] border border-dashed border-[#e5e7eb] p-6 text-center text-[13px] text-[#737373]">
-              Activity log will appear here as customers scan QR codes, earn points, and redeem rewards.
+              Activity log will appear here as customers scan QR codes, earn points, and redeem
+              rewards.
             </div>
           </Card>
 
@@ -428,9 +440,7 @@ export function SetupCompleteDashboard({
             </div>
             <ul className="mt-4 divide-y divide-[#eef1f7]">
               {topCustomers.length === 0 ? (
-                <li className="py-6 text-center text-[13px] text-[#737373]">
-                  No customers yet.
-                </li>
+                <li className="py-6 text-center text-[13px] text-[#737373]">No customers yet.</li>
               ) : (
                 topCustomers.map((c) => (
                   <li key={c.id} className="flex items-center gap-3 py-3">
@@ -465,10 +475,7 @@ export function SetupCompleteDashboard({
           {/* Customers at risk */}
           <Card>
             <div className="flex items-start justify-between gap-3">
-              <CardHeader
-                title="Customers at Risk"
-                subtitle="Haven't visited in 30+ days"
-              />
+              <CardHeader title="Customers at Risk" subtitle="Haven't visited in 30+ days" />
               <Link
                 to="/customers"
                 className="inline-flex items-center gap-1 text-[13px] font-medium text-[#344f89]"
@@ -593,7 +600,13 @@ function Donut({
   const total = slices.reduce((s, x) => s + x.count, 0) || 1;
   let acc = 0;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label="Redemption breakdown">
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      role="img"
+      aria-label="Redemption breakdown"
+    >
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#eef1f7" strokeWidth={stroke} />
       {slices.map((s) => {
         const len = (s.count / total) * c;

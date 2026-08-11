@@ -90,7 +90,9 @@ function AnalyticsPage() {
         navigate({ to: "/onboarding", replace: true });
         return;
       }
-      setFullName((profile.full_name as string | null)?.trim() || (user.email?.split("@")[0] ?? ""));
+      setFullName(
+        (profile.full_name as string | null)?.trim() || (user.email?.split("@")[0] ?? ""),
+      );
       const { data: program } = await getAuthSupabase()
         .from("loyalty_programs")
         .select("id")
@@ -104,10 +106,11 @@ function AnalyticsPage() {
       const [{ data: cs }, { data: rs }] = await Promise.all([
         getAuthSupabase()
           .from("customers")
-          .select("id, full_name, email, tier, points, visits, status, last_activity_at, created_at")
+          .select(
+            "id, full_name, email, tier, points, visits, status, last_activity_at, created_at",
+          )
           .eq("loyalty_program_id", program.id),
         getAuthSupabase()
-
           .from("rewards")
           .select("id, name, icon, point_cost, redeemed_count")
           .eq("loyalty_program_id", program.id),
@@ -176,16 +179,13 @@ function AnalyticsPage() {
               aria-selected={tab === t.id}
               onClick={() => setTab(t.id)}
               className={`rounded-[8px] px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60 ${
-                tab === t.id
-                  ? "bg-[#feb602] text-white"
-                  : "text-[#0a152f] hover:bg-[#eef1f7]"
+                tab === t.id ? "bg-[#feb602] text-white" : "text-[#0a152f] hover:bg-[#eef1f7]"
               }`}
             >
               {t.label}
             </button>
           ))}
         </div>
-
 
         {tab === "overview" ? (
           <OverviewTab customers={customers} rewards={rewards} hasProgram={!!programId} />
@@ -194,7 +194,6 @@ function AnalyticsPage() {
         ) : (
           <RevenueTab />
         )}
-
       </div>
     </DashboardShell>
   );
@@ -216,18 +215,14 @@ function OverviewTab({
 
   const activeMembers = customers.filter((c) => c.status === "active").length;
   const totalPointsIssued = customers.reduce((s, c) => s + (c.points || 0), 0);
-  const pointsRedeemed = rewards.reduce(
-    (s, r) => s + r.redeemed_count * (r.point_cost ?? 0),
-    0,
-  );
+  const pointsRedeemed = rewards.reduce((s, r) => s + r.redeemed_count * (r.point_cost ?? 0), 0);
   const redemptionRate =
     totalPointsIssued + pointsRedeemed > 0
       ? (pointsRedeemed / (totalPointsIssued + pointsRedeemed)) * 100
       : 0;
   const avgLiability = activeMembers > 0 ? Math.round(totalPointsIssued / activeMembers) : 0;
   const repeaters = customers.filter((c) => c.visits >= 2).length;
-  const repeatRate =
-    customers.length > 0 ? Math.round((repeaters / customers.length) * 100) : 0;
+  const repeatRate = customers.length > 0 ? Math.round((repeaters / customers.length) * 100) : 0;
 
   // Members by tier
   const tierBreakdown = React.useMemo(() => {
@@ -457,9 +452,7 @@ function OverviewTab({
           />
           <ul className="mt-4 divide-y divide-[#eef1f7]">
             {topRewards.length === 0 ? (
-              <li className="py-10 text-center text-[13px] text-[#737373]">
-                No redemptions yet.
-              </li>
+              <li className="py-10 text-center text-[13px] text-[#737373]">No redemptions yet.</li>
             ) : (
               topRewards.map((r, i) => (
                 <li key={r.id} className="flex items-center gap-4 py-4">
@@ -467,9 +460,7 @@ function OverviewTab({
                     <RewardIcon name={r.name} icon={r.icon} index={i} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14px] font-semibold text-[#0a152f]">
-                      {r.name}
-                    </p>
+                    <p className="truncate text-[14px] font-semibold text-[#0a152f]">{r.name}</p>
                     {r.point_cost != null ? (
                       <p className="mt-0.5 text-[12px] text-[#737373]">
                         {r.point_cost.toLocaleString()} pts each
@@ -521,10 +512,7 @@ function OverviewTab({
 
       {/* Revenue impact */}
       <Card>
-        <CardHeader
-          title="Revenue impact"
-          subtitle="Avg. order value, loyalty vs. non-members"
-        />
+        <CardHeader title="Revenue impact" subtitle="Avg. order value, loyalty vs. non-members" />
         {/* TODO(feature): no transaction/order data source yet. */}
         <div className="mt-4 flex items-center gap-3 rounded-[12px] bg-[#eff8f3] px-4 py-3 text-[13px] text-[#0a152f]">
           <Sparkles className="h-4 w-4 text-[#44b678]" aria-hidden />
@@ -547,13 +535,7 @@ function OverviewTab({
 
 /* ---------------- Engagement Tab ---------------- */
 
-function EngagementTab({
-  customers,
-  hasProgram,
-}: {
-  customers: Customer[];
-  hasProgram: boolean;
-}) {
+function EngagementTab({ customers, hasProgram }: { customers: Customer[]; hasProgram: boolean }) {
   const now = Date.now();
   const DAY = 24 * 3600 * 1000;
 
@@ -575,9 +557,7 @@ function EngagementTab({
   const daysSince = (iso: string | null) =>
     iso ? (now - new Date(iso).getTime()) / DAY : Infinity;
 
-  const champions = customers.filter(
-    (c) => c.visits >= 10 && daysSince(c.last_activity_at) <= 30,
-  );
+  const champions = customers.filter((c) => c.visits >= 10 && daysSince(c.last_activity_at) <= 30);
   const loyal = customers.filter(
     (c) => c.visits >= 5 && c.visits < 10 && daysSince(c.last_activity_at) <= 30,
   );
@@ -895,8 +875,6 @@ function TierPill({ tier }: { tier: string | null }) {
   );
 }
 
-
-
 /* ---------------- Building blocks ---------------- */
 
 function Card({ children }: { children: React.ReactNode }) {
@@ -980,7 +958,14 @@ function Donut({
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#eef1f7" strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="#eef1f7"
+          strokeWidth={stroke}
+        />
         {slices.map((s) => {
           const len = (s.count / total) * c;
           const el = (
@@ -1013,7 +998,11 @@ function RewardIcon({ name, icon, index }: { name: string; icon: string | null; 
   const fallbacks = [Coffee, Percent, Cookie, Gift, Crown];
   const Icon = fallbacks[index % fallbacks.length];
   if (icon && icon.length <= 2) {
-    return <span className="text-[16px]" aria-label={name}>{icon}</span>;
+    return (
+      <span className="text-[16px]" aria-label={name}>
+        {icon}
+      </span>
+    );
   }
   return <Icon className="h-4 w-4 text-[#e29f00]" aria-hidden />;
 }
@@ -1024,12 +1013,48 @@ function RevenueTab() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <StatCard icon={<Coins className="h-5 w-5 text-[#feb602]" />} label="Total Revenue Generated" value="—" delta="—" deltaHint="Requires order data" />
-        <StatCard icon={<TrendingUp className="h-5 w-5 text-[#44b678]" />} label="Loyalty-Driven Revenue" value="—" delta="—" deltaHint="No transaction source yet" />
-        <StatCard icon={<Percent className="h-5 w-5 text-[#344f89]" />} label="ROI from Rewards" value="—" delta="—" deltaHint="Requires reward cost + revenue link" />
-        <StatCard icon={<Users className="h-5 w-5 text-[#0a152f]" />} label="Avg. revenue per member" value="—" delta="—" deltaHint="Requires order data" />
-        <StatCard icon={<Gift className="h-5 w-5 text-[#e29f00]" />} label="Rewards redeemed revenue" value="—" delta="—" deltaHint="Requires order data" />
-        <StatCard icon={<Crown className="h-5 w-5 text-[#6c2bd9]" />} label="Top-spending member" value="—" delta="—" deltaHint="Requires order data" />
+        <StatCard
+          icon={<Coins className="h-5 w-5 text-[#feb602]" />}
+          label="Total Revenue Generated"
+          value="—"
+          delta="—"
+          deltaHint="Requires order data"
+        />
+        <StatCard
+          icon={<TrendingUp className="h-5 w-5 text-[#44b678]" />}
+          label="Loyalty-Driven Revenue"
+          value="—"
+          delta="—"
+          deltaHint="No transaction source yet"
+        />
+        <StatCard
+          icon={<Percent className="h-5 w-5 text-[#344f89]" />}
+          label="ROI from Rewards"
+          value="—"
+          delta="—"
+          deltaHint="Requires reward cost + revenue link"
+        />
+        <StatCard
+          icon={<Users className="h-5 w-5 text-[#0a152f]" />}
+          label="Avg. revenue per member"
+          value="—"
+          delta="—"
+          deltaHint="Requires order data"
+        />
+        <StatCard
+          icon={<Gift className="h-5 w-5 text-[#e29f00]" />}
+          label="Rewards redeemed revenue"
+          value="—"
+          delta="—"
+          deltaHint="Requires order data"
+        />
+        <StatCard
+          icon={<Crown className="h-5 w-5 text-[#6c2bd9]" />}
+          label="Top-spending member"
+          value="—"
+          delta="—"
+          deltaHint="Requires order data"
+        />
       </div>
       <Card>
         <CardHeader title="Revenue over time" subtitle="Monthly revenue trend" />
@@ -1053,7 +1078,5 @@ function RevenueTab() {
     </div>
   );
 }
-
-
 
 export default AnalyticsPage;

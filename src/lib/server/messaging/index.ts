@@ -21,7 +21,4 @@ export {
   type CampaignRenderInput,
 } from "@/lib/server/messaging/render";
 
-export {
-  getMessagingTransport,
-  stubMessagingTransport,
-} from "@/lib/server/messaging/transport";
+export { getMessagingTransport, stubMessagingTransport } from "@/lib/server/messaging/transport";

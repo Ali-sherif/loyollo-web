@@ -62,7 +62,9 @@ export function HowItWorks() {
             See it Live
             <ArrowUpRight aria-hidden />
           </Button>
-          <Button variant="ghostNavy" size="lg" className="w-auto">Book a demo</Button>
+          <Button variant="ghostNavy" size="lg" className="w-auto">
+            Book a demo
+          </Button>
         </div>
       </div>
     </section>

@@ -84,8 +84,12 @@ export function Footer() {
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 text-xs text-navy-200 sm:flex-row">
           <p>© {new Date().getFullYear()} Loyollo. All rights reserved.</p>
           <div className="flex gap-6">
-            <Link to="/privacy" className="hover:text-white">Privacy</Link>
-            <Link to="/terms" className="hover:text-white">Terms</Link>
+            <Link to="/privacy" className="hover:text-white">
+              Privacy
+            </Link>
+            <Link to="/terms" className="hover:text-white">
+              Terms
+            </Link>
           </div>
         </div>
       </div>

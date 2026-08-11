@@ -17,13 +17,13 @@ Supabase browser auth persists in localStorage, auto-refreshes, and drives `Auth
 7. Validate ownership even when using the service-role client on the server.
 8. Preserve exact verification, recovery, MFA, onboarding, and sign-out behavior.
 
-| Concern                                     | Backend change required                                |
-| ------------------------------------------- | ------------------------------------------------------ |
-| App Router pages/forms                      | No                                                     |
-| Server verification of current session      | No                                                     |
-| Cookie-based SSR session                    | UNKNOWN; likely configuration/adapter work, must prove |
-| RLS/schema                                  | No for Phase 1 — retain existing policies ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md)); Phase 2 Backend APIs only |
-| Auth email webhook URLs                     | Configuration update at cutover, not contract redesign |
+| Concern                                | Backend change required                                                                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| App Router pages/forms                 | No                                                                                                                                          |
+| Server verification of current session | No                                                                                                                                          |
+| Cookie-based SSR session               | UNKNOWN; likely configuration/adapter work, must prove                                                                                      |
+| RLS/schema                             | No for Phase 1 — retain existing policies ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md)); Phase 2 Backend APIs only |
+| Auth email webhook URLs                | Configuration update at cutover, not contract redesign                                                                                      |
 
 ## Security gates
 

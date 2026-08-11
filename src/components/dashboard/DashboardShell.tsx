@@ -16,14 +16,11 @@ import {
   X,
 } from "lucide-react";
 
-
-
 import loyolloLogoWhite from "@/assets/loyollo-logo-white-sidebar.svg";
 import { formatDistanceToNow } from "date-fns";
 import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import { resolveHref } from "@/lib/navigation/paths";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-
 
 type NavItem = {
   id: string;
@@ -95,11 +92,7 @@ export function DashboardShell({
           <main className="px-4 pb-10 pt-2 sm:px-6 lg:px-8">{children}</main>
         </div>
       </div>
-      <MobileNavDrawer
-        open={mobileNavOpen}
-        onClose={closeMobileNav}
-        onSignOut={onSignOut}
-      />
+      <MobileNavDrawer open={mobileNavOpen} onClose={closeMobileNav} onSignOut={onSignOut} />
     </div>
   );
 }
@@ -119,11 +112,7 @@ function DashboardSidebar({
   return (
     <aside className="hidden w-[220px] shrink-0 flex-col bg-[#0f1c3d] px-4 py-6 text-[#b0bcd4] md:flex">
       <div className="mb-8 flex justify-center">
-        <img
-          src={loyolloLogoWhite}
-          alt="Loyollo"
-          className="h-8 w-auto"
-        />
+        <img src={loyolloLogoWhite} alt="Loyollo" className="h-8 w-auto" />
       </div>
       <NavSection label="Main" items={MAIN_NAV} isActive={isActive} />
       <div className="mt-6" />
@@ -138,12 +127,7 @@ function DashboardSidebar({
           }
           to="/settings"
         />
-        <SidebarItem
-          icon={LogOut}
-          label="Logout"
-          active={false}
-          onClick={() => onSignOut()}
-        />
+        <SidebarItem icon={LogOut} label="Logout" active={false} onClick={() => onSignOut()} />
       </div>
     </aside>
   );
@@ -167,12 +151,13 @@ function MobileNavDrawer({
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="Main navigation">
-      <div
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-        aria-hidden
-      />
+    <div
+      className="fixed inset-0 z-50 md:hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Main navigation"
+    >
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden />
       <aside className="absolute inset-y-0 left-0 flex w-[260px] max-w-[80vw] flex-col bg-[#0f1c3d] px-4 py-6 text-[#b0bcd4] shadow-xl">
         <div className="mb-6 flex items-center justify-between">
           <img src={loyolloLogoWhite} alt="Loyollo" className="h-8 w-auto" />
@@ -198,18 +183,12 @@ function MobileNavDrawer({
             }
             to="/settings"
           />
-          <SidebarItem
-            icon={LogOut}
-            label="Logout"
-            active={false}
-            onClick={() => onSignOut()}
-          />
+          <SidebarItem icon={LogOut} label="Logout" active={false} onClick={() => onSignOut()} />
         </div>
       </aside>
     </div>
   );
 }
-
 
 function NavSection({
   label,
@@ -222,9 +201,7 @@ function NavSection({
 }) {
   return (
     <div>
-      <p className="mb-2 px-3 text-[11px] uppercase tracking-wide text-[#b0bcd4]/70">
-        {label}
-      </p>
+      <p className="mb-2 px-3 text-[11px] uppercase tracking-wide text-[#b0bcd4]/70">{label}</p>
       <ul className="flex flex-col gap-1">
         {items.map((it) => (
           <li key={it.id}>
@@ -316,7 +293,6 @@ function DashboardHeader({
       <div className="ml-auto flex items-center gap-2">
         <NotificationsBell />
 
-
         <button
           type="button"
           onClick={() => navigate({ to: "/dashboard" })}
@@ -325,11 +301,7 @@ function DashboardHeader({
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#eef1f7] overflow-hidden">
             {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt=""
-                className="h-full w-full object-cover"
-              />
+              <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
             ) : (
               <User className="h-4 w-4 text-[#344f89]" />
             )}
@@ -489,4 +461,3 @@ function NotificationsBell() {
     </Popover>
   );
 }
-

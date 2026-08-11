@@ -103,11 +103,7 @@ function SignInPage() {
         {/* Left: form panel */}
         <div className="flex flex-1 flex-col items-center justify-center gap-10 rounded-[32px] bg-transparent px-6 py-10 sm:px-12 lg:px-20 lg:py-0">
           {/* Logo */}
-          <img
-            src={loyolloLogoSignin}
-            alt="Loyollo logo"
-            className="h-8 w-auto md:h-10"
-          />
+          <img src={loyolloLogoSignin} alt="Loyollo logo" className="h-8 w-auto md:h-10" />
 
           {/* Heading */}
           <div className="w-full text-center">
@@ -150,19 +146,12 @@ function SignInPage() {
                   autoComplete="current-password"
                   rightAction={{
                     label: showPw ? "Hide password" : "Show password",
-                    icon: showPw ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    ),
+                    icon: showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />,
                     onClick: () => setShowPw((s) => !s),
                   }}
                 />
                 <div className="text-right">
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm text-[#0a152f] hover:underline"
-                  >
+                  <Link to="/forgot-password" className="text-sm text-[#0a152f] hover:underline">
                     Forgot password?
                   </Link>
                 </div>
@@ -181,7 +170,11 @@ function SignInPage() {
             </label>
 
             {submitError && (
-              <div role="alert" aria-live="polite" className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">
+              <div
+                role="alert"
+                aria-live="polite"
+                className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-600"
+              >
                 <p>{submitError}</p>
                 {needsVerification && (
                   <button
@@ -208,10 +201,7 @@ function SignInPage() {
 
             <p className="text-center text-base text-[#0a152f]">
               Don&rsquo;t have an account?{" "}
-              <Link
-                to="/signup"
-                className="font-semibold text-[#e29f00] underline"
-              >
+              <Link to="/signup" className="font-semibold text-[#e29f00] underline">
                 Create account
               </Link>
             </p>
@@ -273,9 +263,7 @@ function SignInPage() {
               </div>
 
               <div className="w-full rounded-[20px] bg-white/10 p-4 text-center">
-                <p className="text-[32px] font-bold leading-[1.2] text-white">
-                  +10K
-                </p>
+                <p className="text-[32px] font-bold leading-[1.2] text-white">+10K</p>
                 <p className="mt-3 text-base font-semibold text-[#eef1f7]">
                   <Users className="mr-1 inline h-4 w-4" />
                   Businesses
@@ -289,8 +277,8 @@ function SignInPage() {
               The Smarter Way to Retain Customers
             </h2>
             <p className="mt-2 text-base text-[#eef1f7]/80">
-              Everything you need to manage loyalty programs, customer insights,
-              and rewards in one platform.
+              Everything you need to manage loyalty programs, customer insights, and rewards in one
+              platform.
             </p>
           </div>
         </div>
@@ -311,9 +299,7 @@ function StatCard({ icon, iconBg, delta, label, value }: StatCardProps) {
   return (
     <div className="rounded-[20px] bg-white/10 p-4">
       <div className="flex items-center justify-between">
-        <div className={`grid h-14 w-14 place-items-center rounded-full ${iconBg}`}>
-          {icon}
-        </div>
+        <div className={`grid h-14 w-14 place-items-center rounded-full ${iconBg}`}>{icon}</div>
         <div className="flex items-center gap-1 text-base font-semibold text-[#44b678]">
           {delta}
           <ArrowRight className="h-4 w-4 -rotate-45" />
@@ -365,9 +351,7 @@ function Field({
           error ? "border-red-400" : "border-[#d7ddea]"
         } focus-within:border-[#feb602] focus-within:ring-2 focus-within:ring-[#feb602]/30`}
       >
-        <span className="grid h-4 w-4 place-items-center text-[#737373]">
-          {icon}
-        </span>
+        <span className="grid h-4 w-4 place-items-center text-[#737373]">{icon}</span>
         <div className="h-5 w-px bg-[#d7ddea]" />
         <input
           id={id}
@@ -399,6 +383,5 @@ function Field({
     </div>
   );
 }
-
 
 export default SignInPage;

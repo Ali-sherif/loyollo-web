@@ -50,7 +50,6 @@ const BENEFIT_OPTIONS = [
   "Custom Benefit",
 ] as const;
 
-
 const COLOR_OPTIONS: {
   value: string;
   label: string;
@@ -60,11 +59,51 @@ const COLOR_OPTIONS: {
   badgeText: string;
   swatch: string;
 }[] = [
-  { value: "silver", label: "Silver", ring: "#F3F4F6", text: "#737373", badgeBg: "#F3F4F6", badgeText: "#424242", swatch: "#C0C0C0" },
-  { value: "gold",   label: "Gold",   ring: "#FFF9E6", text: "#B48800", badgeBg: "#FFF1BF", badgeText: "#8A6A00", swatch: "#FEB602" },
-  { value: "vip",    label: "VIP",    ring: "#EEF1F7", text: "#0F1C3D", badgeBg: "#D7DDEA", badgeText: "#0F1C3D", swatch: "#0F1C3D" },
-  { value: "bronze", label: "Bronze", ring: "#F5EBE0", text: "#8B5A2B", badgeBg: "#F5EBE0", badgeText: "#8B5A2B", swatch: "#CD7F32" },
-  { value: "emerald",label: "Emerald",ring: "#EFFAF4", text: "#267A4D", badgeBg: "#B2E7C7", badgeText: "#267A4D", swatch: "#44B678" },
+  {
+    value: "silver",
+    label: "Silver",
+    ring: "#F3F4F6",
+    text: "#737373",
+    badgeBg: "#F3F4F6",
+    badgeText: "#424242",
+    swatch: "#C0C0C0",
+  },
+  {
+    value: "gold",
+    label: "Gold",
+    ring: "#FFF9E6",
+    text: "#B48800",
+    badgeBg: "#FFF1BF",
+    badgeText: "#8A6A00",
+    swatch: "#FEB602",
+  },
+  {
+    value: "vip",
+    label: "VIP",
+    ring: "#EEF1F7",
+    text: "#0F1C3D",
+    badgeBg: "#D7DDEA",
+    badgeText: "#0F1C3D",
+    swatch: "#0F1C3D",
+  },
+  {
+    value: "bronze",
+    label: "Bronze",
+    ring: "#F5EBE0",
+    text: "#8B5A2B",
+    badgeBg: "#F5EBE0",
+    badgeText: "#8B5A2B",
+    swatch: "#CD7F32",
+  },
+  {
+    value: "emerald",
+    label: "Emerald",
+    ring: "#EFFAF4",
+    text: "#267A4D",
+    badgeBg: "#B2E7C7",
+    badgeText: "#267A4D",
+    swatch: "#44B678",
+  },
 ];
 
 export function colorFor(color: string) {
@@ -175,11 +214,10 @@ export function TierSection({ programId }: Props) {
             loading="lazy"
             className="h-[110px] w-auto"
           />
-          <p className="mt-4 text-[20px] font-bold text-[#0a152f]">
-            No Tiers Created Yet!
-          </p>
+          <p className="mt-4 text-[20px] font-bold text-[#0a152f]">No Tiers Created Yet!</p>
           <p className="mt-2 max-w-[458px] text-[14px] leading-[1.4] text-[#737373]">
-            Create membership tiers to reward your most loyal customers with exclusive benefits, bonus points, and special rewards.
+            Create membership tiers to reward your most loyal customers with exclusive benefits,
+            bonus points, and special rewards.
           </p>
           <button
             type="button"
@@ -199,7 +237,7 @@ export function TierSection({ programId }: Props) {
             const badge =
               t.bonus_percentage > 0
                 ? `+${t.bonus_percentage}% bonus${t.benefits.includes("Exclusive Rewards") ? " · Exclusive rewards" : ""}`
-                : t.benefits[0] ?? "Standard rewards";
+                : (t.benefits[0] ?? "Standard rewards");
             const c = colorFor(t.color);
             return (
               <li
@@ -264,15 +302,13 @@ export function TierSection({ programId }: Props) {
         }}
       />
 
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(o) => !o && setDeleteTarget(null)}
-      >
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this tier?</AlertDialogTitle>
             <AlertDialogDescription>
-              "{deleteTarget?.name}" will be permanently removed. Customers currently on this tier will need to be reassigned.
+              "{deleteTarget?.name}" will be permanently removed. Customers currently on this tier
+              will need to be reassigned.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -342,11 +378,8 @@ export function TierDialog({
     setErrors({});
   }, [open, editing]);
 
-
   function toggleBenefit(b: string) {
-    setBenefits((prev) =>
-      prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b],
-    );
+    setBenefits((prev) => (prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]));
   }
 
   function validate() {
@@ -356,8 +389,7 @@ export function TierDialog({
     if (threshold === "" || Number.isNaN(th) || th < 0)
       next.threshold = "Enter a point threshold of 0 or more.";
     const bp = bonusPct === "" ? 0 : Number(bonusPct);
-    if (Number.isNaN(bp) || bp < 0 || bp > 100)
-      next.bonusPct = "Bonus must be between 0 and 100.";
+    if (Number.isNaN(bp) || bp < 0 || bp > 100) next.bonusPct = "Bonus must be between 0 and 100.";
     const mp = multiplier === "" ? 1 : Number(multiplier);
     if (Number.isNaN(mp) || mp < 0 || mp > 100)
       next.multiplier = "Multiplier must be between 0 and 100.";
@@ -396,10 +428,7 @@ export function TierDialog({
       sort_order: Math.floor(th),
     };
     const { error } = editing
-      ? await getAuthSupabase()
-          .from("loyalty_program_tiers")
-          .update(payload)
-          .eq("id", editing.id)
+      ? await getAuthSupabase().from("loyalty_program_tiers").update(payload).eq("id", editing.id)
       : await getAuthSupabase().from("loyalty_program_tiers").insert(payload);
     setSaving(false);
     if (error) {
@@ -409,7 +438,6 @@ export function TierDialog({
     toast.success(editing ? "Tier updated" : "Tier created");
     onSaved();
   }
-
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -483,9 +511,7 @@ export function TierDialog({
                   >
                     <span
                       className={`flex h-5 w-5 items-center justify-center rounded-[4px] border transition ${
-                        checked
-                          ? "border-[#44b678] bg-[#44b678]"
-                          : "border-[#d4d4d4] bg-white"
+                        checked ? "border-[#44b678] bg-[#44b678]" : "border-[#d4d4d4] bg-white"
                       }`}
                       aria-hidden
                     >
@@ -514,7 +540,6 @@ export function TierDialog({
             suffix="%"
             error={errors.bonusPct}
           />
-
 
           <div className="-mx-6 border-t border-[#eef1f7]" />
 
@@ -570,11 +595,7 @@ function TextInput({
     <div>
       <label
         htmlFor={id}
-        className={
-          labelSrOnly
-            ? "sr-only"
-            : "block text-[14px] font-medium text-[#0a152f]"
-        }
+        className={labelSrOnly ? "sr-only" : "block text-[14px] font-medium text-[#0a152f]"}
       >
         {label}
       </label>
@@ -612,13 +633,7 @@ function TextInput({
   );
 }
 
-function ColorSelect({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
+function ColorSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <div>
       <label htmlFor="tier-color" className="sr-only">

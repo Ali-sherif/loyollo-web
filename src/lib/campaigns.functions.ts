@@ -24,7 +24,10 @@ function personalize(template: string, ctx: Record<string, string>): string {
 function buildHtml(businessName: string, message: string): string {
   const paragraphs = escapeHtml(message)
     .split(/\n{2,}/)
-    .map((p) => `<p style="margin:0 0 16px 0;line-height:1.55;color:#0a152f;font-size:15px;">${p.replace(/\n/g, "<br/>")}</p>`)
+    .map(
+      (p) =>
+        `<p style="margin:0 0 16px 0;line-height:1.55;color:#0a152f;font-size:15px;">${p.replace(/\n/g, "<br/>")}</p>`,
+    )
     .join("");
   return `<!doctype html><html><body style="margin:0;padding:0;background:#f4f6fb;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
   <div style="max-width:560px;margin:0 auto;padding:32px 16px;">
@@ -53,9 +56,7 @@ export const sendCampaign = createServerFn({ method: "POST" })
     // Load campaign, verify ownership
     const { data: campaign, error: cErr } = await supabaseAdmin
       .from("campaigns")
-      .select(
-        "id, owner_id, loyalty_program_id, name, channel, audience, subject, message, status",
-      )
+      .select("id, owner_id, loyalty_program_id, name, channel, audience, subject, message, status")
       .eq("id", data.campaignId)
       .maybeSingle();
     if (cErr) throw new Error(cErr.message);
@@ -115,10 +116,7 @@ export const sendCampaign = createServerFn({ method: "POST" })
     }
 
     // Mark campaign as sending
-    await supabaseAdmin
-      .from("campaigns")
-      .update({ status: "sending" })
-      .eq("id", campaign.id);
+    await supabaseAdmin.from("campaigns").update({ status: "sending" }).eq("id", campaign.id);
 
     // Insert recipient rows (pending), idempotent via UNIQUE (campaign_id, customer_id)
     const rows = recipients.map((c) => ({
@@ -174,9 +172,12 @@ export const sendCampaign = createServerFn({ method: "POST" })
           status: "pending",
         });
 
-        const { data: unsubToken, error: tokErr } = await supabaseAdmin.rpc("mint_unsubscribe_token", {
-          p_email: c.email,
-        });
+        const { data: unsubToken, error: tokErr } = await supabaseAdmin.rpc(
+          "mint_unsubscribe_token",
+          {
+            p_email: c.email,
+          },
+        );
         if (tokErr) throw new Error(tokErr.message);
 
         const { error: enqErr } = await supabaseAdmin.rpc("enqueue_email", {

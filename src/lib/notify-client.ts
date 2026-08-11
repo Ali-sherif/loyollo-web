@@ -26,11 +26,7 @@ export function notifyCampaignCreated(args: {
   }).catch((err) => console.error("[notifyCampaignCreated] failed:", err));
 }
 
-export function notifyBranchAdded(args: {
-  userId: string;
-  branchId: string;
-  branchName: string;
-}) {
+export function notifyBranchAdded(args: { userId: string; branchId: string; branchName: string }) {
   void fetch("/api/notifications/owner", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

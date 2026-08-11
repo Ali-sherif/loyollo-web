@@ -34,7 +34,11 @@ export function Navbar() {
                 <Menu className="h-6 w-6" />
               </button>
             </SheetTrigger>
-            <SheetContent id="mobile-nav-sheet" side="left" className="flex w-[280px] flex-col gap-6">
+            <SheetContent
+              id="mobile-nav-sheet"
+              side="left"
+              className="flex w-[280px] flex-col gap-6"
+            >
               <SheetTitle className="sr-only">Navigation menu</SheetTitle>
 
               <Link to="/" className="flex items-center" onClick={handleNavClick}>
@@ -70,7 +74,6 @@ export function Navbar() {
               </div>
             </SheetContent>
           </Sheet>
-
 
           <nav className="hidden items-center gap-8 md:flex">
             {links.map((l) => {

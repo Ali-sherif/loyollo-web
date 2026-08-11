@@ -2,10 +2,7 @@ import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
 
-import {
-  requireServiceRoleKey,
-  requireSupabaseUrl,
-} from "@/config/env";
+import { requireServiceRoleKey, requireSupabaseUrl } from "@/config/env";
 import type { Database } from "@/integrations/supabase/types";
 import { createSupabaseFetch } from "@/integrations/supabase/fetch";
 

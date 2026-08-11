@@ -2,9 +2,7 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 
-import {
-  requirePublicSupabaseEnv,
-} from "@/config/env";
+import { requirePublicSupabaseEnv } from "@/config/env";
 import type { Database } from "@/integrations/supabase/types";
 import { createSupabaseFetch } from "@/integrations/supabase/fetch";
 

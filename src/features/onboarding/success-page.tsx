@@ -10,7 +10,6 @@ function useSearchParamsCompat(): Record<string, string | undefined> {
   return out;
 }
 
-
 import { Link, useNavigate, useRouterState } from "@/lib/navigation";
 import * as React from "react";
 import { Check, ArrowRight } from "lucide-react";
@@ -73,8 +72,7 @@ function OnboardingSuccessPage() {
       if (!data?.num_locations || !data?.business_type || !data?.plan) {
         // Send back to earliest incomplete step
         if (!data?.num_locations) navigate({ to: "/onboarding", replace: true });
-        else if (!data?.business_type)
-          navigate({ to: "/onboarding/business-type", replace: true });
+        else if (!data?.business_type) navigate({ to: "/onboarding/business-type", replace: true });
         else navigate({ to: "/onboarding/plan", replace: true });
         return;
       }
@@ -145,8 +143,8 @@ function OnboardingSuccessPage() {
             Your loyalty program is ready to go. We&rsquo;ve saved your setup
             {businessType ? (
               <>
-                {" "}for{" "}
-                <span className="font-semibold text-[#0a152f]">{businessType}</span>
+                {" "}
+                for <span className="font-semibold text-[#0a152f]">{businessType}</span>
               </>
             ) : null}
             .
@@ -169,9 +167,7 @@ function OnboardingSuccessPage() {
             </button>
           </div>
 
-          <p className="mt-8 text-sm text-[#737373]">
-            *Your data stays private and encrypted.
-          </p>
+          <p className="mt-8 text-sm text-[#737373]">*Your data stays private and encrypted.</p>
         </div>
       </div>
 
@@ -185,6 +181,5 @@ function OnboardingSuccessPage() {
     </div>
   );
 }
-
 
 export default OnboardingSuccessPage;

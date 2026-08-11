@@ -7,7 +7,12 @@ const FROM_DOMAIN = "loyollo.com";
 const APP_ORIGIN = "https://www.loyollo.com";
 
 const esc = (s: string) =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
 const getProgramSchema = z.object({
   programId: z.string().uuid(),
@@ -15,43 +20,43 @@ const getProgramSchema = z.object({
 
 export async function getJoinProgram(input: z.infer<typeof getProgramSchema>) {
   const data = getProgramSchema.parse(input);
-    const supabaseAdmin = createAdminSupabaseClient();
-    const { data: program, error } = await supabaseAdmin
-      .from("loyalty_programs")
-      .select(
-        "id, name, owner_id, program_type, spend_amount, points_earned, visits_required, reward_on_completion",
-      )
-      .eq("id", data.programId)
+  const supabaseAdmin = createAdminSupabaseClient();
+  const { data: program, error } = await supabaseAdmin
+    .from("loyalty_programs")
+    .select(
+      "id, name, owner_id, program_type, spend_amount, points_earned, visits_required, reward_on_completion",
+    )
+    .eq("id", data.programId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!program) return null;
+  let businessName: string | null = null;
+  if (program.owner_id) {
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("business_name")
+      .eq("id", program.owner_id)
       .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!program) return null;
-    let businessName: string | null = null;
-    if (program.owner_id) {
-      const { data: profile } = await supabaseAdmin
-        .from("profiles")
-        .select("business_name")
-        .eq("id", program.owner_id)
-        .maybeSingle();
-      businessName = profile?.business_name ?? null;
-    }
-    const { data: qr } = await supabaseAdmin
-      .from("qr_page_settings")
-      .select("*")
-      .eq("loyalty_program_id", program.id)
-      .maybeSingle();
-    return {
-      id: program.id,
-      name: program.name,
-      businessName,
-      qr: qr ?? null,
-      config: {
-        program_type: (program.program_type as "points" | "visit" | "tier" | null) ?? null,
-        spend_amount: Number(program.spend_amount ?? 0),
-        points_earned: Number(program.points_earned ?? 0),
-        visits_required: Number(program.visits_required ?? 0),
-        reward_on_completion: (program.reward_on_completion as string | null) ?? null,
-      },
-    };
+    businessName = profile?.business_name ?? null;
+  }
+  const { data: qr } = await supabaseAdmin
+    .from("qr_page_settings")
+    .select("*")
+    .eq("loyalty_program_id", program.id)
+    .maybeSingle();
+  return {
+    id: program.id,
+    name: program.name,
+    businessName,
+    qr: qr ?? null,
+    config: {
+      program_type: (program.program_type as "points" | "visit" | "tier" | null) ?? null,
+      spend_amount: Number(program.spend_amount ?? 0),
+      points_earned: Number(program.points_earned ?? 0),
+      visits_required: Number(program.visits_required ?? 0),
+      reward_on_completion: (program.reward_on_completion as string | null) ?? null,
+    },
+  };
 }
 
 const enrollSchema = z
@@ -69,7 +74,6 @@ const enrollSchema = z
     message: "Please enter your name",
     path: ["fullName"],
   });
-
 
 export type EnrollResult = {
   customerId: string;
@@ -91,79 +95,78 @@ export type EnrollResult = {
 
 export async function enrollCustomer(input: z.infer<typeof enrollSchema>): Promise<EnrollResult> {
   const data = enrollSchema.parse(input);
-    const supabaseAdmin = createAdminSupabaseClient();
+  const supabaseAdmin = createAdminSupabaseClient();
 
-    const { data: program, error: programErr } = await supabaseAdmin
-      .from("loyalty_programs")
-      .select(
-        "id, owner_id, program_type, points_earned, visits_required, reward_on_completion, double_stamp_weekends, max_visits_per_day, after_reward_action"
-      )
-      .eq("id", data.programId)
-      .maybeSingle();
-    if (programErr) throw new Error(programErr.message);
-    if (!program) throw new Error("Program not found");
+  const { data: program, error: programErr } = await supabaseAdmin
+    .from("loyalty_programs")
+    .select(
+      "id, owner_id, program_type, points_earned, visits_required, reward_on_completion, double_stamp_weekends, max_visits_per_day, after_reward_action",
+    )
+    .eq("id", data.programId)
+    .maybeSingle();
+  if (programErr) throw new Error(programErr.message);
+  if (!program) throw new Error("Program not found");
 
-    const email = data.email && data.email.length > 0 ? data.email.toLowerCase() : null;
-    const phone = data.phone && data.phone.length > 0 ? data.phone : null;
+  const email = data.email && data.email.length > 0 ? data.email.toLowerCase() : null;
+  const phone = data.phone && data.phone.length > 0 ? data.phone : null;
 
-    // Dedupe: match by email OR phone within the same program
-    let existingId: string | null = null;
-    if (email || phone) {
-      const orFilters: string[] = [];
-      if (email) orFilters.push(`email.eq.${email}`);
-      if (phone) orFilters.push(`phone.eq.${phone}`);
-      const { data: existing, error: dupErr } = await supabaseAdmin
-        .from("customers")
-        .select("id")
-        .eq("loyalty_program_id", data.programId)
-        .or(orFilters.join(","))
-        .limit(1)
-        .maybeSingle();
-      if (dupErr) throw new Error(dupErr.message);
-      if (existing) existingId = existing.id;
-    }
-
-    if (existingId) {
-      // Existing customer scanning again => real check-in with progression
-      return await recordCheckIn({ customerId: existingId, program });
-    }
-
-    const { data: inserted, error: insErr } = await supabaseAdmin
+  // Dedupe: match by email OR phone within the same program
+  let existingId: string | null = null;
+  if (email || phone) {
+    const orFilters: string[] = [];
+    if (email) orFilters.push(`email.eq.${email}`);
+    if (phone) orFilters.push(`phone.eq.${phone}`);
+    const { data: existing, error: dupErr } = await supabaseAdmin
       .from("customers")
-      .insert({
-        loyalty_program_id: data.programId,
-        full_name: data.fullName.trim(),
-        email,
-        phone,
-        status: "active",
-        points: 0,
-        last_activity_at: new Date().toISOString(),
-        birth_date: data.birthday && data.birthday.length > 0 ? data.birthday : null,
-        gender: data.gender && data.gender.length > 0 ? data.gender : null,
-        city: data.city && data.city.length > 0 ? data.city : null,
-        custom_field_value:
-          data.customFieldValue && data.customFieldValue.length > 0 ? data.customFieldValue : null,
-      })
-      .select("id, points, visits")
-      .single();
-    if (insErr) throw new Error(insErr.message);
+      .select("id")
+      .eq("loyalty_program_id", data.programId)
+      .or(orFilters.join(","))
+      .limit(1)
+      .maybeSingle();
+    if (dupErr) throw new Error(dupErr.message);
+    if (existing) existingId = existing.id;
+  }
 
+  if (existingId) {
+    // Existing customer scanning again => real check-in with progression
+    return await recordCheckIn({ customerId: existingId, program });
+  }
 
-    void notifyOwnerOfNewCustomer({
-      programId: data.programId,
-      customerId: inserted.id,
-      customerName: data.fullName.trim(),
-    }).catch((err) => {
-      console.error("[enrollCustomer] owner notification failed:", err);
-    });
+  const { data: inserted, error: insErr } = await supabaseAdmin
+    .from("customers")
+    .insert({
+      loyalty_program_id: data.programId,
+      full_name: data.fullName.trim(),
+      email,
+      phone,
+      status: "active",
+      points: 0,
+      last_activity_at: new Date().toISOString(),
+      birth_date: data.birthday && data.birthday.length > 0 ? data.birthday : null,
+      gender: data.gender && data.gender.length > 0 ? data.gender : null,
+      city: data.city && data.city.length > 0 ? data.city : null,
+      custom_field_value:
+        data.customFieldValue && data.customFieldValue.length > 0 ? data.customFieldValue : null,
+    })
+    .select("id, points, visits")
+    .single();
+  if (insErr) throw new Error(insErr.message);
 
-    return {
-      customerId: inserted.id,
-      alreadyEnrolled: false,
-      programType: (program.program_type as EnrollResult["programType"]) ?? null,
-      progress: { points: inserted.points ?? 0, visits: inserted.visits ?? 0 },
-      earnedReward: null,
-    };
+  void notifyOwnerOfNewCustomer({
+    programId: data.programId,
+    customerId: inserted.id,
+    customerName: data.fullName.trim(),
+  }).catch((err) => {
+    console.error("[enrollCustomer] owner notification failed:", err);
+  });
+
+  return {
+    customerId: inserted.id,
+    alreadyEnrolled: false,
+    programType: (program.program_type as EnrollResult["programType"]) ?? null,
+    progress: { points: inserted.points ?? 0, visits: inserted.visits ?? 0 },
+    earnedReward: null,
+  };
 }
 
 type ProgramRow = {
@@ -298,12 +301,12 @@ async function recordCheckIn(args: {
         programType: program.program_type as "visit" | "tier",
       };
       // Apply after_reward_action for visit programs (tier programs continue accumulating)
-      if (program.program_type === "visit" && (program.after_reward_action ?? "reset") === "reset") {
+      if (
+        program.program_type === "visit" &&
+        (program.after_reward_action ?? "reset") === "reset"
+      ) {
         const remaining = Math.max(0, newVisits - program.visits_required);
-        await supabaseAdmin
-          .from("customers")
-          .update({ visits: remaining })
-          .eq("id", customerId);
+        await supabaseAdmin.from("customers").update({ visits: remaining }).eq("id", customerId);
         newVisits = remaining;
         visitProgramReset = true;
       }
@@ -353,7 +356,9 @@ async function getOwnerProfile(ownerId: string) {
   return profile;
 }
 
-function brandNameOf(profile: { business_name?: string | null; full_name?: string | null } | null | undefined) {
+function brandNameOf(
+  profile: { business_name?: string | null; full_name?: string | null } | null | undefined,
+) {
   return (
     (profile?.business_name && profile.business_name.trim()) ||
     (profile?.full_name && profile.full_name.trim()) ||

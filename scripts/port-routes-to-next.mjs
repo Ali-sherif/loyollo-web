@@ -13,45 +13,239 @@ const root = process.cwd();
 /** @type {{ routeFile: string, featureFile: string, appPage: string, params?: string[], search?: string[], title?: string, componentName: string }[]} */
 const MAP = [
   // Marketing / legal (slice 5)
-  { routeFile: "src/routes/index.tsx", featureFile: "src/features/marketing/landing-page.tsx", appPage: "src/app/(marketing)/page.tsx", componentName: "LandingPage", title: "Loyalty — Grow customer loyalty & repeat business" },
-  { routeFile: "src/routes/about.tsx", featureFile: "src/features/marketing/about-page.tsx", appPage: "src/app/(marketing)/about/page.tsx", componentName: "AboutPage", title: "About" },
-  { routeFile: "src/routes/features.tsx", featureFile: "src/features/marketing/features-page.tsx", appPage: "src/app/(marketing)/features/page.tsx", componentName: "FeaturesPage", title: "Features" },
-  { routeFile: "src/routes/pricing.tsx", featureFile: "src/features/marketing/pricing-page.tsx", appPage: "src/app/(marketing)/pricing/page.tsx", componentName: "PricingPage", title: "Pricing" },
-  { routeFile: "src/routes/guide.tsx", featureFile: "src/features/marketing/guide-page.tsx", appPage: "src/app/(marketing)/guide/page.tsx", componentName: "GuidePage", title: "Guide" },
-  { routeFile: "src/routes/contact.tsx", featureFile: "src/features/marketing/contact-page.tsx", appPage: "src/app/(marketing)/contact/page.tsx", componentName: "ContactPage", title: "Contact" },
-  { routeFile: "src/routes/terms.tsx", featureFile: "src/features/legal/terms-page.tsx", appPage: "src/app/legal/terms/page.tsx", componentName: "TermsPage", title: "Terms of Service" },
-  { routeFile: "src/routes/privacy.tsx", featureFile: "src/features/legal/privacy-page.tsx", appPage: "src/app/legal/privacy/page.tsx", componentName: "PrivacyPage", title: "Privacy Policy" },
+  {
+    routeFile: "src/routes/index.tsx",
+    featureFile: "src/features/marketing/landing-page.tsx",
+    appPage: "src/app/(marketing)/page.tsx",
+    componentName: "LandingPage",
+    title: "Loyalty — Grow customer loyalty & repeat business",
+  },
+  {
+    routeFile: "src/routes/about.tsx",
+    featureFile: "src/features/marketing/about-page.tsx",
+    appPage: "src/app/(marketing)/about/page.tsx",
+    componentName: "AboutPage",
+    title: "About",
+  },
+  {
+    routeFile: "src/routes/features.tsx",
+    featureFile: "src/features/marketing/features-page.tsx",
+    appPage: "src/app/(marketing)/features/page.tsx",
+    componentName: "FeaturesPage",
+    title: "Features",
+  },
+  {
+    routeFile: "src/routes/pricing.tsx",
+    featureFile: "src/features/marketing/pricing-page.tsx",
+    appPage: "src/app/(marketing)/pricing/page.tsx",
+    componentName: "PricingPage",
+    title: "Pricing",
+  },
+  {
+    routeFile: "src/routes/guide.tsx",
+    featureFile: "src/features/marketing/guide-page.tsx",
+    appPage: "src/app/(marketing)/guide/page.tsx",
+    componentName: "GuidePage",
+    title: "Guide",
+  },
+  {
+    routeFile: "src/routes/contact.tsx",
+    featureFile: "src/features/marketing/contact-page.tsx",
+    appPage: "src/app/(marketing)/contact/page.tsx",
+    componentName: "ContactPage",
+    title: "Contact",
+  },
+  {
+    routeFile: "src/routes/terms.tsx",
+    featureFile: "src/features/legal/terms-page.tsx",
+    appPage: "src/app/legal/terms/page.tsx",
+    componentName: "TermsPage",
+    title: "Terms of Service",
+  },
+  {
+    routeFile: "src/routes/privacy.tsx",
+    featureFile: "src/features/legal/privacy-page.tsx",
+    appPage: "src/app/legal/privacy/page.tsx",
+    componentName: "PrivacyPage",
+    title: "Privacy Policy",
+  },
 
   // Auth (slice 6)
-  { routeFile: "src/routes/signin.tsx", featureFile: "src/features/auth/sign-in-page.tsx", appPage: "src/app/auth/sign-in/page.tsx", componentName: "SignInPage", title: "Sign in" },
-  { routeFile: "src/routes/signup.tsx", featureFile: "src/features/auth/sign-up-page.tsx", appPage: "src/app/auth/sign-up/page.tsx", componentName: "SignUpPage", title: "Sign up", search: ["plan"] },
-  { routeFile: "src/routes/verify.tsx", featureFile: "src/features/auth/verify-page.tsx", appPage: "src/app/auth/verify/page.tsx", componentName: "VerifyPage", title: "Verify email", search: ["email"] },
-  { routeFile: "src/routes/verified.tsx", featureFile: "src/features/auth/verified-page.tsx", appPage: "src/app/auth/verified/page.tsx", componentName: "VerifiedPage", title: "Email verified" },
-  { routeFile: "src/routes/forgot-password.tsx", featureFile: "src/features/auth/forgot-password-page.tsx", appPage: "src/app/auth/forgot-password/page.tsx", componentName: "ForgotPasswordPage", title: "Forgot password" },
-  { routeFile: "src/routes/reset-password.tsx", featureFile: "src/features/auth/reset-password-page.tsx", appPage: "src/app/auth/reset-password/page.tsx", componentName: "ResetPasswordPage", title: "Reset password" },
+  {
+    routeFile: "src/routes/signin.tsx",
+    featureFile: "src/features/auth/sign-in-page.tsx",
+    appPage: "src/app/auth/sign-in/page.tsx",
+    componentName: "SignInPage",
+    title: "Sign in",
+  },
+  {
+    routeFile: "src/routes/signup.tsx",
+    featureFile: "src/features/auth/sign-up-page.tsx",
+    appPage: "src/app/auth/sign-up/page.tsx",
+    componentName: "SignUpPage",
+    title: "Sign up",
+    search: ["plan"],
+  },
+  {
+    routeFile: "src/routes/verify.tsx",
+    featureFile: "src/features/auth/verify-page.tsx",
+    appPage: "src/app/auth/verify/page.tsx",
+    componentName: "VerifyPage",
+    title: "Verify email",
+    search: ["email"],
+  },
+  {
+    routeFile: "src/routes/verified.tsx",
+    featureFile: "src/features/auth/verified-page.tsx",
+    appPage: "src/app/auth/verified/page.tsx",
+    componentName: "VerifiedPage",
+    title: "Email verified",
+  },
+  {
+    routeFile: "src/routes/forgot-password.tsx",
+    featureFile: "src/features/auth/forgot-password-page.tsx",
+    appPage: "src/app/auth/forgot-password/page.tsx",
+    componentName: "ForgotPasswordPage",
+    title: "Forgot password",
+  },
+  {
+    routeFile: "src/routes/reset-password.tsx",
+    featureFile: "src/features/auth/reset-password-page.tsx",
+    appPage: "src/app/auth/reset-password/page.tsx",
+    componentName: "ResetPasswordPage",
+    title: "Reset password",
+  },
 
   // Onboarding (slice 7)
-  { routeFile: "src/routes/onboarding.index.tsx", featureFile: "src/features/onboarding/onboarding-index-page.tsx", appPage: "src/app/onboarding/page.tsx", componentName: "OnboardingIndexPage", title: "Onboarding" },
-  { routeFile: "src/routes/onboarding.business-category.tsx", featureFile: "src/features/onboarding/business-category-page.tsx", appPage: "src/app/onboarding/business-category/page.tsx", componentName: "BusinessCategoryPage", title: "Business category" },
-  { routeFile: "src/routes/onboarding.business-type.tsx", featureFile: "src/features/onboarding/business-type-page.tsx", appPage: "src/app/onboarding/business-type/page.tsx", componentName: "BusinessTypePage", title: "Business type" },
-  { routeFile: "src/routes/onboarding.plan.tsx", featureFile: "src/features/onboarding/plan-page.tsx", appPage: "src/app/onboarding/plan/page.tsx", componentName: "OnboardingPlanPage", title: "Choose plan" },
-  { routeFile: "src/routes/onboarding.success.tsx", featureFile: "src/features/onboarding/success-page.tsx", appPage: "src/app/onboarding/success/page.tsx", componentName: "OnboardingSuccessPage", title: "Onboarding complete", search: ["justCompleted"] },
+  {
+    routeFile: "src/routes/onboarding.index.tsx",
+    featureFile: "src/features/onboarding/onboarding-index-page.tsx",
+    appPage: "src/app/onboarding/page.tsx",
+    componentName: "OnboardingIndexPage",
+    title: "Onboarding",
+  },
+  {
+    routeFile: "src/routes/onboarding.business-category.tsx",
+    featureFile: "src/features/onboarding/business-category-page.tsx",
+    appPage: "src/app/onboarding/business-category/page.tsx",
+    componentName: "BusinessCategoryPage",
+    title: "Business category",
+  },
+  {
+    routeFile: "src/routes/onboarding.business-type.tsx",
+    featureFile: "src/features/onboarding/business-type-page.tsx",
+    appPage: "src/app/onboarding/business-type/page.tsx",
+    componentName: "BusinessTypePage",
+    title: "Business type",
+  },
+  {
+    routeFile: "src/routes/onboarding.plan.tsx",
+    featureFile: "src/features/onboarding/plan-page.tsx",
+    appPage: "src/app/onboarding/plan/page.tsx",
+    componentName: "OnboardingPlanPage",
+    title: "Choose plan",
+  },
+  {
+    routeFile: "src/routes/onboarding.success.tsx",
+    featureFile: "src/features/onboarding/success-page.tsx",
+    appPage: "src/app/onboarding/success/page.tsx",
+    componentName: "OnboardingSuccessPage",
+    title: "Onboarding complete",
+    search: ["justCompleted"],
+  },
 
   // Join (slice 8)
-  { routeFile: "src/routes/join.$programId.tsx", featureFile: "src/features/join/join-page.tsx", appPage: "src/app/join/[programId]/page.tsx", componentName: "JoinPage", title: "Join loyalty program", params: ["programId"] },
+  {
+    routeFile: "src/routes/join.$programId.tsx",
+    featureFile: "src/features/join/join-page.tsx",
+    appPage: "src/app/join/[programId]/page.tsx",
+    componentName: "JoinPage",
+    title: "Join loyalty program",
+    params: ["programId"],
+  },
 
   // App shell pages (slices 9–13)
-  { routeFile: "src/routes/dashboard.tsx", featureFile: "src/features/dashboard/dashboard-page.tsx", appPage: "src/app/app/(shell)/dashboard/page.tsx", componentName: "DashboardPage", title: "Dashboard" },
-  { routeFile: "src/routes/customers.index.tsx", featureFile: "src/features/customers/customers-page.tsx", appPage: "src/app/app/(shell)/customers/page.tsx", componentName: "CustomersPage", title: "Customers" },
-  { routeFile: "src/routes/customers.$customerId.tsx", featureFile: "src/features/customers/customer-detail-page.tsx", appPage: "src/app/app/(shell)/customers/[customerId]/page.tsx", componentName: "CustomerDetailPage", title: "Customer", params: ["customerId"] },
-  { routeFile: "src/routes/loyalty-program.tsx", featureFile: "src/features/loyalty/loyalty-page.tsx", appPage: "src/app/app/(shell)/loyalty/page.tsx", componentName: "LoyaltyPage", title: "Loyalty program", search: ["tab"] },
-  { routeFile: "src/routes/branches.index.tsx", featureFile: "src/features/branches/branches-page.tsx", appPage: "src/app/app/(shell)/branches/page.tsx", componentName: "BranchesPage", title: "Branches" },
-  { routeFile: "src/routes/branches.$branchId.tsx", featureFile: "src/features/branches/branch-detail-page.tsx", appPage: "src/app/app/(shell)/branches/[branchId]/page.tsx", componentName: "BranchDetailPage", title: "Branch", params: ["branchId"] },
-  { routeFile: "src/routes/campaigns.index.tsx", featureFile: "src/features/campaigns/campaigns-page.tsx", appPage: "src/app/app/(shell)/campaigns/page.tsx", componentName: "CampaignsPage", title: "Campaigns" },
-  { routeFile: "src/routes/campaigns.$campaignId.tsx", featureFile: "src/features/campaigns/campaign-detail-page.tsx", appPage: "src/app/app/(shell)/campaigns/[campaignId]/page.tsx", componentName: "CampaignDetailPage", title: "Campaign", params: ["campaignId"] },
-  { routeFile: "src/routes/analytics.tsx", featureFile: "src/features/analytics/analytics-page.tsx", appPage: "src/app/app/(shell)/analytics/page.tsx", componentName: "AnalyticsPage", title: "Analytics" },
-  { routeFile: "src/routes/settings.tsx", featureFile: "src/features/settings/settings-page.tsx", appPage: "src/app/app/(shell)/settings/page.tsx", componentName: "SettingsPage", title: "Settings" },
-  { routeFile: "src/routes/change-password.tsx", featureFile: "src/features/settings/password-page.tsx", appPage: "src/app/app/(shell)/settings/password/page.tsx", componentName: "ChangePasswordPage", title: "Change password" },
+  {
+    routeFile: "src/routes/dashboard.tsx",
+    featureFile: "src/features/dashboard/dashboard-page.tsx",
+    appPage: "src/app/app/(shell)/dashboard/page.tsx",
+    componentName: "DashboardPage",
+    title: "Dashboard",
+  },
+  {
+    routeFile: "src/routes/customers.index.tsx",
+    featureFile: "src/features/customers/customers-page.tsx",
+    appPage: "src/app/app/(shell)/customers/page.tsx",
+    componentName: "CustomersPage",
+    title: "Customers",
+  },
+  {
+    routeFile: "src/routes/customers.$customerId.tsx",
+    featureFile: "src/features/customers/customer-detail-page.tsx",
+    appPage: "src/app/app/(shell)/customers/[customerId]/page.tsx",
+    componentName: "CustomerDetailPage",
+    title: "Customer",
+    params: ["customerId"],
+  },
+  {
+    routeFile: "src/routes/loyalty-program.tsx",
+    featureFile: "src/features/loyalty/loyalty-page.tsx",
+    appPage: "src/app/app/(shell)/loyalty/page.tsx",
+    componentName: "LoyaltyPage",
+    title: "Loyalty program",
+    search: ["tab"],
+  },
+  {
+    routeFile: "src/routes/branches.index.tsx",
+    featureFile: "src/features/branches/branches-page.tsx",
+    appPage: "src/app/app/(shell)/branches/page.tsx",
+    componentName: "BranchesPage",
+    title: "Branches",
+  },
+  {
+    routeFile: "src/routes/branches.$branchId.tsx",
+    featureFile: "src/features/branches/branch-detail-page.tsx",
+    appPage: "src/app/app/(shell)/branches/[branchId]/page.tsx",
+    componentName: "BranchDetailPage",
+    title: "Branch",
+    params: ["branchId"],
+  },
+  {
+    routeFile: "src/routes/campaigns.index.tsx",
+    featureFile: "src/features/campaigns/campaigns-page.tsx",
+    appPage: "src/app/app/(shell)/campaigns/page.tsx",
+    componentName: "CampaignsPage",
+    title: "Campaigns",
+  },
+  {
+    routeFile: "src/routes/campaigns.$campaignId.tsx",
+    featureFile: "src/features/campaigns/campaign-detail-page.tsx",
+    appPage: "src/app/app/(shell)/campaigns/[campaignId]/page.tsx",
+    componentName: "CampaignDetailPage",
+    title: "Campaign",
+    params: ["campaignId"],
+  },
+  {
+    routeFile: "src/routes/analytics.tsx",
+    featureFile: "src/features/analytics/analytics-page.tsx",
+    appPage: "src/app/app/(shell)/analytics/page.tsx",
+    componentName: "AnalyticsPage",
+    title: "Analytics",
+  },
+  {
+    routeFile: "src/routes/settings.tsx",
+    featureFile: "src/features/settings/settings-page.tsx",
+    appPage: "src/app/app/(shell)/settings/page.tsx",
+    componentName: "SettingsPage",
+    title: "Settings",
+  },
+  {
+    routeFile: "src/routes/change-password.tsx",
+    featureFile: "src/features/settings/password-page.tsx",
+    appPage: "src/app/app/(shell)/settings/password/page.tsx",
+    componentName: "ChangePasswordPage",
+    title: "Change password",
+  },
 ];
 
 function ensureDir(filePath) {
@@ -81,12 +275,9 @@ function transformSource(src, meta) {
   if (meta.params?.length) {
     for (const p of meta.params) {
       out = out.replaceAll(`Route.useParams().${p}`, p);
-      out = out.replace(
-        /const\s+\{\s*([^}]+)\s*\}\s*=\s*Route\.useParams\(\);?/,
-        (match, keys) => {
-          return `/* params from props */`;
-        },
-      );
+      out = out.replace(/const\s+\{\s*([^}]+)\s*\}\s*=\s*Route\.useParams\(\);?/, (match, keys) => {
+        return `/* params from props */`;
+      });
     }
     out = out.replace(/Route\.useParams\(\)/g, `({ ${meta.params.join(", ")} })`);
   }
@@ -138,7 +329,10 @@ function transformSource(src, meta) {
 
   // Wrap default export: find function ComponentName or function XxxPage
   // Ensure named export exists matching componentName
-  if (!new RegExp(`function\\s+${meta.componentName}\\b`).test(out) && !new RegExp(`const\\s+${meta.componentName}\\b`).test(out)) {
+  if (
+    !new RegExp(`function\\s+${meta.componentName}\\b`).test(out) &&
+    !new RegExp(`const\\s+${meta.componentName}\\b`).test(out)
+  ) {
     // Try to rename common patterns like function SignIn / function SigninPage
     const fnMatch = out.match(/function\s+([A-Z][A-Za-z0-9]*)\s*\(/);
     if (fnMatch && fnMatch[1] !== meta.componentName) {
@@ -155,7 +349,10 @@ function transformSource(src, meta) {
     );
   }
 
-  if (!out.includes(`export default ${meta.componentName}`) && !out.includes(`export { ${meta.componentName}`)) {
+  if (
+    !out.includes(`export default ${meta.componentName}`) &&
+    !out.includes(`export { ${meta.componentName}`)
+  ) {
     out += `\n\nexport default ${meta.componentName};\n`;
   }
 

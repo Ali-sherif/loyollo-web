@@ -28,7 +28,9 @@ export function DashboardShowcase() {
               Try Now <ArrowUpRight />
             </Link>
           </Button>
-          <Button variant="ghostLight" size="lg">Book a demo</Button>
+          <Button variant="ghostLight" size="lg">
+            Book a demo
+          </Button>
         </div>
       </div>
     </section>

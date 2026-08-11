@@ -25,10 +25,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { passwordFeedback } from "@/lib/password";
-import {
-  sendPasswordChangedEmail,
-  deleteMyAccount,
-} from "@/lib/security.functions";
+import { sendPasswordChangedEmail, deleteMyAccount } from "@/lib/security.functions";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -213,7 +210,8 @@ function SettingsPage() {
         <div>
           <h1 className="text-[20px] font-bold leading-tight text-[#0a152f]">Settings</h1>
           <p className="mt-1 text-sm text-[#737373]">
-            Manage your business information, loyalty preferences, team members, and account settings.
+            Manage your business information, loyalty preferences, team members, and account
+            settings.
           </p>
         </div>
 
@@ -384,7 +382,6 @@ function SettingsPage() {
                 </div>
               </Card>
 
-
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
                   type="button"
@@ -419,7 +416,6 @@ function SettingsPage() {
   );
 }
 
-
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_2px_rgba(15,28,61,0.04)]">
@@ -432,9 +428,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      {label ? (
-        <label className="text-xs font-medium text-[#737373]">{label}</label>
-      ) : null}
+      {label ? <label className="text-xs font-medium text-[#737373]">{label}</label> : null}
       {children}
     </div>
   );
@@ -540,7 +534,9 @@ function NotificationsTab({ userId }: { userId: string }) {
     (async () => {
       const { data, error } = await supabase
         .from("notification_preferences")
-        .select("new_customer_joined,reward_earned,reward_redeemed,campaign_created,branch_added,weekly_summary,monthly_report")
+        .select(
+          "new_customer_joined,reward_earned,reward_redeemed,campaign_created,branch_added,weekly_summary,monthly_report",
+        )
         .eq("id", userId)
         .maybeSingle();
       if (cancelled) return;
@@ -583,18 +579,53 @@ function NotificationsTab({ userId }: { userId: string }) {
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       <NotifCard title="Email Notifications">
-        <ToggleRow label="New Customer Joined" checked={prefs.new_customer_joined} busy={pending === "new_customer_joined"} onToggle={() => toggle("new_customer_joined")} />
-        <ToggleRow label="Reward Earned" checked={prefs.reward_earned} busy={pending === "reward_earned"} onToggle={() => toggle("reward_earned")} />
-        <ToggleRow label="Reward Redeemed" checked={prefs.reward_redeemed} busy={pending === "reward_redeemed"} onToggle={() => toggle("reward_redeemed")} />
-        <ToggleRow label="Campaign Created" checked={prefs.campaign_created} busy={pending === "campaign_created"} onToggle={() => toggle("campaign_created")} />
-        <ToggleRow label="Branch Added" checked={prefs.branch_added} busy={pending === "branch_added"} onToggle={() => toggle("branch_added")} />
+        <ToggleRow
+          label="New Customer Joined"
+          checked={prefs.new_customer_joined}
+          busy={pending === "new_customer_joined"}
+          onToggle={() => toggle("new_customer_joined")}
+        />
+        <ToggleRow
+          label="Reward Earned"
+          checked={prefs.reward_earned}
+          busy={pending === "reward_earned"}
+          onToggle={() => toggle("reward_earned")}
+        />
+        <ToggleRow
+          label="Reward Redeemed"
+          checked={prefs.reward_redeemed}
+          busy={pending === "reward_redeemed"}
+          onToggle={() => toggle("reward_redeemed")}
+        />
+        <ToggleRow
+          label="Campaign Created"
+          checked={prefs.campaign_created}
+          busy={pending === "campaign_created"}
+          onToggle={() => toggle("campaign_created")}
+        />
+        <ToggleRow
+          label="Branch Added"
+          checked={prefs.branch_added}
+          busy={pending === "branch_added"}
+          onToggle={() => toggle("branch_added")}
+        />
       </NotifCard>
       <div className="flex flex-col gap-3">
         <NotifCard title="Weekly Reports">
-          <ToggleRow label="Send Weekly Summary" checked={prefs.weekly_summary} busy={pending === "weekly_summary"} onToggle={() => toggle("weekly_summary")} />
+          <ToggleRow
+            label="Send Weekly Summary"
+            checked={prefs.weekly_summary}
+            busy={pending === "weekly_summary"}
+            onToggle={() => toggle("weekly_summary")}
+          />
         </NotifCard>
         <NotifCard title="Monthly Reports">
-          <ToggleRow label="Send Monthly Analytics Report" checked={prefs.monthly_report} busy={pending === "monthly_report"} onToggle={() => toggle("monthly_report")} />
+          <ToggleRow
+            label="Send Monthly Analytics Report"
+            checked={prefs.monthly_report}
+            busy={pending === "monthly_report"}
+            onToggle={() => toggle("monthly_report")}
+          />
         </NotifCard>
       </div>
     </div>
@@ -684,7 +715,11 @@ const INTEGRATION_CATEGORIES: {
   providers: IntegrationProvider[];
   wide?: boolean;
 }[] = [
-  { title: "POS Systems", providers: ["square", "clover", "toast", "lightspeed", "shopify_pos"], wide: true },
+  {
+    title: "POS Systems",
+    providers: ["square", "clover", "toast", "lightspeed", "shopify_pos"],
+    wide: true,
+  },
   { title: "Marketing", providers: ["mailchimp", "klaviyo"] },
   { title: "Communication", providers: ["twilio"] },
   { title: "QR & Wallet", providers: ["apple_wallet", "google_wallet"] },
@@ -837,7 +872,6 @@ type PlanTheme = {
   softBg: string;
 };
 
-
 const PLAN_THEMES: Record<Plan, PlanTheme> = {
   starter: {
     accent: "#feb602",
@@ -870,7 +904,6 @@ const PLAN_THEMES: Record<Plan, PlanTheme> = {
     softBg: "bg-[#eaeef7]",
   },
 };
-
 
 const PLAN_TAGLINE: Record<Plan, string> = {
   starter: "Perfect for new businesses",
@@ -931,10 +964,7 @@ function BillingTab({ userId }: { userId: string }) {
   const confirmSwitch = async () => {
     if (!pending) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update({ plan: pending })
-      .eq("id", userId);
+    const { error } = await supabase.from("profiles").update({ plan: pending }).eq("id", userId);
     setSaving(false);
     if (error) {
       toast.error("Could not switch plan", { description: error.message });
@@ -967,9 +997,7 @@ function BillingTab({ userId }: { userId: string }) {
             isCurrent={p === plan}
             currentPlan={plan}
             expanded={expanded[p]}
-            onToggleExpand={() =>
-              setExpanded((s) => ({ ...s, [p]: !s[p] }))
-            }
+            onToggleExpand={() => setExpanded((s) => ({ ...s, [p]: !s[p] }))}
             onSelect={() => setPending(p)}
           />
         ))}
@@ -990,8 +1018,7 @@ function BillingTab({ userId }: { userId: string }) {
               Switch to {PLAN_LABEL[pending]} plan?
             </h3>
             <p className="mt-2 text-sm text-[#737373]">
-              This is a placeholder until real billing is connected — no payment
-              will be charged.
+              This is a placeholder until real billing is connected — no payment will be charged.
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <button
@@ -1053,12 +1080,9 @@ function PlanCard({
         isCurrent ? theme.ring : ""
       }`}
     >
-
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-2">
-          <h3 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">
-            {PLAN_LABEL[plan]}
-          </h3>
+          <h3 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">{PLAN_LABEL[plan]}</h3>
           <p className="text-sm text-[#737373]">{PLAN_TAGLINE[plan]}</p>
           <p className={`text-[16px] font-semibold ${theme.priceText}`}>
             ${PLAN_PRICES[plan]}/month
@@ -1113,7 +1137,6 @@ function PlanCard({
     </section>
   );
 }
-
 
 // =====================================================================
 // Security tab
@@ -1431,9 +1454,7 @@ function TwoFactorCard() {
 
   return (
     <section className="rounded-[16px] bg-white p-6 shadow-[0_1px_2px_rgba(15,28,61,0.04)]">
-      <h2 className="mb-4 text-[16px] font-semibold text-[#0a152f]">
-        Two-Factor Authentication
-      </h2>
+      <h2 className="mb-4 text-[16px] font-semibold text-[#0a152f]">Two-Factor Authentication</h2>
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-sm text-[#0a152f]">
@@ -1639,8 +1660,7 @@ function DeleteAccountCard({ onDeleted }: { onDeleted: () => void }) {
               campaigns, branches, rewards, and all related data. There is no undo.
             </p>
             <p className="mt-4 text-sm text-[#0a152f]">
-              To confirm, type{" "}
-              <span className="font-mono font-semibold">{expected}</span> below:
+              To confirm, type <span className="font-mono font-semibold">{expected}</span> below:
             </p>
             <input
               type="text"

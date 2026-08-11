@@ -187,16 +187,14 @@ function GuidePage() {
 
           <div className="relative mx-auto max-w-7xl px-6 pt-16 pb-10 text-center">
             <h1 className="mx-auto mt-4 max-w-4xl text-4xl font-bold leading-[1.1] tracking-tight text-navy-900 sm:text-5xl md:text-6xl">
-              Simple Setup,{" "}
-              <span className="text-gold-500">Powerful Results</span>
+              Simple Setup, <span className="text-gold-500">Powerful Results</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base text-navy-700 sm:text-lg">
-              From account creation to customer rewards, our platform is designed
-              to help small businesses build loyalty with minimal effort.
+              From account creation to customer rewards, our platform is designed to help small
+              businesses build loyalty with minimal effort.
             </p>
           </div>
         </section>
-
 
         {/* The Short Version */}
         <section className="border-b border-border/60 bg-background py-16">
@@ -221,9 +219,7 @@ function GuidePage() {
                     <div className="mt-6 text-sm font-semibold uppercase tracking-wider text-gold-500">
                       {s.title}
                     </div>
-                    <div className="mt-1 text-base font-semibold text-navy-900">
-                      {s.desc}
-                    </div>
+                    <div className="mt-1 text-base font-semibold text-navy-900">{s.desc}</div>
                   </li>
                 ))}
               </ol>
@@ -239,13 +235,11 @@ function GuidePage() {
                 Step by Step
               </span>
               <h2 className="mt-4 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">
-                See How Easy It Is To{" "}
-                <span className="text-gold-500">Get Started</span>
+                See How Easy It Is To <span className="text-gold-500">Get Started</span>
               </h2>
               <p className="mt-4 text-base text-muted-foreground">
-                Create your loyalty program, engage your customers, and start
-                tracking results in just a few simple steps — no technical
-                expertise required.
+                Create your loyalty program, engage your customers, and start tracking results in
+                just a few simple steps — no technical expertise required.
               </p>
             </div>
 
@@ -253,10 +247,7 @@ function GuidePage() {
               {bigSteps.map((s, i) => {
                 const flip = i % 2 === 1;
                 return (
-                  <div
-                    key={s.n}
-                    className="grid items-center gap-10 md:grid-cols-2 md:gap-16"
-                  >
+                  <div key={s.n} className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
                     {/* Illustration */}
                     <div className={cn("order-2 md:order-1", flip && "md:order-2")}>
                       {s.n === "01" ? (
@@ -293,9 +284,7 @@ function GuidePage() {
                       <h3 className="mt-3 text-2xl font-bold tracking-tight text-navy-900">
                         {s.title}
                       </h3>
-                      <p className="mt-3 text-base text-muted-foreground">
-                        {s.desc}
-                      </p>
+                      <p className="mt-3 text-base text-muted-foreground">{s.desc}</p>
                       <ul className="mt-6 space-y-3">
                         {s.bullets.map((b) => (
                           <li key={b} className="flex items-start gap-3 text-sm text-foreground">
@@ -316,7 +305,6 @@ function GuidePage() {
 
         {/* Multiple Business Types */}
         <BusinessTypesTabs />
-
 
         {/* Time to Value */}
         <section className="bg-white py-24 text-navy-900">
@@ -343,9 +331,7 @@ function GuidePage() {
                       {m.when}
                     </span>
                   </div>
-                  <div className="mt-6 text-lg font-semibold text-white">
-                    {m.title}
-                  </div>
+                  <div className="mt-6 text-lg font-semibold text-white">{m.title}</div>
                 </li>
               ))}
             </ul>
@@ -370,12 +356,11 @@ function GuidePage() {
                     Ready when you are
                   </div>
                   <h3 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                    Start Building Customer{" "}
-                    <span className="text-gold-400">Loyalty</span> Today
+                    Start Building Customer <span className="text-gold-400">Loyalty</span> Today
                   </h3>
                   <p className="mt-3 text-base text-navy-100">
-                    Create meaningful customer relationships and keep customers
-                    coming back with an easy-to-manage loyalty platform.
+                    Create meaningful customer relationships and keep customers coming back with an
+                    easy-to-manage loyalty platform.
                   </p>
                   <p className="mt-4 text-xs text-navy-200">
                     No credit card required • 14-day free trial • Cancel anytime

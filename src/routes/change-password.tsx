@@ -91,16 +91,10 @@ function ChangePasswordPage() {
   return (
     <div className="bg-[#eef1f7] p-3 sm:p-6 lg:p-12">
       <div className="mx-auto flex w-full max-w-[720px] flex-col items-center justify-center gap-10 rounded-[40px] bg-[#eef1f7] px-6 py-10 sm:px-12 lg:px-20 lg:py-12">
-        <img
-          src={loyolloLogoSignup}
-          alt="Loyollo"
-          className="h-8 w-auto md:h-10"
-        />
+        <img src={loyolloLogoSignup} alt="Loyollo" className="h-8 w-auto md:h-10" />
 
         <div className="w-full text-center">
-          <h1 className="text-2xl font-bold leading-[1.2] text-[#0a152f]">
-            Create New Password
-          </h1>
+          <h1 className="text-2xl font-bold leading-[1.2] text-[#0a152f]">Create New Password</h1>
           <p className="mt-2 text-base text-[#525252]">
             Choose a strong password to secure your account.
           </p>
@@ -140,17 +134,9 @@ function ChangePasswordPage() {
               invalid={!!fieldErrors.password}
               hint={
                 fieldErrors.password ??
-                (passwordValid
-                  ? "Looks strong ✓"
-                  : liveFeedback ?? undefined)
+                (passwordValid ? "Looks strong ✓" : (liveFeedback ?? undefined))
               }
-              hintTone={
-                fieldErrors.password
-                  ? "error"
-                  : passwordValid
-                    ? "success"
-                    : "muted"
-              }
+              hintTone={fieldErrors.password ? "error" : passwordValid ? "success" : "muted"}
             />
             <PwField
               id="confirm-new-password"
@@ -169,7 +155,11 @@ function ChangePasswordPage() {
             />
 
             {submitError && (
-              <p role="alert" aria-live="polite" className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">
+              <p
+                role="alert"
+                aria-live="polite"
+                className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-600"
+              >
                 {submitError}
               </p>
             )}
@@ -197,7 +187,16 @@ function ChangePasswordPage() {
 }
 
 function PwField({
-  id, placeholder, value, onChange, show, onToggle, autoComplete, invalid, hint, hintTone = "muted",
+  id,
+  placeholder,
+  value,
+  onChange,
+  show,
+  onToggle,
+  autoComplete,
+  invalid,
+  hint,
+  hintTone = "muted",
 }: {
   id: string;
   placeholder: string;

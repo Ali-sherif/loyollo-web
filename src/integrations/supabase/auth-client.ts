@@ -8,10 +8,7 @@
 import { createBrowserClient } from "@supabase/ssr";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-import {
-  getOptionalPublicSupabaseEnv,
-  isPublicSupabaseConfigured,
-} from "@/config/env";
+import { getOptionalPublicSupabaseEnv, isPublicSupabaseConfigured } from "@/config/env";
 import type { Database } from "@/integrations/supabase/types";
 import { createSupabaseFetch } from "@/integrations/supabase/fetch";
 import { isNextRuntime } from "@/lib/navigation/paths";

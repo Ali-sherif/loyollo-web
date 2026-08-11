@@ -66,16 +66,13 @@ function timingSafeEqualString(a: string, b: string): boolean {
  * First-party auth email HTML preview (replaces `/lovable/email/auth/preview`).
  */
 export async function POST(request: Request) {
-  const secret =
-    process.env.EMAIL_WEBHOOK_SECRET || process.env.LOVABLE_API_KEY;
+  const secret = process.env.EMAIL_WEBHOOK_SECRET || process.env.LOVABLE_API_KEY;
   if (!secret) {
     return Response.json({ error: "Server configuration error" }, { status: 500 });
   }
 
   const authHeader = request.headers.get("Authorization") ?? "";
-  const token = authHeader.startsWith("Bearer ")
-    ? authHeader.slice("Bearer ".length).trim()
-    : "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length).trim() : "";
   if (!token || !timingSafeEqualString(token, secret)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -63,14 +63,15 @@ function authElement(input: AuthRenderInput): React.ReactElement {
 }
 
 /** Render preserved auth React Email templates to HTML (+ subject). */
-export async function renderAuthEmail(
-  input: AuthRenderInput,
-): Promise<RenderedMessage> {
+export async function renderAuthEmail(input: AuthRenderInput): Promise<RenderedMessage> {
   const html = await render(authElement(input));
   return {
     subject: AUTH_EMAIL_SUBJECTS[input.type],
     html,
-    text: html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
+    text: html
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim(),
   };
 }
 
@@ -86,9 +87,7 @@ export type CampaignRenderInput = {
 };
 
 /** Campaign email: same personalization tokens + HTML wrapper as today. */
-export function renderCampaignEmail(
-  input: CampaignRenderInput,
-): RenderedMessage {
+export function renderCampaignEmail(input: CampaignRenderInput): RenderedMessage {
   const ctx: Record<string, string> = {
     name: input.tokens.name ?? "",
     first_name: input.tokens.first_name ?? "",

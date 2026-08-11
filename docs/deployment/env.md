@@ -4,7 +4,7 @@
 **Scope:** Names and metadata only. **Never commit or paste secret values into this file, tickets, or chat.**  
 **Hosting target:** Vercel + Node.js 24 LTS ([ADR-008](../architecture/decisions/ADR-008-deployment.md)).
 
-This inventory is the canonical list for deployment configuration. Source of truth for *usage* is the codebase; this document classifies what the code actually references (plus Next naming expected when the auth SSR spike is recreated).
+This inventory is the canonical list for deployment configuration. Source of truth for _usage_ is the codebase; this document classifies what the code actually references (plus Next naming expected when the auth SSR spike is recreated).
 
 ## How to use
 
@@ -14,12 +14,12 @@ This inventory is the canonical list for deployment configuration. Source of tru
 
 ## Security rules
 
-| Rule | Detail |
-| --- | --- |
-| Server-only secrets | `SUPABASE_SERVICE_ROLE_KEY`, `LOVABLE_API_KEY`, spike passwords — never prefix with `VITE_` or `NEXT_PUBLIC_` |
-| Client-safe | `VITE_*` / `NEXT_PUBLIC_*` and publishable/anon keys are embeddable in the browser bundle by design |
-| Do not rename | This audit documents current names; do not rename variables without an explicit migration |
-| Tracked secrets | Root `.env` has historically been **git-tracked**. Remove it from the index (`git rm --cached .env`) after confirming local/Vercel copies exist, then rotate any keys that were ever committed |
+| Rule                | Detail                                                                                                                                                                                         |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Server-only secrets | `SUPABASE_SERVICE_ROLE_KEY`, `LOVABLE_API_KEY`, spike passwords — never prefix with `VITE_` or `NEXT_PUBLIC_`                                                                                  |
+| Client-safe         | `VITE_*` / `NEXT_PUBLIC_*` and publishable/anon keys are embeddable in the browser bundle by design                                                                                            |
+| Do not rename       | This audit documents current names; do not rename variables without an explicit migration                                                                                                      |
+| Tracked secrets     | Root `.env` has historically been **git-tracked**. Remove it from the index (`git rm --cached .env`) after confirming local/Vercel copies exist, then rotate any keys that were ever committed |
 
 ---
 
@@ -27,26 +27,26 @@ This inventory is the canonical list for deployment configuration. Source of tru
 
 Runtime today: Vite + TanStack Start (`npm run dev` / `npm run build`). Client reads `import.meta.env.VITE_*`; SSR middleware and some server paths read `process.env.SUPABASE_*`.
 
-| Variable | Required | Scope | Environments | Used In | Purpose | Secret |
-| --- | --- | --- | --- | --- | --- | --- |
-| `VITE_SUPABASE_URL` | Yes | Client (+ build) | All | `src/integrations/supabase/client.ts`; Lovable email routes | Supabase API URL (browser / `import.meta.env`) | No |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Yes | Client (+ build) | All | `src/integrations/supabase/client.ts` | Supabase anon/publishable key (browser) | No (public by design) |
-| `SUPABASE_URL` | Yes | Server | All | `client.ts` SSR fallback; `auth-middleware.ts`; `client.server.ts` | Supabase API URL for Node/SSR | No |
-| `SUPABASE_PUBLISHABLE_KEY` | Yes | Server | All | `client.ts` SSR fallback; `auth-middleware.ts` | Anon/publishable key for SSR auth client | No (public by design) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Yes* | Server | All* | `client.server.ts`; Lovable email webhook/queue | Privileged Supabase client (bypasses RLS) | Yes |
-| `LOVABLE_API_KEY` | Yes† | Server | All† | `src/routes/lovable/email/auth/{preview,webhook}.ts`; `queue/process.ts` | Authorize Lovable email HTTP handlers | Yes |
-| `LOVABLE_SEND_URL` | Yes† | Server | All† | `src/routes/lovable/email/queue/process.ts` | Lovable email send endpoint | Yes (sensitive config) |
-| `SUPABASE_PROJECT_ID` | No | — | — | Present in local `.env` only | Project id mirror; **not referenced in app code** | No |
-| `VITE_SUPABASE_PROJECT_ID` | No | — | — | Present in local `.env` only | Vite-prefixed project id; **not referenced in app code** | No |
+| Variable                        | Required | Scope            | Environments | Used In                                                                  | Purpose                                                  | Secret                 |
+| ------------------------------- | -------- | ---------------- | ------------ | ------------------------------------------------------------------------ | -------------------------------------------------------- | ---------------------- |
+| `VITE_SUPABASE_URL`             | Yes      | Client (+ build) | All          | `src/integrations/supabase/client.ts`; Lovable email routes              | Supabase API URL (browser / `import.meta.env`)           | No                     |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Yes      | Client (+ build) | All          | `src/integrations/supabase/client.ts`                                    | Supabase anon/publishable key (browser)                  | No (public by design)  |
+| `SUPABASE_URL`                  | Yes      | Server           | All          | `client.ts` SSR fallback; `auth-middleware.ts`; `client.server.ts`       | Supabase API URL for Node/SSR                            | No                     |
+| `SUPABASE_PUBLISHABLE_KEY`      | Yes      | Server           | All          | `client.ts` SSR fallback; `auth-middleware.ts`                           | Anon/publishable key for SSR auth client                 | No (public by design)  |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Yes*     | Server           | All*         | `client.server.ts`; Lovable email webhook/queue                          | Privileged Supabase client (bypasses RLS)                | Yes                    |
+| `LOVABLE_API_KEY`               | Yes†     | Server           | All†         | `src/routes/lovable/email/auth/{preview,webhook}.ts`; `queue/process.ts` | Authorize Lovable email HTTP handlers                    | Yes                    |
+| `LOVABLE_SEND_URL`              | Yes†     | Server           | All†         | `src/routes/lovable/email/queue/process.ts`                              | Lovable email send endpoint                              | Yes (sensitive config) |
+| `SUPABASE_PROJECT_ID`           | No       | —                | —            | Present in local `.env` only                                             | Project id mirror; **not referenced in app code**        | No                     |
+| `VITE_SUPABASE_PROJECT_ID`      | No       | —                | —            | Present in local `.env` only                                             | Vite-prefixed project id; **not referenced in app code** | No                     |
 
 \* Required for any code path that constructs the service-role client or runs Lovable email webhook/queue. Without it, admin server functions and `/lovable/email/*` fail.  
 † Required only while Lovable email routes remain. Per [ADR-009](../architecture/decisions/ADR-009-lovable-withdrawal.md), these must be withdrawn; do not treat them as long-term Vercel requirements for the Next.js app.
 
 ### Client vs server pairing (current app)
 
-| Browser (`VITE_*`) | Server (`process.env`) | Same value? |
-| --- | --- | --- |
-| `VITE_SUPABASE_URL` | `SUPABASE_URL` | Yes — set both to the project URL |
+| Browser (`VITE_*`)              | Server (`process.env`)     | Same value?                                |
+| ------------------------------- | -------------------------- | ------------------------------------------ |
+| `VITE_SUPABASE_URL`             | `SUPABASE_URL`             | Yes — set both to the project URL          |
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | `SUPABASE_PUBLISHABLE_KEY` | Yes — set both to the anon/publishable key |
 
 `auth-middleware.ts` and `client.server.ts` do **not** read `VITE_*`; SSR will break if only the Vite-prefixed names are set.
@@ -57,26 +57,26 @@ Runtime today: Vite + TanStack Start (`npm run dev` / `npm run build`). Client r
 
 The isolated `spikes/auth-ssr/` POC was **removed** from the repo. When D-28 is re-run, expect these Next-oriented names (see [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)).
 
-| Variable | Required | Scope | Environments | Used In | Purpose | Secret |
-| --- | --- | --- | --- | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Client | Spike local / Preview if deployed | Next Supabase client factories | Supabase URL (Next public) | No |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Client | Spike local / Preview if deployed | Next Supabase client factories | Maps from current `VITE_SUPABASE_PUBLISHABLE_KEY` / anon key | No (public by design) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Optional‡ | Server | Spike local | Bootstrap + validate harness | Create confirmed users when `mailer_autoconfirm=false` | Yes |
-| `SPIKE_TEST_EMAIL` | Optional‡ | Server (script) | Spike local | Validate harness | Confirmed test user email | No |
-| `SPIKE_TEST_PASSWORD` | Optional‡ | Server (script) | Spike local | Validate harness | Confirmed test user password | Yes |
+| Variable                        | Required  | Scope           | Environments                      | Used In                        | Purpose                                                      | Secret                |
+| ------------------------------- | --------- | --------------- | --------------------------------- | ------------------------------ | ------------------------------------------------------------ | --------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Yes       | Client          | Spike local / Preview if deployed | Next Supabase client factories | Supabase URL (Next public)                                   | No                    |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes       | Client          | Spike local / Preview if deployed | Next Supabase client factories | Maps from current `VITE_SUPABASE_PUBLISHABLE_KEY` / anon key | No (public by design) |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Optional‡ | Server          | Spike local                       | Bootstrap + validate harness   | Create confirmed users when `mailer_autoconfirm=false`       | Yes                   |
+| `SPIKE_TEST_EMAIL`              | Optional‡ | Server (script) | Spike local                       | Validate harness               | Confirmed test user email                                    | No                    |
+| `SPIKE_TEST_PASSWORD`           | Optional‡ | Server (script) | Spike local                       | Validate harness               | Confirmed test user password                                 | Yes                   |
 
 ‡ Validation needs **either** service-role bootstrap **or** confirmed `SPIKE_TEST_*` credentials (see [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)).
 
 ### Name map (current app → Next spike / future Next app)
 
-| Current (Vite / TanStack) | Next.js convention | Notes |
-| --- | --- | --- |
-| `VITE_SUPABASE_URL` | `NEXT_PUBLIC_SUPABASE_URL` | Public |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Same key; different name in spike |
-| `SUPABASE_URL` | Keep server-only or derive from public URL | Avoid duplicating secrets |
-| `SUPABASE_PUBLISHABLE_KEY` | Prefer `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Next | Spike uses public name only |
-| `SUPABASE_SERVICE_ROLE_KEY` | `SUPABASE_SERVICE_ROLE_KEY` | Server-only; never `NEXT_PUBLIC_` |
-| `LOVABLE_API_KEY` / `LOVABLE_SEND_URL` | **Do not carry forward** | Withdraw with Lovable ([ADR-009](../architecture/decisions/ADR-009-lovable-withdrawal.md)) |
+| Current (Vite / TanStack)              | Next.js convention                             | Notes                                                                                      |
+| -------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `VITE_SUPABASE_URL`                    | `NEXT_PUBLIC_SUPABASE_URL`                     | Public                                                                                     |
+| `VITE_SUPABASE_PUBLISHABLE_KEY`        | `NEXT_PUBLIC_SUPABASE_ANON_KEY`                | Same key; different name in spike                                                          |
+| `SUPABASE_URL`                         | Keep server-only or derive from public URL     | Avoid duplicating secrets                                                                  |
+| `SUPABASE_PUBLISHABLE_KEY`             | Prefer `NEXT_PUBLIC_SUPABASE_ANON_KEY` on Next | Spike uses public name only                                                                |
+| `SUPABASE_SERVICE_ROLE_KEY`            | `SUPABASE_SERVICE_ROLE_KEY`                    | Server-only; never `NEXT_PUBLIC_`                                                          |
+| `LOVABLE_API_KEY` / `LOVABLE_SEND_URL` | **Do not carry forward**                       | Withdraw with Lovable ([ADR-009](../architecture/decisions/ADR-009-lovable-withdrawal.md)) |
 
 ---
 
@@ -84,30 +84,30 @@ The isolated `spikes/auth-ssr/` POC was **removed** from the repo. When D-28 is 
 
 These appear in architecture docs as future needs. **Do not invent Vercel values until the feature lands.**
 
-| Concern | Status | Likely future env area |
-| --- | --- | --- |
-| Email delivery provider | ACCEPTED RISK — adapter stubs | Provider API keys (e.g. Resend/Postmark/SES) — TBD |
-| SMS provider | ACCEPTED RISK — stub throws | Provider credentials — TBD |
-| Public enrollment rate limit | ADR-012 decided; product TBD | Possibly Upstash Redis / Vercel / Cloudflare platform config |
-| Campaign queue runtime | ADR-013 decided; product TBD | Queue/worker credentials outside Next — TBD |
-| Payments | Deferred | Payment provider secrets — TBD |
-| Custom backend API base URL | Backend remains primary API (ADR-006) | Public or server API URL when BFF calls external backend — TBD |
+| Concern                      | Status                                | Likely future env area                                         |
+| ---------------------------- | ------------------------------------- | -------------------------------------------------------------- |
+| Email delivery provider      | ACCEPTED RISK — adapter stubs         | Provider API keys (e.g. Resend/Postmark/SES) — TBD             |
+| SMS provider                 | ACCEPTED RISK — stub throws           | Provider credentials — TBD                                     |
+| Public enrollment rate limit | ADR-012 decided; product TBD          | Possibly Upstash Redis / Vercel / Cloudflare platform config   |
+| Campaign queue runtime       | ADR-013 decided; product TBD          | Queue/worker credentials outside Next — TBD                    |
+| Payments                     | Deferred                              | Payment provider secrets — TBD                                 |
+| Custom backend API base URL  | Backend remains primary API (ADR-006) | Public or server API URL when BFF calls external backend — TBD |
 
 ---
 
 ## Integrations cross-check
 
-| Integration | Vars in use today | Notes |
-| --- | --- | --- |
-| Supabase (DB + Auth + Storage) | `VITE_SUPABASE_*`, `SUPABASE_*`, service role | Primary data/auth plane |
-| Lovable email transport | `LOVABLE_API_KEY`, `LOVABLE_SEND_URL` | Withdraw; not for long-term Next deploy |
-| Redis / queues | None in code | Deferred |
-| Email provider (non-Lovable) | None | Deferred stubs |
-| SMS | None (hard error string) | Deferred |
-| Payments | None | UI placeholder |
-| Analytics / Sentry / OAuth extras | None found | — |
-| Cloudflare | Build tooling / `.wrangler` artifacts only | Hosting target is Vercel; CF secondary |
-| Vercel platform | No app-level `VERCEL_*` reads | Platform injects its own vars at runtime |
+| Integration                       | Vars in use today                             | Notes                                    |
+| --------------------------------- | --------------------------------------------- | ---------------------------------------- |
+| Supabase (DB + Auth + Storage)    | `VITE_SUPABASE_*`, `SUPABASE_*`, service role | Primary data/auth plane                  |
+| Lovable email transport           | `LOVABLE_API_KEY`, `LOVABLE_SEND_URL`         | Withdraw; not for long-term Next deploy  |
+| Redis / queues                    | None in code                                  | Deferred                                 |
+| Email provider (non-Lovable)      | None                                          | Deferred stubs                           |
+| SMS                               | None (hard error string)                      | Deferred                                 |
+| Payments                          | None                                          | UI placeholder                           |
+| Analytics / Sentry / OAuth extras | None found                                    | —                                        |
+| Cloudflare                        | Build tooling / `.wrangler` artifacts only    | Hosting target is Vercel; CF secondary   |
+| Vercel platform                   | No app-level `VERCEL_*` reads                 | Platform injects its own vars at runtime |
 
 ---
 
@@ -146,6 +146,6 @@ These appear in architecture docs as future needs. **Do not invent Vercel values
 
 ### Gate status
 
-Checklist item *Environment inventory* in [pre-implementation-checklist.md](../architecture/pre-implementation-checklist.md) is **ACCEPTED RISK** for migration GO: this inventory is the documentation source of truth.
+Checklist item _Environment inventory_ in [pre-implementation-checklist.md](../architecture/pre-implementation-checklist.md) is **ACCEPTED RISK** for migration GO: this inventory is the documentation source of truth.
 
 **Remember (still open):** confirm values in the Vercel project UI before a Next deploy (Development / Preview / Production) **without** pasting secret values into git, tickets, or chat. Mark this follow-up done in [deferred-decisions.md](../architecture/deferred-decisions.md) when confirmed.

@@ -21,7 +21,6 @@ import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { BranchDialog, type BranchFormData } from "@/features/branches/branches-page";
 
-
 type Branch = {
   id: string;
   name: string;
@@ -47,7 +46,6 @@ function BranchDetailPage({ branchId }: { branchId: string }) {
   const [toggling, setToggling] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
 
-
   React.useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -61,7 +59,11 @@ function BranchDetailPage({ branchId }: { branchId: string }) {
     let cancel = false;
     (async () => {
       const [{ data: p }, { data: b, error }] = await Promise.all([
-        getAuthSupabase().from("profiles").select("full_name, email").eq("id", user.id).maybeSingle(),
+        getAuthSupabase()
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", user.id)
+          .maybeSingle(),
         getAuthSupabase()
           .from("branches")
           .select(
@@ -123,9 +125,7 @@ function BranchDetailPage({ branchId }: { branchId: string }) {
         is_main: data.is_main,
       })
       .eq("id", branch.id)
-      .select(
-        "id, name, address, city, email, phone, manager_name, is_main, is_active, created_at",
-      )
+      .select("id, name, address, city, email, phone, manager_name, is_main, is_active, created_at")
       .single();
     if (error) {
       toast.error(error.message);
@@ -136,7 +136,6 @@ function BranchDetailPage({ branchId }: { branchId: string }) {
     toast.success("Branch updated");
   };
 
-
   if (loading || !ready) {
     return (
       <div className="grid min-h-screen place-items-center bg-[#eef1f7] text-sm text-[#737373]">
@@ -146,9 +145,7 @@ function BranchDetailPage({ branchId }: { branchId: string }) {
   }
   if (notFound || !branch) {
     return (
-      <DashboardShell
-        firstName={fullName || (user?.email ?? "")} onSignOut={signOut}
-      >
+      <DashboardShell firstName={fullName || (user?.email ?? "")} onSignOut={signOut}>
         <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-16 text-center">
           <h1 className="text-lg font-bold text-[#0a152f]">Branch not found</h1>
           <p className="text-sm text-[#737373]">
@@ -167,9 +164,7 @@ function BranchDetailPage({ branchId }: { branchId: string }) {
   }
 
   return (
-    <DashboardShell
-      firstName={fullName || (user?.email ?? "")} onSignOut={signOut}
-    >
+    <DashboardShell firstName={fullName || (user?.email ?? "")} onSignOut={signOut}>
       <div className="space-y-6 pb-16">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1 text-[13px]" aria-label="Breadcrumb">
@@ -227,7 +222,6 @@ function BranchDetailPage({ branchId }: { branchId: string }) {
               <Edit3 className="h-4 w-4" aria-hidden />
               Edit
             </button>
-
           </div>
         </section>
 
@@ -237,12 +231,8 @@ function BranchDetailPage({ branchId }: { branchId: string }) {
           <div className="rounded-[12px] border border-[#d7ddea] bg-white p-5">
             <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-start sm:gap-3">
               <div className="min-w-0">
-                <h2 className="text-[20px] font-semibold text-[#0a152f]">
-                  Customer Engagement
-                </h2>
-                <p className="mt-1 text-[14px] text-[#737373]">
-                  Customer's visits monthly
-                </p>
+                <h2 className="text-[20px] font-semibold text-[#0a152f]">Customer Engagement</h2>
+                <p className="mt-1 text-[14px] text-[#737373]">Customer's visits monthly</p>
               </div>
               <button
                 type="button"
@@ -261,8 +251,16 @@ function BranchDetailPage({ branchId }: { branchId: string }) {
           <div className="rounded-[12px] border border-[#d7ddea] bg-white p-5">
             <h2 className="text-[20px] font-semibold text-[#0a152f]">Branch Stats</h2>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <StatTile label="Customers" value="—" icon={<UsersIcon className="h-5 w-5 text-[#344f89]" />} />
-              <StatTile label="Total Visits" value="—" icon={<TrendingUp className="h-5 w-5 text-[#344f89]" />} />
+              <StatTile
+                label="Customers"
+                value="—"
+                icon={<UsersIcon className="h-5 w-5 text-[#344f89]" />}
+              />
+              <StatTile
+                label="Total Visits"
+                value="—"
+                icon={<TrendingUp className="h-5 w-5 text-[#344f89]" />}
+              />
             </div>
             <div className="mt-3 grid gap-3">
               <StatTile
@@ -308,8 +306,8 @@ function BranchDetailPage({ branchId }: { branchId: string }) {
                 No branch-linked customers yet
               </p>
               <p className="max-w-[420px] text-[13px] text-[#737373]">
-                Once customers are enrolled at this branch, their visits and
-                points will appear here.
+                Once customers are enrolled at this branch, their visits and points will appear
+                here.
               </p>
               {/* TODO(feature): top customers per branch requires branch_id on customer enrollment. */}
             </div>
@@ -342,8 +340,8 @@ function BranchDetailPage({ branchId }: { branchId: string }) {
                 No branch-linked reward data yet
               </p>
               <p className="max-w-[420px] text-[13px] text-[#737373]">
-                Redemptions made at this branch and their point costs will appear
-                here once rewards are linked to a branch.
+                Redemptions made at this branch and their point costs will appear here once rewards
+                are linked to a branch.
               </p>
               {/* TODO(feature): top rewards per branch requires branch_id on redemptions once that exists. */}
             </div>
@@ -371,7 +369,6 @@ function BranchDetailPage({ branchId }: { branchId: string }) {
   );
 }
 
-
 function StatTile({
   label,
   value,
@@ -384,11 +381,7 @@ function StatTile({
   full?: boolean;
 }) {
   return (
-    <div
-      className={`rounded-[12px] border border-[#d7ddea] bg-white p-4 ${
-        full ? "w-full" : ""
-      }`}
-    >
+    <div className={`rounded-[12px] border border-[#d7ddea] bg-white p-4 ${full ? "w-full" : ""}`}>
       <div className="flex items-center justify-between">
         <span className="text-[14px] text-[#737373]">{label}</span>
         {icon}
@@ -447,7 +440,10 @@ function EngagementChartPlaceholder() {
       </div>
       <div className="mt-2 flex gap-2 px-2 sm:gap-6">
         {labels.map((l) => (
-          <p key={l} className="flex-1 text-center text-[11px] leading-tight text-[#737373] sm:text-[12px]">
+          <p
+            key={l}
+            className="flex-1 text-center text-[11px] leading-tight text-[#737373] sm:text-[12px]"
+          >
             {l}
           </p>
         ))}
@@ -455,6 +451,5 @@ function EngagementChartPlaceholder() {
     </div>
   );
 }
-
 
 export default BranchDetailPage;

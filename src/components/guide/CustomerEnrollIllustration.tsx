@@ -6,11 +6,7 @@
  * success / card / border) and matches the flat illustration style of the
  * other How It Works step graphics.
  */
-export function CustomerEnrollIllustration({
-  className,
-}: {
-  className?: string;
-}) {
+export function CustomerEnrollIllustration({ className }: { className?: string }) {
   return (
     <svg
       role="img"
@@ -21,19 +17,12 @@ export function CustomerEnrollIllustration({
       preserveAspectRatio="xMidYMid meet"
     >
       <title>
-        Illustration of a hand holding a smartphone to scan a QR code, with a
-        welcome confirmation and sparkle accents showing instant enrollment
+        Illustration of a hand holding a smartphone to scan a QR code, with a welcome confirmation
+        and sparkle accents showing instant enrollment
       </title>
 
       {/* Backdrop panel */}
-      <rect
-        x="0"
-        y="0"
-        width="600"
-        height="305"
-        rx="16"
-        fill="var(--navy-25)"
-      />
+      <rect x="0" y="0" width="600" height="305" rx="16" fill="var(--navy-25)" />
 
       {/* Soft accent blobs */}
       <circle cx="80" cy="80" r="70" fill="var(--gold-50)" opacity="0.85" />
@@ -41,7 +30,14 @@ export function CustomerEnrollIllustration({
 
       {/* Customer avatar (subtle, top-left) */}
       <g transform="translate(70 38)">
-        <circle cx="36" cy="36" r="32" fill="var(--card)" stroke="var(--navy-100)" strokeWidth="1.5" />
+        <circle
+          cx="36"
+          cy="36"
+          r="32"
+          fill="var(--card)"
+          stroke="var(--navy-100)"
+          strokeWidth="1.5"
+        />
         <circle cx="36" cy="30" r="20" fill="var(--navy-100)" opacity="0.6" />
         <path
           d="M16 22 C16 8, 56 8, 56 22 C56 14, 50 10, 36 10 C22 10, 16 14, 16 22"
@@ -56,10 +52,7 @@ export function CustomerEnrollIllustration({
           strokeLinecap="round"
           fill="none"
         />
-        <path
-          d="M12 60 C12 46, 60 46, 60 60 V66 H12 Z"
-          fill="var(--navy-700)"
-        />
+        <path d="M12 60 C12 46, 60 46, 60 60 V66 H12 Z" fill="var(--navy-700)" />
         <rect x="24" y="56" width="24" height="3" rx="1.5" fill="var(--gold-500)" />
       </g>
 
@@ -89,14 +82,7 @@ export function CustomerEnrollIllustration({
         />
 
         {/* Phone screen */}
-        <rect
-          x="10"
-          y="10"
-          width="120"
-          height="180"
-          rx="16"
-          fill="var(--card)"
-        />
+        <rect x="10" y="10" width="120" height="180" rx="16" fill="var(--card)" />
 
         {/* Camera notch */}
         <rect x="50" y="10" width="40" height="6" rx="3" fill="var(--navy-900)" />
@@ -108,7 +94,14 @@ export function CustomerEnrollIllustration({
 
         {/* QR code on phone screen */}
         <g transform="translate(30 52)">
-          <rect width="80" height="80" rx="10" fill="var(--navy-25)" stroke="var(--navy-100)" strokeWidth="1" />
+          <rect
+            width="80"
+            height="80"
+            rx="10"
+            fill="var(--navy-25)"
+            stroke="var(--navy-100)"
+            strokeWidth="1"
+          />
 
           {/* QR position markers */}
           <rect x="10" y="10" width="20" height="20" rx="4" fill="var(--navy-900)" />
@@ -174,7 +167,6 @@ export function CustomerEnrollIllustration({
             fill="none"
           />
         </g>
-
       </g>
 
       {/* Welcome speech bubble */}
@@ -230,13 +222,7 @@ export function CustomerEnrollIllustration({
         <path d="M360 210 L362 216 L368 218 L362 220 L360 226 L358 220 L352 218 L358 216 Z" />
       </g>
 
-      <g
-        stroke="var(--gold-500)"
-        strokeWidth="2"
-        strokeLinecap="round"
-        fill="none"
-        opacity="0.8"
-      >
+      <g stroke="var(--gold-500)" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.8">
         <path d="M210 58 L218 54" />
         <path d="M210 240 L218 244" />
         <path d="M390 190 L398 190" />

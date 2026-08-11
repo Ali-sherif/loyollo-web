@@ -1,17 +1,7 @@
 import { assetSrc } from "@/lib/asset-src";
 import * as React from "react";
 import { toast } from "sonner";
-import {
-  Crown,
-  Check,
-  Plus,
-  MoreHorizontal,
-  Pencil,
-  Trash2,
-  Send,
-  ArrowLeft,
-
-} from "lucide-react";
+import { Crown, Check, Plus, MoreHorizontal, Pencil, Trash2, Send, ArrowLeft } from "lucide-react";
 import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import telescopeImg from "@/assets/telescope-empty-state.png";
 import type { Tier } from "@/components/loyalty/TierSection";
@@ -72,12 +62,7 @@ const TEMPLATES: Template[] = [
     threshold: 1000,
     multiplier: 1.25,
     bonus_percentage: 25,
-    benefits: [
-      "Standard rewards",
-      "Birthday reward",
-      "+25% bonus points",
-      "Priority redemption",
-    ],
+    benefits: ["Standard rewards", "Birthday reward", "+25% bonus points", "Priority redemption"],
     headerBg: "#fff9e6",
     headerDot: "#feb602",
     buttonBg: "#feb602",
@@ -137,7 +122,6 @@ type Props = {
   rightColumn?: React.ReactNode;
 };
 
-
 export function TierBasedFlow(props: Props) {
   const { programId, tiers, reloadTiers, ensureProgramSaved } = props;
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -147,7 +131,6 @@ export function TierBasedFlow(props: Props) {
   const [creatingFromTemplate, setCreatingFromTemplate] = React.useState<string | null>(null);
   const [preparingCustom, setPreparingCustom] = React.useState(false);
   const [showTemplates, setShowTemplates] = React.useState(false);
-
 
   async function applyTemplate(t: Template) {
     if (tiers.some((x) => x.name.toLowerCase() === t.name.toLowerCase())) {
@@ -184,7 +167,6 @@ export function TierBasedFlow(props: Props) {
     await reloadTiers();
   }
 
-
   async function handleCreateCustom() {
     setPreparingCustom(true);
     const pid = programId ?? (await ensureProgramSaved());
@@ -194,7 +176,6 @@ export function TierBasedFlow(props: Props) {
     setShowTemplates(false);
     setDialogOpen(true);
   }
-
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -241,7 +222,6 @@ export function TierBasedFlow(props: Props) {
           onBack={hasTiers ? () => setShowTemplates(false) : undefined}
         />
       )}
-
 
       <TierDialog
         open={dialogOpen}
@@ -301,9 +281,7 @@ function TemplatesView({
   onBack?: () => void;
 }) {
   const busy = creatingId !== null || preparingCustom;
-  const availableTemplates = TEMPLATES.filter(
-    (t) => !existingTierNames?.has(t.name.toLowerCase()),
-  );
+  const availableTemplates = TEMPLATES.filter((t) => !existingTierNames?.has(t.name.toLowerCase()));
   return (
     <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
       <div className="flex items-start justify-between gap-4">
@@ -362,7 +340,6 @@ function TemplatesView({
     </section>
   );
 }
-
 
 function TemplateCard({
   template: t,
@@ -490,7 +467,6 @@ function ConfiguredView({
         <h2 className="text-[20px] font-semibold leading-none text-[#0a152f]">Global tier rules</h2>
         <p className="mt-2 text-[14px] text-[#737373]">Applied across all tiers</p>
 
-
         <div className="mt-6 grid gap-5 sm:grid-cols-2">
           <TierSelectField
             id="tier-measured-by"
@@ -545,9 +521,10 @@ function ConfiguredView({
     <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-[20px] font-semibold leading-none text-[#0a152f]">Tier configuration</h2>
+          <h2 className="text-[20px] font-semibold leading-none text-[#0a152f]">
+            Tier configuration
+          </h2>
           <p className="mt-2 text-[14px] text-[#737373]">
-
             Choose a tier structure to reward your most loyal customers. Start with a ready-made
             template or build your own from scratch.
           </p>
@@ -596,13 +573,15 @@ function ConfiguredView({
   );
 }
 
-
-const TIER_HEADER: Record<string, { bg: string; dot: string; footerBg: string; footerText: string }> = {
-  silver:  { bg: "#f3f4f6", dot: "#a3a3a3", footerBg: "#f3f4f6", footerText: "#525252" },
-  gold:    { bg: "#fff9e6", dot: "#feb602", footerBg: "#fff9e6", footerText: "#8a6a00" },
-  vip:     { bg: "#effaf4", dot: "#44b678", footerBg: "#effaf4", footerText: "#267a4d" },
+const TIER_HEADER: Record<
+  string,
+  { bg: string; dot: string; footerBg: string; footerText: string }
+> = {
+  silver: { bg: "#f3f4f6", dot: "#a3a3a3", footerBg: "#f3f4f6", footerText: "#525252" },
+  gold: { bg: "#fff9e6", dot: "#feb602", footerBg: "#fff9e6", footerText: "#8a6a00" },
+  vip: { bg: "#effaf4", dot: "#44b678", footerBg: "#effaf4", footerText: "#267a4d" },
   emerald: { bg: "#effaf4", dot: "#44b678", footerBg: "#effaf4", footerText: "#267a4d" },
-  bronze:  { bg: "#f5ebe0", dot: "#cd7f32", footerBg: "#f5ebe0", footerText: "#8b5a2b" },
+  bronze: { bg: "#f5ebe0", dot: "#cd7f32", footerBg: "#f5ebe0", footerText: "#8b5a2b" },
 };
 
 function ConfiguredTierCard({
@@ -729,9 +708,10 @@ function MembersCloseToUpgradingPanel() {
     <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-[20px] font-semibold leading-none text-[#0a152f]">Members close to upgrading</h2>
+          <h2 className="text-[20px] font-semibold leading-none text-[#0a152f]">
+            Members close to upgrading
+          </h2>
           <p className="mt-2 text-[14px] text-[#737373]">
-
             Customers within 20% of the next tier threshold
           </p>
         </div>

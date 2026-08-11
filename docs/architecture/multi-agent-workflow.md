@@ -9,12 +9,12 @@ Multiple AI models/agents are allowed and useful. They must **not** invent paral
 
 ## Role split (by strength)
 
-| Role | Typical work | Prefer |
-| --- | --- | --- |
-| Lead / architect | Gate status, ADR wording, go/no-go, slice sequencing, conflict resolution | Strongest reasoning / Plan Mode |
-| Implementer | One authorized slice: code + acceptance checks | Strong coding model |
-| Reviewer | Diff review vs ADRs, visual/messaging parity, risk callouts | Strong review model |
-| Spike / explorer | Read-only inventory or blocked spike evidence (e.g. D-28) | Any capable model; no product redesign |
+| Role             | Typical work                                                              | Prefer                                 |
+| ---------------- | ------------------------------------------------------------------------- | -------------------------------------- |
+| Lead / architect | Gate status, ADR wording, go/no-go, slice sequencing, conflict resolution | Strongest reasoning / Plan Mode        |
+| Implementer      | One authorized slice: code + acceptance checks                            | Strong coding model                    |
+| Reviewer         | Diff review vs ADRs, visual/messaging parity, risk callouts               | Strong review model                    |
+| Spike / explorer | Read-only inventory or blocked spike evidence (e.g. D-28)                 | Any capable model; no product redesign |
 
 Switch models freely **between** roles or slices. Do not switch mid-slice without a handoff note (slice id, files touched, remaining acceptance).
 
@@ -30,13 +30,13 @@ Switch models freely **between** roles or slices. Do not switch mid-slice withou
 
 ## Parallelization map (current)
 
-| Slice | Title | Parallel? |
-| --- | --- | --- |
-| 1 | Foundation | **Done** — do not re-scaffold |
-| 2 | Vendor/re-host Lovable/CDN assets | **Done** |
-| 3 | Server infrastructure + auth proof (D-28) | **Done (scaffolding)** — cookie/SSR proof still **BLOCKED** (D-28) |
-| 4 | Messaging skeleton (`src/lib/server/messaging/`) | **Done** (stubs; no real provider) |
-| 5+ | Routes / domains | **Done (ported)** — Next is default `npm run dev` / `npm run build`; TanStack kept as `dev:tanstack` until retirement approval |
+| Slice | Title                                            | Parallel?                                                                                                                      |
+| ----- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| 1     | Foundation                                       | **Done** — do not re-scaffold                                                                                                  |
+| 2     | Vendor/re-host Lovable/CDN assets                | **Done**                                                                                                                       |
+| 3     | Server infrastructure + auth proof (D-28)        | **Done (scaffolding)** — cookie/SSR proof still **BLOCKED** (D-28)                                                             |
+| 4     | Messaging skeleton (`src/lib/server/messaging/`) | **Done** (stubs; no real provider)                                                                                             |
+| 5+    | Routes / domains                                 | **Done (ported)** — Next is default `npm run dev` / `npm run build`; TanStack kept as `dev:tanstack` until retirement approval |
 
 **Forbidden parallel pairs:** two agents on the same route tree; redesign + migration; Lovable deletion + active feature ports.
 
@@ -53,6 +53,7 @@ Route port slices 5–13 are in the Next App Router tree. Default scripts point 
 
 ```markdown
 ## Migration status
+
 - Coding allowed: yes/no
 - Current slice: N — title
 - Files owned this turn: …

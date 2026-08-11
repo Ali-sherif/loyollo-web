@@ -19,10 +19,10 @@ export type EnrollResult = {
 };
 
 export async function getJoinProgram(data: { programId: string }) {
-  const res = await fetch(
-    `/api/join/program?programId=${encodeURIComponent(data.programId)}`,
-    { method: "GET", cache: "no-store" },
-  );
+  const res = await fetch(`/api/join/program?programId=${encodeURIComponent(data.programId)}`, {
+    method: "GET",
+    cache: "no-store",
+  });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || "Failed to load program");

@@ -5,7 +5,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-
 const faqs = [
   {
     q: "What types of business can use this platform?",
@@ -61,4 +60,3 @@ export function FAQ() {
     </section>
   );
 }
-

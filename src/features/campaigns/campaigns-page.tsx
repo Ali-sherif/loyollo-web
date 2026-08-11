@@ -369,7 +369,10 @@ function CampaignsPage() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await getAuthSupabase().from(CAMPAIGN_TABLE).delete().eq("id", deleteTarget.id);
+    const { error } = await getAuthSupabase()
+      .from(CAMPAIGN_TABLE)
+      .delete()
+      .eq("id", deleteTarget.id);
     setDeleting(false);
     if (error) {
       toast.error(error.message);
@@ -393,9 +396,7 @@ function CampaignsPage() {
       <div className="mx-auto max-w-[1140px] space-y-6">
         <header className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <h1 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">
-              Campaigns
-            </h1>
+            <h1 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">Campaigns</h1>
             <p className="mt-2 text-[14px] text-[#737373]">
               Create, manage, and track campaigns that drive customer engagement and repeat visits.
             </p>
@@ -413,10 +414,30 @@ function CampaignsPage() {
         </header>
 
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard label="Total Campaigns" value={String(totalCampaigns)} icon={Megaphone} iconColor="#feb602" />
-          <StatCard label="Emails Sent" value={String(emailsSent)} icon={Mail} iconColor="#344f89" />
-          <StatCard label="SMS Sent" value={String(smsSent)} icon={MessageSquare} iconColor="#44b678" />
-          <StatCard label="Campaign Revenue" value={`$${(revenue / 100).toFixed(2)}`} icon={DollarSign} iconColor="#44b678" />
+          <StatCard
+            label="Total Campaigns"
+            value={String(totalCampaigns)}
+            icon={Megaphone}
+            iconColor="#feb602"
+          />
+          <StatCard
+            label="Emails Sent"
+            value={String(emailsSent)}
+            icon={Mail}
+            iconColor="#344f89"
+          />
+          <StatCard
+            label="SMS Sent"
+            value={String(smsSent)}
+            icon={MessageSquare}
+            iconColor="#44b678"
+          />
+          <StatCard
+            label="Campaign Revenue"
+            value={`$${(revenue / 100).toFixed(2)}`}
+            icon={DollarSign}
+            iconColor="#44b678"
+          />
         </section>
 
         <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_2px_rgba(15,28,61,0.04)]">
@@ -530,79 +551,83 @@ function CampaignsPage() {
             </div>
           </div>
 
-            {filtered.length === 0 ? (
-              <div className="flex flex-col items-center gap-3 py-10 text-center">
-                <img
-                  src={assetSrc(telescopeEmpty)}
-                  alt=""
-                  width={149}
-                  height={110}
-                  loading="lazy"
-                  className="h-[110px] w-[149px] object-contain"
-                />
-                <div className="max-w-[520px] space-y-2 px-4">
-                  <h2 className="text-[20px] font-bold text-[#0a152f]">
-                    {campaigns.length === 0 ? "No Campaigns Yet!" : "No matching campaigns"}
-                  </h2>
-                  <p className="text-[16px] text-[#737373]">
-                    {campaigns.length === 0
-                      ? "Create your first campaign to engage customers, promote rewards, and bring customers back more often."
-                      : "Try a different search or status filter."}
-                  </p>
-                </div>
-                {campaigns.length === 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setCreateOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-full bg-[#feb602] px-4 py-2 text-sm font-semibold text-white shadow-[0_1px_8px_rgba(0,0,0,0.12)] transition hover:bg-[#e29f00]"
-                  >
-                    <Plus className="h-4 w-4" aria-hidden />
-                    Create Campaign
-                  </button>
-                )}
+          {filtered.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <img
+                src={assetSrc(telescopeEmpty)}
+                alt=""
+                width={149}
+                height={110}
+                loading="lazy"
+                className="h-[110px] w-[149px] object-contain"
+              />
+              <div className="max-w-[520px] space-y-2 px-4">
+                <h2 className="text-[20px] font-bold text-[#0a152f]">
+                  {campaigns.length === 0 ? "No Campaigns Yet!" : "No matching campaigns"}
+                </h2>
+                <p className="text-[16px] text-[#737373]">
+                  {campaigns.length === 0
+                    ? "Create your first campaign to engage customers, promote rewards, and bring customers back more often."
+                    : "Try a different search or status filter."}
+                </p>
               </div>
-            ) : (
-              <div className="mt-4 overflow-x-auto">
-                <table className="w-full min-w-[760px] border-collapse text-left">
-                  <thead>
-                    <tr className="bg-[#f7f8fb] text-[13px] font-semibold text-[#8698bb]">
-                      <th className="rounded-l-[8px] px-4 py-3">Campaign</th>
-                      <th className="px-4 py-3">Audience</th>
-                      <th className="px-4 py-3">Type</th>
-                      <th className="px-4 py-3">Performance</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="rounded-r-[8px] px-4 py-3 w-[52px]" aria-label="Actions" />
+              {campaigns.length === 0 && (
+                <button
+                  type="button"
+                  onClick={() => setCreateOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#feb602] px-4 py-2 text-sm font-semibold text-white shadow-[0_1px_8px_rgba(0,0,0,0.12)] transition hover:bg-[#e29f00]"
+                >
+                  <Plus className="h-4 w-4" aria-hidden />
+                  Create Campaign
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[760px] border-collapse text-left">
+                <thead>
+                  <tr className="bg-[#f7f8fb] text-[13px] font-semibold text-[#8698bb]">
+                    <th className="rounded-l-[8px] px-4 py-3">Campaign</th>
+                    <th className="px-4 py-3">Audience</th>
+                    <th className="px-4 py-3">Type</th>
+                    <th className="px-4 py-3">Performance</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="rounded-r-[8px] px-4 py-3 w-[52px]" aria-label="Actions" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((c) => (
+                    <tr key={c.id} className="border-b border-[#eef1f7] text-[14px] text-[#0a152f]">
+                      <td className="px-4 py-4 font-semibold">{c.name}</td>
+                      <td className="px-4 py-4 text-[#525252]">{c.audience ?? "—"}</td>
+                      <td className="px-4 py-4 text-[#525252]">
+                        {c.channel === "sms" ? "SMS" : "Email"}
+                      </td>
+                      <td className="px-4 py-4 text-[#525252]">{formatPerformance(c)}</td>
+                      <td className="px-4 py-4">
+                        <StatusPill status={c.status} />
+                      </td>
+                      <td className="px-4 py-4">
+                        <RowMenu
+                          campaign={c}
+                          launching={launchingId === c.id}
+                          onView={() =>
+                            navigate({ to: "/campaigns/$campaignId", params: { campaignId: c.id } })
+                          }
+                          onEdit={() => setEditTarget(c)}
+                          onDelete={() => setDeleteTarget(c)}
+                          onLaunch={() => void runSend(c.id)}
+                          onDisable={() => void updateStatus(c, "disabled", "Campaign disabled")}
+                          onEnable={() => void updateStatus(c, "active", "Campaign enabled")}
+                        />
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((c) => (
-                      <tr key={c.id} className="border-b border-[#eef1f7] text-[14px] text-[#0a152f]">
-                        <td className="px-4 py-4 font-semibold">{c.name}</td>
-                        <td className="px-4 py-4 text-[#525252]">{c.audience ?? "—"}</td>
-                        <td className="px-4 py-4 text-[#525252]">
-                          {c.channel === "sms" ? "SMS" : "Email"}
-                        </td>
-                        <td className="px-4 py-4 text-[#525252]">{formatPerformance(c)}</td>
-                        <td className="px-4 py-4"><StatusPill status={c.status} /></td>
-                        <td className="px-4 py-4">
-                          <RowMenu
-                            campaign={c}
-                            launching={launchingId === c.id}
-                            onView={() => navigate({ to: "/campaigns/$campaignId", params: { campaignId: c.id } })}
-                            onEdit={() => setEditTarget(c)}
-                            onDelete={() => setDeleteTarget(c)}
-                            onLaunch={() => void runSend(c.id)}
-                            onDisable={() => void updateStatus(c, "disabled", "Campaign disabled")}
-                            onEnable={() => void updateStatus(c, "active", "Campaign enabled")}
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
 
         {user && <AutomationsSection ownerId={user.id} />}
       </div>
@@ -621,11 +646,7 @@ function CampaignsPage() {
         initial={editTarget}
       />
 
-
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(o) => !o && setDeleteTarget(null)}
-      >
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this campaign?</AlertDialogTitle>
@@ -764,7 +785,6 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
-
 export function CreateCampaignDialog({
   open,
   onOpenChange,
@@ -787,11 +807,10 @@ export function CreateCampaignDialog({
       setForm({
         name: initial.name,
         description: initial.description ?? "",
-        channel: (initial.channel === "sms" ? "sms" : "email"),
-        audience:
-          (AUDIENCE_OPTIONS.includes(initial.audience as AudienceOption)
-            ? (initial.audience as AudienceOption)
-            : "All customers"),
+        channel: initial.channel === "sms" ? "sms" : "email",
+        audience: AUDIENCE_OPTIONS.includes(initial.audience as AudienceOption)
+          ? (initial.audience as AudienceOption)
+          : "All customers",
         subject: initial.subject ?? "",
         message: initial.message ?? "",
       });
@@ -852,9 +871,13 @@ export function CreateCampaignDialog({
               <Label>Channel</Label>
               <Select
                 value={form.channel}
-                onValueChange={(v) => setForm({ ...form, channel: v as CampaignFormData["channel"] })}
+                onValueChange={(v) =>
+                  setForm({ ...form, channel: v as CampaignFormData["channel"] })
+                }
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="email">Email</SelectItem>
                   <SelectItem value="sms">SMS</SelectItem>
@@ -865,9 +888,7 @@ export function CreateCampaignDialog({
               <Label htmlFor="camp-aud">Audience</Label>
               <Select
                 value={form.audience}
-                onValueChange={(v) =>
-                  setForm({ ...form, audience: v as AudienceOption })
-                }
+                onValueChange={(v) => setForm({ ...form, audience: v as AudienceOption })}
               >
                 <SelectTrigger id="camp-aud">
                   <SelectValue />
@@ -942,6 +963,5 @@ export function CreateCampaignDialog({
     </Dialog>
   );
 }
-
 
 export default CampaignsPage;

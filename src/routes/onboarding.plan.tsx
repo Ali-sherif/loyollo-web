@@ -12,8 +12,7 @@ export const Route = createFileRoute("/onboarding/plan")({
       { title: "Choose your plan — Loyalty" },
       {
         name: "description",
-        content:
-          "Pick a monthly plan and start your 14-day free trial. Cancel anytime.",
+        content: "Pick a monthly plan and start your 14-day free trial. Cancel anytime.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -61,7 +60,11 @@ const PLANS: Plan[] = [
 ];
 
 function formatCardNumber(v: string) {
-  return v.replace(/\D/g, "").slice(0, 19).replace(/(.{4})/g, "$1 ").trim();
+  return v
+    .replace(/\D/g, "")
+    .slice(0, 19)
+    .replace(/(.{4})/g, "$1 ")
+    .trim();
 }
 function formatExpiry(v: string) {
   const d = v.replace(/\D/g, "").slice(0, 4);
@@ -100,9 +103,7 @@ function OnboardingPlan() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select(
-          "onboarding_completed, num_locations, business_type, business_category, plan",
-        )
+        .select("onboarding_completed, num_locations, business_type, business_category, plan")
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
@@ -120,11 +121,8 @@ function OnboardingPlan() {
       }
       // Step 3 requires business_category to match a real category and
       // business_type to be one of its sub-types.
-      const cat = BUSINESS_CATEGORIES.find(
-        (c) => c.label === data.business_category,
-      );
-      const validSubType =
-        cat && cat.items.some((i) => i.label === data.business_type);
+      const cat = BUSINESS_CATEGORIES.find((c) => c.label === data.business_category);
+      const validSubType = cat && cat.items.some((i) => i.label === data.business_type);
       if (!cat || !validSubType) {
         navigate({ to: "/onboarding/business-category", replace: true });
         return;
@@ -180,17 +178,14 @@ function OnboardingPlan() {
         <aside className="relative flex w-full flex-col items-center justify-center gap-8 overflow-hidden rounded-[32px] bg-[#0a152f] p-5 text-white lg:h-auto lg:w-[320px] lg:rounded-[40px] lg:p-7">
           <OnboardingLeftPanelDecor />
           <div className="relative flex items-center justify-center rounded-full bg-[#0f1c3d] px-10 py-5">
-            <span className="text-base font-semibold leading-none text-[#feb602]">
-              LOGO
-            </span>
+            <span className="text-base font-semibold leading-none text-[#feb602]">LOGO</span>
           </div>
           <div className="relative flex w-full flex-col items-center gap-4 text-center">
             <h2 className="text-[24px] font-bold leading-[1.2] text-white">
               Let&rsquo;s Setup Your Account
             </h2>
             <p className="text-base font-normal text-[#eef1f7]">
-              Just a few quick steps to personalize your experience and launch
-              your loyalty program.
+              Just a few quick steps to personalize your experience and launch your loyalty program.
             </p>
           </div>
         </aside>
@@ -210,18 +205,12 @@ function OnboardingPlan() {
               {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
                 const step = i + 1;
                 if (step === CURRENT_STEP) {
-                  return (
-                    <span key={i} className="h-2 w-8 rounded-full bg-[#feb602]" />
-                  );
+                  return <span key={i} className="h-2 w-8 rounded-full bg-[#feb602]" />;
                 }
                 if (step < CURRENT_STEP) {
-                  return (
-                    <span key={i} className="h-2 w-2 rounded-full bg-[#44b678]" />
-                  );
+                  return <span key={i} className="h-2 w-2 rounded-full bg-[#44b678]" />;
                 }
-                return (
-                  <span key={i} className="h-2 w-2 rounded-full bg-[#d7ddea]" />
-                );
+                return <span key={i} className="h-2 w-2 rounded-full bg-[#d7ddea]" />;
               })}
             </div>
 
@@ -251,9 +240,7 @@ function OnboardingPlan() {
                     onClick={() => setSelectedPlan(plan.id)}
                     className={
                       "relative flex flex-col items-center gap-4 rounded-[16px] border bg-white p-6 text-center transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#eef1f7] " +
-                      (plan.popular
-                        ? "border-[#85d5a4] "
-                        : "border-[#d7ddea] ") +
+                      (plan.popular ? "border-[#85d5a4] " : "border-[#d7ddea] ") +
                       (active
                         ? "shadow-[0_4px_14px_0_rgba(68,182,120,0.20)]"
                         : "hover:border-[#0a152f]/30")
@@ -269,14 +256,10 @@ function OnboardingPlan() {
                       aria-hidden
                       className={
                         "absolute left-6 top-6 flex h-6 w-6 items-center justify-center rounded-full border " +
-                        (active
-                          ? "border-[#44b678] bg-[#effaf4]"
-                          : "border-[#b2e7c7] bg-[#effaf4]")
+                        (active ? "border-[#44b678] bg-[#effaf4]" : "border-[#b2e7c7] bg-[#effaf4]")
                       }
                     >
-                      {active && (
-                        <span className="h-3 w-3 rounded-full bg-[#44b678]" />
-                      )}
+                      {active && <span className="h-3 w-3 rounded-full bg-[#44b678]" />}
                     </span>
                     {/* Right icon */}
                     <span aria-hidden className="absolute right-6 top-6 text-[#0a152f]">
@@ -296,9 +279,7 @@ function OnboardingPlan() {
                       <span className={"text-[24px] font-semibold leading-none " + plan.priceColor}>
                         {plan.price}
                       </span>
-                      <span className="text-[14px] font-normal text-[#737373]">
-                        /month
-                      </span>
+                      <span className="text-[14px] font-normal text-[#737373]">/month</span>
                     </div>
                   </button>
                 );
@@ -359,9 +340,7 @@ function OnboardingPlan() {
                       placeholder="CVC"
                       maxLength={4}
                       value={cvc}
-                      onChange={(e) =>
-                        setCvc(e.target.value.replace(/\D/g, "").slice(0, 4))
-                      }
+                      onChange={(e) => setCvc(e.target.value.replace(/\D/g, "").slice(0, 4))}
                       className="flex-1 bg-transparent text-base text-[#0a152f] placeholder:text-[#a3a3a3] focus:outline-none"
                     />
                   </div>
@@ -391,9 +370,7 @@ function OnboardingPlan() {
 
             <div className="flex items-center justify-between">
               <span className="text-base font-normal text-[#737373]">Total:</span>
-              <span className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">
-                $0.00
-              </span>
+              <span className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">$0.00</span>
             </div>
 
             {submitError && (
@@ -429,9 +406,7 @@ function OnboardingPlan() {
           </div>
 
           <div className="flex items-center justify-center py-2">
-            <p className="text-base text-[#737373]">
-              *Your data stays private and encrypted.
-            </p>
+            <p className="text-base text-[#737373]">*Your data stays private and encrypted.</p>
           </div>
         </section>
       </div>

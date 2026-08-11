@@ -25,9 +25,7 @@ export async function POST(request: Request) {
     }
 
     const authHeader = request.headers.get("Authorization") ?? "";
-    const token = authHeader.startsWith("Bearer ")
-      ? authHeader.slice("Bearer ".length).trim()
-      : "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length).trim() : "";
     if (!token || !timingSafeEqualString(token, serviceKey)) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }

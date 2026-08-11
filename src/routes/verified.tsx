@@ -63,11 +63,7 @@ function VerifiedPage() {
     <div className="min-h-screen bg-[#eef1f7] p-3 sm:p-6 lg:p-12">
       <div className="mx-auto flex w-full max-w-[720px] flex-col items-center justify-center gap-10 rounded-[40px] bg-[#eef1f7] px-6 py-10 sm:px-12 lg:px-20 lg:py-12">
         {/* Logo */}
-        <img
-          src={loyolloLogoSignup}
-          alt="Loyollo"
-          className="h-8 w-auto md:h-10"
-        />
+        <img src={loyolloLogoSignup} alt="Loyollo" className="h-8 w-auto md:h-10" />
 
         {/* Illustration */}
         <img
@@ -79,11 +75,7 @@ function VerifiedPage() {
         />
 
         {/* Copy */}
-        <div
-          className="w-full text-center"
-          role="status"
-          aria-live="polite"
-        >
+        <div className="w-full text-center" role="status" aria-live="polite">
           <h1
             ref={headingRef}
             tabIndex={-1}

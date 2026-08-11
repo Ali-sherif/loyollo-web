@@ -29,9 +29,7 @@ export function StampCardPreview({
   return (
     <section className="rounded-[12px] border border-[#d7ddea] bg-white p-5">
       <h2 className="text-[20px] font-semibold text-[#0a152f]">Stamp card preview</h2>
-      <p className="mt-1 text-[14px] text-[#737373]">
-        See how customers will view this card.
-      </p>
+      <p className="mt-1 text-[14px] text-[#737373]">See how customers will view this card.</p>
 
       <div className="mt-5 rounded-[12px] bg-[#0A152F] p-5">
         <p className="text-[12px] font-semibold uppercase tracking-wide text-[#eef1f7]/80">
@@ -70,9 +68,7 @@ export function StampCardPreview({
         </p>
         <p className="mt-2 text-[13px] text-[#eef1f7]/80">
           Reward:{" "}
-          <span className="font-medium text-white">
-            {rewardDescription || "Your reward here"}
-          </span>
+          <span className="font-medium text-white">{rewardDescription || "Your reward here"}</span>
         </p>
       </div>
     </section>
@@ -118,7 +114,10 @@ export function StampCardPreviewCompact({
               }
               aria-hidden
             >
-              <Stamp className="h-3 w-3" style={{ color: i < filled ? "#0a152f" : "rgba(255,255,255,0.6)" }} />
+              <Stamp
+                className="h-3 w-3"
+                style={{ color: i < filled ? "#0a152f" : "rgba(255,255,255,0.6)" }}
+              />
             </div>
           ))
         ) : (
@@ -131,10 +130,7 @@ export function StampCardPreviewCompact({
         )}
       </div>
       <p className="mt-2 text-[11px] text-white/80">
-        Reward:{" "}
-        <span className="font-medium text-white">
-          {rewardDescription || "Your reward"}
-        </span>
+        Reward: <span className="font-medium text-white">{rewardDescription || "Your reward"}</span>
       </p>
     </div>
   );

@@ -78,17 +78,35 @@ const customerMgmt: FeatureGroup[] = [
   {
     label: "Profiles & History",
     items: [
-      { title: "Customer Profiles", desc: "Rich profiles with contact details, preferences, and full history in one place." },
-      { title: "Customer Activity Timeline", desc: "Track every visit, reward, and interaction on a single timeline." },
-      { title: "Customer Status", desc: "See who's active, at-risk, or lapsed and act at the right moment." },
+      {
+        title: "Customer Profiles",
+        desc: "Rich profiles with contact details, preferences, and full history in one place.",
+      },
+      {
+        title: "Customer Activity Timeline",
+        desc: "Track every visit, reward, and interaction on a single timeline.",
+      },
+      {
+        title: "Customer Status",
+        desc: "See who's active, at-risk, or lapsed and act at the right moment.",
+      },
     ],
   },
   {
     label: "Data & Insights",
     items: [
-      { title: "Customer Segmentation", desc: "Group customers by behavior, spend, or activity to target them precisely." },
-      { title: "Customer Insights", desc: "Understand what drives your best customers with clear, actionable data." },
-      { title: "Import & Export Customers", desc: "Bring existing lists in and export data whenever you need it." },
+      {
+        title: "Customer Segmentation",
+        desc: "Group customers by behavior, spend, or activity to target them precisely.",
+      },
+      {
+        title: "Customer Insights",
+        desc: "Understand what drives your best customers with clear, actionable data.",
+      },
+      {
+        title: "Import & Export Customers",
+        desc: "Bring existing lists in and export data whenever you need it.",
+      },
     ],
   },
 ];
@@ -97,17 +115,35 @@ const loyaltyPrograms: FeatureGroup[] = [
   {
     label: "Program Types",
     items: [
-      { title: "Points Programs", desc: "Reward every purchase with flexible, points-based earning rules." },
-      { title: "Stamp Cards", desc: "Classic digital stamp cards — 'buy X, get one free' made effortless." },
-      { title: "Reward Tiers", desc: "Create tiers that unlock bigger rewards as customers stay loyal." },
+      {
+        title: "Points Programs",
+        desc: "Reward every purchase with flexible, points-based earning rules.",
+      },
+      {
+        title: "Stamp Cards",
+        desc: "Classic digital stamp cards — 'buy X, get one free' made effortless.",
+      },
+      {
+        title: "Reward Tiers",
+        desc: "Create tiers that unlock bigger rewards as customers stay loyal.",
+      },
     ],
   },
   {
     label: "Rewards & Growth",
     items: [
-      { title: "Custom Rewards", desc: "Design any reward: free items, discounts, exclusive perks, or gifts." },
-      { title: "Referral Programs", desc: "Turn happy customers into advocates with built-in referral tools." },
-      { title: "QR Code Enrollment", desc: "Customers join instantly by scanning a QR code — no app required." },
+      {
+        title: "Custom Rewards",
+        desc: "Design any reward: free items, discounts, exclusive perks, or gifts.",
+      },
+      {
+        title: "Referral Programs",
+        desc: "Turn happy customers into advocates with built-in referral tools.",
+      },
+      {
+        title: "QR Code Enrollment",
+        desc: "Customers join instantly by scanning a QR code — no app required.",
+      },
     ],
   },
 ];
@@ -115,12 +151,30 @@ const loyaltyPrograms: FeatureGroup[] = [
 const campaigns: FeatureGroup[] = [
   {
     items: [
-      { title: "Email Campaigns", desc: "Send beautifully designed emails to the right customer segment." },
-      { title: "SMS Campaigns", desc: "Reach customers instantly with high-open-rate SMS messages." },
-      { title: "Birthday Campaigns", desc: "Automate birthday rewards that make every customer feel special." },
-      { title: "Win-back Campaigns", desc: "Bring lapsed customers back with targeted, timely offers." },
-      { title: "Automated Reminders", desc: "Nudge customers about unused rewards or upcoming expirations." },
-      { title: "Campaign Analytics", desc: "Measure open, click, and redemption performance in real time." },
+      {
+        title: "Email Campaigns",
+        desc: "Send beautifully designed emails to the right customer segment.",
+      },
+      {
+        title: "SMS Campaigns",
+        desc: "Reach customers instantly with high-open-rate SMS messages.",
+      },
+      {
+        title: "Birthday Campaigns",
+        desc: "Automate birthday rewards that make every customer feel special.",
+      },
+      {
+        title: "Win-back Campaigns",
+        desc: "Bring lapsed customers back with targeted, timely offers.",
+      },
+      {
+        title: "Automated Reminders",
+        desc: "Nudge customers about unused rewards or upcoming expirations.",
+      },
+      {
+        title: "Campaign Analytics",
+        desc: "Measure open, click, and redemption performance in real time.",
+      },
     ],
   },
 ];
@@ -129,9 +183,15 @@ const analytics: FeatureGroup[] = [
   {
     label: "Growth Metrics",
     items: [
-      { title: "Revenue Impact", desc: "See exactly how loyalty is driving your top-line revenue." },
+      {
+        title: "Revenue Impact",
+        desc: "See exactly how loyalty is driving your top-line revenue.",
+      },
       { title: "Customer Growth", desc: "Track new sign-ups and program adoption over time." },
-      { title: "Repeat Purchase Rate", desc: "Understand how loyalty translates into repeat visits." },
+      {
+        title: "Repeat Purchase Rate",
+        desc: "Understand how loyalty translates into repeat visits.",
+      },
     ],
   },
   {
@@ -139,7 +199,10 @@ const analytics: FeatureGroup[] = [
     items: [
       { title: "Redemption Rate", desc: "Monitor how often rewards are earned and redeemed." },
       { title: "Top Customers", desc: "Identify your VIPs and reward them before they churn." },
-      { title: "Performance Dashboard", desc: "All the metrics that matter — beautifully visualized." },
+      {
+        title: "Performance Dashboard",
+        desc: "All the metrics that matter — beautifully visualized.",
+      },
     ],
   },
 ];
@@ -148,17 +211,35 @@ const multiLocation: FeatureGroup[] = [
   {
     label: "Team & Access",
     items: [
-      { title: "Branch Management", desc: "Run a single program across every location seamlessly." },
-      { title: "Multiple Admins", desc: "Invite team members and collaborate without stepping on toes." },
-      { title: "Role Permissions", desc: "Fine-grained access controls for owners, managers, and staff." },
+      {
+        title: "Branch Management",
+        desc: "Run a single program across every location seamlessly.",
+      },
+      {
+        title: "Multiple Admins",
+        desc: "Invite team members and collaborate without stepping on toes.",
+      },
+      {
+        title: "Role Permissions",
+        desc: "Fine-grained access controls for owners, managers, and staff.",
+      },
     ],
   },
   {
     label: "Reporting & Rewards",
     items: [
-      { title: "Centralized Reporting", desc: "One dashboard, every location — compare performance instantly." },
-      { title: "Location Performance", desc: "Drill into any branch to see what's working and what isn't." },
-      { title: "Cross-Location Rewards", desc: "Let customers earn at one location and redeem at another." },
+      {
+        title: "Centralized Reporting",
+        desc: "One dashboard, every location — compare performance instantly.",
+      },
+      {
+        title: "Location Performance",
+        desc: "Drill into any branch to see what's working and what isn't.",
+      },
+      {
+        title: "Cross-Location Rewards",
+        desc: "Let customers earn at one location and redeem at another.",
+      },
     ],
   },
 ];
@@ -166,12 +247,30 @@ const multiLocation: FeatureGroup[] = [
 const automation: FeatureGroup[] = [
   {
     items: [
-      { title: "Automated Rewards", desc: "Trigger rewards based on milestones, spend, or visit count." },
-      { title: "Birthday Rewards", desc: "Automatically celebrate every customer on their special day." },
-      { title: "Tier Upgrades", desc: "Move customers up tiers the moment they qualify — no manual work." },
-      { title: "Points Expiration", desc: "Set fair expiration rules and drive urgency to redeem." },
-      { title: "Scheduled Campaigns", desc: "Plan and schedule campaigns weeks or months in advance." },
-      { title: "Smart Customer Triggers", desc: "React to customer behavior automatically with smart triggers." },
+      {
+        title: "Automated Rewards",
+        desc: "Trigger rewards based on milestones, spend, or visit count.",
+      },
+      {
+        title: "Birthday Rewards",
+        desc: "Automatically celebrate every customer on their special day.",
+      },
+      {
+        title: "Tier Upgrades",
+        desc: "Move customers up tiers the moment they qualify — no manual work.",
+      },
+      {
+        title: "Points Expiration",
+        desc: "Set fair expiration rules and drive urgency to redeem.",
+      },
+      {
+        title: "Scheduled Campaigns",
+        desc: "Plan and schedule campaigns weeks or months in advance.",
+      },
+      {
+        title: "Smart Customer Triggers",
+        desc: "React to customer behavior automatically with smart triggers.",
+      },
     ],
   },
 ];
@@ -256,7 +355,10 @@ function Checklist({ groups }: { groups: FeatureGroup[] }) {
             )}
             <ul className="space-y-3">
               {g.items.map((item) => (
-                <li key={item.title} className="flex items-start gap-3 text-sm text-muted-foreground">
+                <li
+                  key={item.title}
+                  className="flex items-start gap-3 text-sm text-muted-foreground"
+                >
                   <Check className="mt-1 h-4 w-4 shrink-0 text-gold-500" />
                   <span>
                     <span className="font-medium text-foreground">{item.title}</span>
@@ -304,9 +406,7 @@ function SectionHead({
       <span className="inline-block rounded-full bg-gold-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-gold-500">
         {eyebrow}
       </span>
-      <h2 className="mt-4 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">
-        {title}
-      </h2>
+      <h2 className="mt-4 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">{title}</h2>
       <p className="mt-4 text-base text-muted-foreground">{description}</p>
     </div>
   );
@@ -354,7 +454,9 @@ function FeatureSection({
             <SectionHead eyebrow={eyebrow} title={title} description={description} />
             <Checklist groups={groups} />
           </div>
-          <div className={cn("lg:sticky lg:top-40", imageLayout === "split-left" ? "lg:order-1" : "")}>
+          <div
+            className={cn("lg:sticky lg:top-40", imageLayout === "split-left" ? "lg:order-1" : "")}
+          >
             <Frame src={image} alt={imageAlt} />
           </div>
         </div>
@@ -388,9 +490,7 @@ function useActiveSection(ids: string[]) {
 function MidPageCTA() {
   return (
     <section className="px-6 py-12">
-      <div
-        className="relative mx-auto max-w-5xl overflow-hidden rounded-2xl border border-gold-500/20 bg-navy-50/60 px-8 py-10 shadow-[var(--shadow-soft)]"
-      >
+      <div className="relative mx-auto max-w-5xl overflow-hidden rounded-2xl border border-gold-500/20 bg-navy-50/60 px-8 py-10 shadow-[var(--shadow-soft)]">
         <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
           <div className="max-w-xl">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-gold-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-gold-500">
@@ -452,12 +552,11 @@ function FeaturesPage() {
 
           <div className="relative mx-auto max-w-7xl px-6 pt-16 pb-10 text-center">
             <h1 className="mx-auto mt-4 max-w-4xl text-4xl font-bold leading-[1.1] tracking-tight text-navy-900 sm:text-5xl md:text-6xl">
-              Everything You Need to Build{" "}
-              <span className="text-gold-500">Customer Loyalty</span>
+              Everything You Need to Build <span className="text-gold-500">Customer Loyalty</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base text-navy-700 sm:text-lg">
-              Manage loyalty programs, customer data, rewards, and analytics with a
-              platform built specifically for local businesses.
+              Manage loyalty programs, customer data, rewards, and analytics with a platform built
+              specifically for local businesses.
             </p>
 
             <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -572,7 +671,8 @@ function FeaturesPage() {
                   key={s.label}
                   className={cn(
                     "rounded-2xl border border-border bg-card p-7 text-center shadow-[var(--shadow-soft)]",
-                    i === stats.length - 1 && "col-span-2 sm:col-span-2 md:col-span-1 lg:col-span-1",
+                    i === stats.length - 1 &&
+                      "col-span-2 sm:col-span-2 md:col-span-1 lg:col-span-1",
                   )}
                 >
                   <div className="text-3xl font-bold text-navy-900 sm:text-4xl">
@@ -615,7 +715,9 @@ function FeaturesPage() {
                   <Link to="/signup">Get Started</Link>
                 </Button>
                 <Button variant="ghostLight" size="lg" asChild>
-                  <Link to="/" hash="pricing">View Pricing</Link>
+                  <Link to="/" hash="pricing">
+                    View Pricing
+                  </Link>
                 </Button>
               </div>
             </div>

@@ -39,9 +39,7 @@ export function CountUp({
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
   const startValue = Math.max(0, Math.min(target, target * startFraction));
-  const [value, setValue] = useState<number>(
-    prefersReducedMotion ? target : startValue,
-  );
+  const [value, setValue] = useState<number>(prefersReducedMotion ? target : startValue);
   const hasStartedRef = useRef(false);
   const ref = useRef<HTMLSpanElement>(null);
 

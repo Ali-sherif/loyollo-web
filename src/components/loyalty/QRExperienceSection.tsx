@@ -217,10 +217,7 @@ export function QRExperienceSection({ programId, ensureProgramSaved, programConf
     setSaving(key);
     const { data, error } = await getAuthSupabase()
       .from("qr_page_settings")
-      .upsert(
-        { loyalty_program_id: pid, ...payload },
-        { onConflict: "loyalty_program_id" },
-      )
+      .upsert({ loyalty_program_id: pid, ...payload }, { onConflict: "loyalty_program_id" })
       .select("id")
       .single();
     setSaving(null);
@@ -246,12 +243,12 @@ export function QRExperienceSection({ programId, ensureProgramSaved, programConf
     try {
       const ext = (file.name.split(".").pop() || "png").toLowerCase();
       const path = `${user.id}/${kind}-${Date.now()}.${ext}`;
-      const { error: upErr } = await getAuthSupabase().storage
-        .from("qr-branding")
+      const { error: upErr } = await getAuthSupabase()
+        .storage.from("qr-branding")
         .upload(path, file, { upsert: true, contentType: file.type });
       if (upErr) throw upErr;
-      const { data: signed, error: signErr } = await getAuthSupabase().storage
-        .from("qr-branding")
+      const { data: signed, error: signErr } = await getAuthSupabase()
+        .storage.from("qr-branding")
         .createSignedUrl(path, 60 * 60 * 24 * 365);
       if (signErr || !signed) throw signErr ?? new Error("Could not sign URL");
       const url = signed.signedUrl;
@@ -289,258 +286,257 @@ export function QRExperienceSection({ programId, ensureProgramSaved, programConf
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
       <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
-      <div className="mb-4">
-        <h2 className="text-[16px] font-semibold text-[#0a152f]">QR Experience</h2>
-        <p className="mt-1 text-[14px] text-[#737373]">
-          Customize what customers see when they scan your QR code to join.
-        </p>
-      </div>
+        <div className="mb-4">
+          <h2 className="text-[16px] font-semibold text-[#0a152f]">QR Experience</h2>
+          <p className="mt-1 text-[14px] text-[#737373]">
+            Customize what customers see when they scan your QR code to join.
+          </p>
+        </div>
 
+        <Accordion type="multiple" defaultValue={["branding"]} className="w-full">
+          {/* BRANDING */}
+          <AccordionItem value="branding" className="border-[#eef1f7]">
+            <AccordionTrigger className="text-[14px] font-semibold text-[#0a152f] hover:no-underline">
+              Branding
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <div className="grid gap-5">
+                <ImageField
+                  label="Logo"
+                  url={s.logo_url}
+                  uploading={uploading === "logo"}
+                  onFile={(f) => handleUpload("logo", f)}
+                  onClear={async () => {
+                    patch({ logo_url: null });
+                    await saveSection("branding", { logo_url: null });
+                  }}
+                />
+                <ImageField
+                  label="Cover image (optional)"
+                  url={s.cover_image_url}
+                  uploading={uploading === "cover"}
+                  onFile={(f) => handleUpload("cover", f)}
+                  onClear={async () => {
+                    patch({ cover_image_url: null });
+                    await saveSection("branding", { cover_image_url: null });
+                  }}
+                />
 
-      <Accordion type="multiple" defaultValue={["branding"]} className="w-full">
-        {/* BRANDING */}
-        <AccordionItem value="branding" className="border-[#eef1f7]">
-          <AccordionTrigger className="text-[14px] font-semibold text-[#0a152f] hover:no-underline">
-            Branding
-          </AccordionTrigger>
-          <AccordionContent className="pt-2">
-            <div className="grid gap-5">
-              <ImageField
-                label="Logo"
-                url={s.logo_url}
-                uploading={uploading === "logo"}
-                onFile={(f) => handleUpload("logo", f)}
-                onClear={async () => {
-                  patch({ logo_url: null });
-                  await saveSection("branding", { logo_url: null });
-                }}
-              />
-              <ImageField
-                label="Cover image (optional)"
-                url={s.cover_image_url}
-                uploading={uploading === "cover"}
-                onFile={(f) => handleUpload("cover", f)}
-                onClear={async () => {
-                  patch({ cover_image_url: null });
-                  await saveSection("branding", { cover_image_url: null });
-                }}
-              />
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <ColorField
+                    label="Primary color"
+                    value={s.primary_color}
+                    onChange={(v) => patch({ primary_color: v })}
+                  />
+                  <ColorField
+                    label="Secondary color"
+                    value={s.secondary_color}
+                    onChange={(v) => patch({ secondary_color: v })}
+                  />
+                  <ColorField
+                    label="Background color"
+                    value={s.background_color}
+                    onChange={(v) => patch({ background_color: v })}
+                  />
+                </div>
 
+                <SaveRow
+                  saving={saving === "branding"}
+                  onSave={() =>
+                    saveSection("branding", {
+                      primary_color: s.primary_color,
+                      secondary_color: s.secondary_color,
+                      background_color: s.background_color,
+                      logo_url: s.logo_url,
+                      cover_image_url: s.cover_image_url,
+                    })
+                  }
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* FORM FIELDS */}
+          <AccordionItem value="fields" className="border-[#eef1f7]">
+            <AccordionTrigger className="text-[14px] font-semibold text-[#0a152f] hover:no-underline">
+              Form fields
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <div className="overflow-hidden rounded-[10px] ring-1 ring-[#eef1f7]">
+                <div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 bg-[#fafafa] px-4 py-2 text-[12px] font-semibold uppercase tracking-wide text-[#8698bb]">
+                  <span>Field</span>
+                  <span className="w-20 text-center">Show</span>
+                  <span className="w-20 text-center">Required</span>
+                </div>
+                {FIELD_KEYS.map((k) => {
+                  const f = s.form_fields[k];
+                  return (
+                    <div
+                      key={k}
+                      className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-t border-[#eef1f7] px-4 py-3"
+                    >
+                      <div>
+                        <p className="text-[14px] font-medium text-[#0a152f]">{FIELD_LABELS[k]}</p>
+                        {k === "custom_field" && f.enabled ? (
+                          <input
+                            type="text"
+                            value={s.custom_field_label ?? ""}
+                            onChange={(e) => patch({ custom_field_label: e.target.value })}
+                            placeholder="Custom field label"
+                            className="mt-2 w-full max-w-xs rounded-[8px] bg-[#fafafa] px-3 py-2 text-[13px] text-[#0a152f] ring-1 ring-[#eef1f7] focus:outline-none focus:ring-2 focus:ring-[#feb602]"
+                          />
+                        ) : null}
+                      </div>
+                      <div className="flex w-20 justify-center">
+                        <Toggle
+                          checked={f.enabled}
+                          onChange={(v) =>
+                            patchField(k, { enabled: v, required: v ? f.required : false })
+                          }
+                          label={`Show ${FIELD_LABELS[k]}`}
+                        />
+                      </div>
+                      <div className="flex w-20 justify-center">
+                        <Toggle
+                          checked={f.required}
+                          disabled={!f.enabled}
+                          onChange={(v) => patchField(k, { required: v })}
+                          label={`Require ${FIELD_LABELS[k]}`}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-4">
+                <SaveRow
+                  saving={saving === "fields"}
+                  onSave={() =>
+                    saveSection("fields", {
+                      form_fields: s.form_fields,
+                      custom_field_label: s.custom_field_label,
+                    })
+                  }
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* CONTENT */}
+          <AccordionItem value="content" className="border-[#eef1f7]">
+            <AccordionTrigger className="text-[14px] font-semibold text-[#0a152f] hover:no-underline">
+              Content
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <div className="grid gap-4">
+                <TextField
+                  label="Business name override"
+                  value={s.business_name_override ?? ""}
+                  onChange={(v) => patch({ business_name_override: v })}
+                  placeholder="Leave blank to use your account name"
+                />
+                <TextField
+                  label="Welcome headline"
+                  value={s.welcome_headline ?? ""}
+                  onChange={(v) => patch({ welcome_headline: v })}
+                  placeholder="Welcome to our loyalty program!"
+                />
+                <TextAreaField
+                  label="Short description"
+                  value={s.short_description ?? ""}
+                  onChange={(v) => patch({ short_description: v })}
+                  placeholder="Tell customers what to expect."
+                />
+
+                <div className="mt-2 grid gap-3 rounded-[10px] bg-[#fafafa] p-4 ring-1 ring-[#eef1f7]">
+                  <ToggleRow
+                    title="Show welcome message"
+                    checked={s.show_welcome_message}
+                    onChange={(v) => patch({ show_welcome_message: v })}
+                  />
+                  <ToggleRow
+                    title="Show rewards preview"
+                    checked={s.show_rewards_preview}
+                    onChange={(v) => patch({ show_rewards_preview: v })}
+                  />
+                  <ToggleRow
+                    title="Show program description"
+                    checked={s.show_program_description}
+                    onChange={(v) => patch({ show_program_description: v })}
+                  />
+                  <ToggleRow
+                    title="Show referral section"
+                    checked={s.show_referral_section}
+                    onChange={(v) => patch({ show_referral_section: v })}
+                  />
+                  <ToggleRow
+                    title="Show terms"
+                    checked={s.show_terms}
+                    onChange={(v) => patch({ show_terms: v })}
+                  />
+                </div>
+
+                <SaveRow
+                  saving={saving === "content"}
+                  onSave={() =>
+                    saveSection("content", {
+                      business_name_override: s.business_name_override,
+                      welcome_headline: s.welcome_headline,
+                      short_description: s.short_description,
+                      show_welcome_message: s.show_welcome_message,
+                      show_rewards_preview: s.show_rewards_preview,
+                      show_program_description: s.show_program_description,
+                      show_referral_section: s.show_referral_section,
+                      show_terms: s.show_terms,
+                    })
+                  }
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* BUTTONS */}
+          <AccordionItem value="buttons" className="border-b-0 border-[#eef1f7]">
+            <AccordionTrigger className="text-[14px] font-semibold text-[#0a152f] hover:no-underline">
+              Buttons
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
               <div className="grid gap-4 sm:grid-cols-3">
                 <ColorField
-                  label="Primary color"
-                  value={s.primary_color}
-                  onChange={(v) => patch({ primary_color: v })}
+                  label="Button color"
+                  value={s.button_color}
+                  onChange={(v) => patch({ button_color: v })}
                 />
                 <ColorField
-                  label="Secondary color"
-                  value={s.secondary_color}
-                  onChange={(v) => patch({ secondary_color: v })}
+                  label="Button text color"
+                  value={s.button_text_color}
+                  onChange={(v) => patch({ button_text_color: v })}
                 />
-                <ColorField
-                  label="Background color"
-                  value={s.background_color}
-                  onChange={(v) => patch({ background_color: v })}
-                />
-              </div>
-
-              <SaveRow
-                saving={saving === "branding"}
-                onSave={() =>
-                  saveSection("branding", {
-                    primary_color: s.primary_color,
-                    secondary_color: s.secondary_color,
-                    background_color: s.background_color,
-                    logo_url: s.logo_url,
-                    cover_image_url: s.cover_image_url,
-                  })
-                }
-              />
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* FORM FIELDS */}
-        <AccordionItem value="fields" className="border-[#eef1f7]">
-          <AccordionTrigger className="text-[14px] font-semibold text-[#0a152f] hover:no-underline">
-            Form fields
-          </AccordionTrigger>
-          <AccordionContent className="pt-2">
-            <div className="overflow-hidden rounded-[10px] ring-1 ring-[#eef1f7]">
-              <div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 bg-[#fafafa] px-4 py-2 text-[12px] font-semibold uppercase tracking-wide text-[#8698bb]">
-                <span>Field</span>
-                <span className="w-20 text-center">Show</span>
-                <span className="w-20 text-center">Required</span>
-              </div>
-              {FIELD_KEYS.map((k) => {
-                const f = s.form_fields[k];
-                return (
-                  <div
-                    key={k}
-                    className="grid grid-cols-[1fr_auto_auto] items-center gap-4 border-t border-[#eef1f7] px-4 py-3"
-                  >
-                    <div>
-                      <p className="text-[14px] font-medium text-[#0a152f]">{FIELD_LABELS[k]}</p>
-                      {k === "custom_field" && f.enabled ? (
-                        <input
-                          type="text"
-                          value={s.custom_field_label ?? ""}
-                          onChange={(e) => patch({ custom_field_label: e.target.value })}
-                          placeholder="Custom field label"
-                          className="mt-2 w-full max-w-xs rounded-[8px] bg-[#fafafa] px-3 py-2 text-[13px] text-[#0a152f] ring-1 ring-[#eef1f7] focus:outline-none focus:ring-2 focus:ring-[#feb602]"
-                        />
-                      ) : null}
-                    </div>
-                    <div className="flex w-20 justify-center">
-                      <Toggle
-                        checked={f.enabled}
-                        onChange={(v) =>
-                          patchField(k, { enabled: v, required: v ? f.required : false })
-                        }
-                        label={`Show ${FIELD_LABELS[k]}`}
-                      />
-                    </div>
-                    <div className="flex w-20 justify-center">
-                      <Toggle
-                        checked={f.required}
-                        disabled={!f.enabled}
-                        onChange={(v) => patchField(k, { required: v })}
-                        label={`Require ${FIELD_LABELS[k]}`}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="mt-4">
-              <SaveRow
-                saving={saving === "fields"}
-                onSave={() =>
-                  saveSection("fields", {
-                    form_fields: s.form_fields,
-                    custom_field_label: s.custom_field_label,
-                  })
-                }
-              />
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* CONTENT */}
-        <AccordionItem value="content" className="border-[#eef1f7]">
-          <AccordionTrigger className="text-[14px] font-semibold text-[#0a152f] hover:no-underline">
-            Content
-          </AccordionTrigger>
-          <AccordionContent className="pt-2">
-            <div className="grid gap-4">
-              <TextField
-                label="Business name override"
-                value={s.business_name_override ?? ""}
-                onChange={(v) => patch({ business_name_override: v })}
-                placeholder="Leave blank to use your account name"
-              />
-              <TextField
-                label="Welcome headline"
-                value={s.welcome_headline ?? ""}
-                onChange={(v) => patch({ welcome_headline: v })}
-                placeholder="Welcome to our loyalty program!"
-              />
-              <TextAreaField
-                label="Short description"
-                value={s.short_description ?? ""}
-                onChange={(v) => patch({ short_description: v })}
-                placeholder="Tell customers what to expect."
-              />
-
-              <div className="mt-2 grid gap-3 rounded-[10px] bg-[#fafafa] p-4 ring-1 ring-[#eef1f7]">
-                <ToggleRow
-                  title="Show welcome message"
-                  checked={s.show_welcome_message}
-                  onChange={(v) => patch({ show_welcome_message: v })}
-                />
-                <ToggleRow
-                  title="Show rewards preview"
-                  checked={s.show_rewards_preview}
-                  onChange={(v) => patch({ show_rewards_preview: v })}
-                />
-                <ToggleRow
-                  title="Show program description"
-                  checked={s.show_program_description}
-                  onChange={(v) => patch({ show_program_description: v })}
-                />
-                <ToggleRow
-                  title="Show referral section"
-                  checked={s.show_referral_section}
-                  onChange={(v) => patch({ show_referral_section: v })}
-                />
-                <ToggleRow
-                  title="Show terms"
-                  checked={s.show_terms}
-                  onChange={(v) => patch({ show_terms: v })}
+                <TextField
+                  label="Button text"
+                  value={s.button_text ?? ""}
+                  onChange={(v) => patch({ button_text: v })}
+                  placeholder="Join Loyalty Program"
                 />
               </div>
-
-              <SaveRow
-                saving={saving === "content"}
-                onSave={() =>
-                  saveSection("content", {
-                    business_name_override: s.business_name_override,
-                    welcome_headline: s.welcome_headline,
-                    short_description: s.short_description,
-                    show_welcome_message: s.show_welcome_message,
-                    show_rewards_preview: s.show_rewards_preview,
-                    show_program_description: s.show_program_description,
-                    show_referral_section: s.show_referral_section,
-                    show_terms: s.show_terms,
-                  })
-                }
-              />
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-
-        {/* BUTTONS */}
-        <AccordionItem value="buttons" className="border-b-0 border-[#eef1f7]">
-          <AccordionTrigger className="text-[14px] font-semibold text-[#0a152f] hover:no-underline">
-            Buttons
-          </AccordionTrigger>
-          <AccordionContent className="pt-2">
-            <div className="grid gap-4 sm:grid-cols-3">
-              <ColorField
-                label="Button color"
-                value={s.button_color}
-                onChange={(v) => patch({ button_color: v })}
-              />
-              <ColorField
-                label="Button text color"
-                value={s.button_text_color}
-                onChange={(v) => patch({ button_text_color: v })}
-              />
-              <TextField
-                label="Button text"
-                value={s.button_text ?? ""}
-                onChange={(v) => patch({ button_text: v })}
-                placeholder="Join Loyalty Program"
-              />
-            </div>
-            <p className="mt-2 text-[12px] text-[#8698bb]">
-              Examples: "Join Loyalty Program", "Start Collecting Points", "Claim Your Rewards"
-            </p>
-            <div className="mt-4">
-              <SaveRow
-                saving={saving === "buttons"}
-                onSave={() =>
-                  saveSection("buttons", {
-                    button_color: s.button_color,
-                    button_text: s.button_text,
-                    button_text_color: s.button_text_color,
-                  })
-                }
-              />
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+              <p className="mt-2 text-[12px] text-[#8698bb]">
+                Examples: "Join Loyalty Program", "Start Collecting Points", "Claim Your Rewards"
+              </p>
+              <div className="mt-4">
+                <SaveRow
+                  saving={saving === "buttons"}
+                  onSave={() =>
+                    saveSection("buttons", {
+                      button_color: s.button_color,
+                      button_text: s.button_text,
+                      button_text_color: s.button_text_color,
+                    })
+                  }
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </section>
 
       <aside className="lg:sticky lg:top-4 lg:self-start">
@@ -549,7 +545,6 @@ export function QRExperienceSection({ programId, ensureProgramSaved, programConf
     </div>
   );
 }
-
 
 /* ---------- helpers ---------- */
 
@@ -772,8 +767,7 @@ function ToggleRow({
 
 function JoinPreview({ s, programConfig }: { s: Settings; programConfig?: QRProgramConfig }) {
   const enabledFields = FIELD_KEYS.filter((k) => s.form_fields[k].enabled);
-  const businessName =
-    (s.business_name_override || "").trim() || "Your business";
+  const businessName = (s.business_name_override || "").trim() || "Your business";
   const headline = (s.welcome_headline || "").trim() || "Welcome!";
   const description =
     (s.short_description || "").trim() ||
@@ -783,9 +777,7 @@ function JoinPreview({ s, programConfig }: { s: Settings; programConfig?: QRProg
     <div className="rounded-[16px] bg-white p-4 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-[14px] font-semibold text-[#0a152f]">Live preview</h3>
-        <span className="text-[11px] uppercase tracking-wide text-[#8698bb]">
-          Not saved yet
-        </span>
+        <span className="text-[11px] uppercase tracking-wide text-[#8698bb]">Not saved yet</span>
       </div>
 
       {/* Phone frame */}
@@ -797,11 +789,7 @@ function JoinPreview({ s, programConfig }: { s: Settings; programConfig?: QRProg
           {/* Cover */}
           {s.cover_image_url ? (
             <div className="h-24 w-full overflow-hidden">
-              <img
-                src={s.cover_image_url}
-                alt=""
-                className="h-full w-full object-cover"
-              />
+              <img src={s.cover_image_url} alt="" className="h-full w-full object-cover" />
             </div>
           ) : (
             <div
@@ -842,9 +830,7 @@ function JoinPreview({ s, programConfig }: { s: Settings; programConfig?: QRProg
 
             {/* Description */}
             {s.show_program_description ? (
-              <p className="mt-2 text-[12px] leading-[1.5] text-[#525252]">
-                {description}
-              </p>
+              <p className="mt-2 text-[12px] leading-[1.5] text-[#525252]">{description}</p>
             ) : null}
 
             {/* Rewards preview — reflects the actual program type */}

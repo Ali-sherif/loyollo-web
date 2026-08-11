@@ -29,11 +29,13 @@ function ResetPasswordPage() {
         setReady(true);
       }
     });
-    getAuthSupabase().auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setValidSession(!!data.session);
-      setReady(true);
-    });
+    getAuthSupabase()
+      .auth.getSession()
+      .then(({ data }) => {
+        if (!mounted) return;
+        setValidSession(!!data.session);
+        setReady(true);
+      });
     return () => {
       mounted = false;
       sub.subscription.unsubscribe();
@@ -50,7 +52,10 @@ function ResetPasswordPage() {
     ev.preventDefault();
     setError(null);
     const v = validate();
-    if (v) { setError(v); return; }
+    if (v) {
+      setError(v);
+      return;
+    }
     setLoading(true);
     const { error: err } = await updatePassword(password);
     setLoading(false);
@@ -65,16 +70,10 @@ function ResetPasswordPage() {
   return (
     <div className="bg-[#eef1f7] p-3 sm:p-6 lg:p-12">
       <div className="mx-auto flex w-full max-w-[720px] flex-col items-center justify-center gap-10 rounded-[40px] bg-[#eef1f7] px-6 py-10 sm:px-12 lg:px-20 lg:py-12">
-        <img
-          src={loyolloLogoSignup}
-          alt="Loyollo logo"
-          className="h-8 w-auto md:h-10"
-        />
+        <img src={loyolloLogoSignup} alt="Loyollo logo" className="h-8 w-auto md:h-10" />
 
         <div className="w-full text-center">
-          <h1 className="text-2xl font-bold leading-[1.2] text-[#0a152f]">
-            Set a new password
-          </h1>
+          <h1 className="text-2xl font-bold leading-[1.2] text-[#0a152f]">Set a new password</h1>
           <p className="mt-2 text-base text-[#525252]">
             Choose a strong password you haven't used before.
           </p>
@@ -85,7 +84,10 @@ function ResetPasswordPage() {
         ) : validSession === false ? (
           <div className="w-full max-w-[560px] rounded-md bg-red-50 px-4 py-4 text-center text-sm text-red-600">
             <p>This reset link is invalid or has expired.</p>
-            <Link to="/forgot-password" className="mt-2 inline-block font-semibold text-[#e29f00] underline">
+            <Link
+              to="/forgot-password"
+              className="mt-2 inline-block font-semibold text-[#e29f00] underline"
+            >
               Request a new reset link
             </Link>
           </div>
@@ -94,7 +96,11 @@ function ResetPasswordPage() {
             Password updated. Redirecting to sign in…
           </p>
         ) : (
-          <form onSubmit={handleSubmit} noValidate className="flex w-full max-w-[560px] flex-col gap-5">
+          <form
+            onSubmit={handleSubmit}
+            noValidate
+            className="flex w-full max-w-[560px] flex-col gap-5"
+          >
             <PwField
               id="new-password"
               placeholder="New password"
@@ -113,7 +119,11 @@ function ResetPasswordPage() {
             />
 
             {error && (
-              <p role="alert" aria-live="polite" className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-600">
+              <p
+                role="alert"
+                aria-live="polite"
+                className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-600"
+              >
                 {error}
               </p>
             )}
@@ -134,7 +144,12 @@ function ResetPasswordPage() {
 }
 
 function PwField({
-  id, placeholder, value, onChange, show, onToggle,
+  id,
+  placeholder,
+  value,
+  onChange,
+  show,
+  onToggle,
 }: {
   id: string;
   placeholder: string;
@@ -167,6 +182,5 @@ function PwField({
     </div>
   );
 }
-
 
 export default ResetPasswordPage;

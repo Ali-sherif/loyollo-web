@@ -1,11 +1,4 @@
-import {
-  QrCode,
-  Users,
-  Gift,
-  LineChart,
-  Mail,
-  BarChart3,
-} from "lucide-react";
+import { QrCode, Users, Gift, LineChart, Mail, BarChart3 } from "lucide-react";
 import { SectionHeader } from "./SectionHeader";
 
 const features = [

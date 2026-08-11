@@ -94,9 +94,7 @@ function OnboardingBusinessType() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select(
-          "onboarding_completed, num_locations, business_type, business_category",
-        )
+        .select("onboarding_completed, num_locations, business_type, business_category")
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
@@ -169,9 +167,7 @@ function OnboardingBusinessType() {
           <OnboardingLeftPanelDecor />
 
           <div className="relative flex items-center justify-center rounded-full bg-[#0f1c3d] px-10 py-5">
-            <span className="text-base font-semibold leading-none text-[#feb602]">
-              LOGO
-            </span>
+            <span className="text-base font-semibold leading-none text-[#feb602]">LOGO</span>
           </div>
 
           <div className="relative flex w-full flex-col items-center gap-4 text-center">
@@ -179,8 +175,7 @@ function OnboardingBusinessType() {
               Let&rsquo;s Setup Your Account
             </h2>
             <p className="text-base font-normal text-[#eef1f7]">
-              Just a few quick steps to personalize your experience and launch
-              your loyalty program.
+              Just a few quick steps to personalize your experience and launch your loyalty program.
             </p>
           </div>
         </aside>
@@ -200,18 +195,12 @@ function OnboardingBusinessType() {
               {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
                 const step = i + 1;
                 if (step === CURRENT_STEP) {
-                  return (
-                    <span key={i} className="h-2 w-8 rounded-full bg-[#feb602]" />
-                  );
+                  return <span key={i} className="h-2 w-8 rounded-full bg-[#feb602]" />;
                 }
                 if (step < CURRENT_STEP) {
-                  return (
-                    <span key={i} className="h-2 w-2 rounded-full bg-[#44b678]" />
-                  );
+                  return <span key={i} className="h-2 w-2 rounded-full bg-[#44b678]" />;
                 }
-                return (
-                  <span key={i} className="h-2 w-2 rounded-full bg-[#d7ddea]" />
-                );
+                return <span key={i} className="h-2 w-2 rounded-full bg-[#d7ddea]" />;
               })}
             </div>
 
@@ -248,10 +237,7 @@ function OnboardingBusinessType() {
                       }
                     >
                       <Icon
-                        className={
-                          "h-5 w-5 " +
-                          (active ? "text-[#e29f00]" : "text-[#0a152f]")
-                        }
+                        className={"h-5 w-5 " + (active ? "text-[#e29f00]" : "text-[#0a152f]")}
                         aria-hidden
                       />
                     </span>
@@ -265,10 +251,7 @@ function OnboardingBusinessType() {
 
             {isOther && (
               <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="business_type_other"
-                  className="text-sm font-medium text-[#0a152f]"
-                >
+                <label htmlFor="business_type_other" className="text-sm font-medium text-[#0a152f]">
                   Tell us about your business category
                 </label>
                 <input
@@ -283,7 +266,6 @@ function OnboardingBusinessType() {
                 />
               </div>
             )}
-
 
             {submitError && (
               <p role="alert" className="text-sm text-red-600">
@@ -316,9 +298,7 @@ function OnboardingBusinessType() {
           </div>
 
           <div className="flex items-center justify-center py-2">
-            <p className="text-base text-[#737373]">
-              *Your data stays private and encrypted.
-            </p>
+            <p className="text-base text-[#737373]">*Your data stays private and encrypted.</p>
           </div>
         </section>
       </div>

@@ -6,7 +6,12 @@ const FROM_DOMAIN = "loyollo.com";
 const APP_ORIGIN = "https://www.loyollo.com";
 
 const esc = (s: string) =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
 const getProgramSchema = z.object({
   programId: z.string().uuid(),
@@ -70,7 +75,6 @@ const enrollSchema = z
     path: ["fullName"],
   });
 
-
 export type EnrollResult = {
   customerId: string;
   alreadyEnrolled: boolean;
@@ -97,7 +101,7 @@ export const enrollCustomer = createServerFn({ method: "POST" })
     const { data: program, error: programErr } = await supabaseAdmin
       .from("loyalty_programs")
       .select(
-        "id, owner_id, program_type, points_earned, visits_required, reward_on_completion, double_stamp_weekends, max_visits_per_day, after_reward_action"
+        "id, owner_id, program_type, points_earned, visits_required, reward_on_completion, double_stamp_weekends, max_visits_per_day, after_reward_action",
       )
       .eq("id", data.programId)
       .maybeSingle();
@@ -148,7 +152,6 @@ export const enrollCustomer = createServerFn({ method: "POST" })
       .select("id, points, visits")
       .single();
     if (insErr) throw new Error(insErr.message);
-
 
     void notifyOwnerOfNewCustomer({
       programId: data.programId,
@@ -299,12 +302,12 @@ async function recordCheckIn(args: {
         programType: program.program_type as "visit" | "tier",
       };
       // Apply after_reward_action for visit programs (tier programs continue accumulating)
-      if (program.program_type === "visit" && (program.after_reward_action ?? "reset") === "reset") {
+      if (
+        program.program_type === "visit" &&
+        (program.after_reward_action ?? "reset") === "reset"
+      ) {
         const remaining = Math.max(0, newVisits - program.visits_required);
-        await supabaseAdmin
-          .from("customers")
-          .update({ visits: remaining })
-          .eq("id", customerId);
+        await supabaseAdmin.from("customers").update({ visits: remaining }).eq("id", customerId);
         newVisits = remaining;
         visitProgramReset = true;
       }
@@ -354,7 +357,9 @@ async function getOwnerProfile(ownerId: string) {
   return profile;
 }
 
-function brandNameOf(profile: { business_name?: string | null; full_name?: string | null } | null | undefined) {
+function brandNameOf(
+  profile: { business_name?: string | null; full_name?: string | null } | null | undefined,
+) {
   return (
     (profile?.business_name && profile.business_name.trim()) ||
     (profile?.full_name && profile.full_name.trim()) ||

@@ -18,15 +18,15 @@ This spike is intentionally isolated from the TanStack production app. No busine
 
 ## What was built
 
-| Piece (was under `spikes/auth-ssr/`) | Role |
-| ----- | ---- |
-| Isolated Next app | Next.js **16.3.0**, React **19.2.8**, `@supabase/ssr` |
-| `proxy.ts` | Session refresh + `/protected` redirect (Next 16 proxy convention) |
-| `lib/supabase/{client,server,middleware}.ts` | Browser / RSC / proxy factories |
-| `app/page.tsx` | Public RSC showing SSR session + client auth panel |
-| `app/protected/page.tsx` | Authenticated RSC (`getUser()` + defense-in-depth redirect) |
-| `app/api/spike/{signup,login,logout,session,bootstrap}` | Cookie-setting Route Handlers + inspect endpoint |
-| `scripts/validate.mjs` | Automated pass/fail harness (`npm run validate`) |
+| Piece (was under `spikes/auth-ssr/`)                    | Role                                                               |
+| ------------------------------------------------------- | ------------------------------------------------------------------ |
+| Isolated Next app                                       | Next.js **16.3.0**, React **19.2.8**, `@supabase/ssr`              |
+| `proxy.ts`                                              | Session refresh + `/protected` redirect (Next 16 proxy convention) |
+| `lib/supabase/{client,server,middleware}.ts`            | Browser / RSC / proxy factories                                    |
+| `app/page.tsx`                                          | Public RSC showing SSR session + client auth panel                 |
+| `app/protected/page.tsx`                                | Authenticated RSC (`getUser()` + defense-in-depth redirect)        |
+| `app/api/spike/{signup,login,logout,session,bootstrap}` | Cookie-setting Route Handlers + inspect endpoint                   |
+| `scripts/validate.mjs`                                  | Automated pass/fail harness (`npm run validate`)                   |
 
 **Note:** Next.js 16.3 deprecates `middleware.ts` in favor of `proxy.ts`. The spike used `proxy.ts` and still exercised the same request-edge cookie bridge the migration docs call “middleware.”
 
@@ -57,14 +57,14 @@ Live project Auth settings (`GET /auth/v1/settings`):
 
 Automated harness against `http://127.0.0.1:3000` with live URL + anon key:
 
-| Step | Result |
-| ---- | ------ |
-| Live Auth settings reachable | PASS |
-| Unauthenticated `GET /protected` → `307` to `/?redirectedFrom=%2Fprotected` | PASS |
-| Anonymous `GET /api/spike/session` → `user: null` | PASS |
-| Establish HTTP-only session (signup/login) | **FAIL / BLOCKED** — signup creates user but no session; login returns `Email not confirmed` |
-| Authenticated RSC `getUser()` after hard refresh | NOT RUN (blocked upstream) |
-| Sign-out clears cookies | NOT RUN |
+| Step                                                                        | Result                                                                                       |
+| --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Live Auth settings reachable                                                | PASS                                                                                         |
+| Unauthenticated `GET /protected` → `307` to `/?redirectedFrom=%2Fprotected` | PASS                                                                                         |
+| Anonymous `GET /api/spike/session` → `user: null`                           | PASS                                                                                         |
+| Establish HTTP-only session (signup/login)                                  | **FAIL / BLOCKED** — signup creates user but no session; login returns `Email not confirmed` |
+| Authenticated RSC `getUser()` after hard refresh                            | NOT RUN (blocked upstream)                                                                   |
+| Sign-out clears cookies                                                     | NOT RUN                                                                                      |
 
 Disposable-inbox attempt (mail.tm) also received **no** confirmation mail — consistent with custom Lovable auth-email delivery rather than direct SMTP to the recipient inbox.
 
@@ -102,11 +102,11 @@ Neither was available in the repo env (only URL + publishable/anon key).
 
 ## Gate impact
 
-| Item | Outcome |
-| ---- | ------- |
-| Cookie/SSR session spike | **ACCEPTED RISK** — remains **BLOCKED** / not APPROVED until proven after migration start |
-| Overall migration Go/No-Go | May be **GO** while this item remains open (must stay documented until PASSED) |
-| Create root Next.js application | Allowed once other Critical checklist items are DECIDED or ACCEPTED RISK |
+| Item                            | Outcome                                                                                   |
+| ------------------------------- | ----------------------------------------------------------------------------------------- |
+| Cookie/SSR session spike        | **ACCEPTED RISK** — remains **BLOCKED** / not APPROVED until proven after migration start |
+| Overall migration Go/No-Go      | May be **GO** while this item remains open (must stay documented until PASSED)            |
+| Create root Next.js application | Allowed once other Critical checklist items are DECIDED or ACCEPTED RISK                  |
 
 ### Unblock checklist (remains open)
 

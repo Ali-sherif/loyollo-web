@@ -7,11 +7,7 @@
  * Uses only site design tokens (navy / gold / success / card / border) and
  * matches the flat illustration style of the other How It Works step graphics.
  */
-export function RewardCustomersIllustration({
-  className,
-}: {
-  className?: string;
-}) {
+export function RewardCustomersIllustration({ className }: { className?: string }) {
   return (
     <svg
       role="img"
@@ -22,19 +18,12 @@ export function RewardCustomersIllustration({
       preserveAspectRatio="xMidYMid meet"
     >
       <title>
-        Illustration of a customer receiving a free gift-box reward after
-        completing a filled stamp card on their phone at a business counter
+        Illustration of a customer receiving a free gift-box reward after completing a filled stamp
+        card on their phone at a business counter
       </title>
 
       {/* Backdrop panel */}
-      <rect
-        x="0"
-        y="0"
-        width="600"
-        height="305"
-        rx="16"
-        fill="var(--navy-25)"
-      />
+      <rect x="0" y="0" width="600" height="305" rx="16" fill="var(--navy-25)" />
 
       {/* Soft accent blobs */}
       <circle cx="90" cy="90" r="70" fill="var(--gold-50)" opacity="0.85" />
@@ -42,7 +31,14 @@ export function RewardCustomersIllustration({
 
       {/* Customer avatar (left, slightly above phone) */}
       <g transform="translate(70 38)">
-        <circle cx="36" cy="36" r="32" fill="var(--card)" stroke="var(--navy-100)" strokeWidth="1.5" />
+        <circle
+          cx="36"
+          cy="36"
+          r="32"
+          fill="var(--card)"
+          stroke="var(--navy-100)"
+          strokeWidth="1.5"
+        />
         <circle cx="36" cy="30" r="20" fill="var(--navy-100)" opacity="0.6" />
         <path
           d="M16 22 C16 8, 56 8, 56 22 C56 14, 50 10, 36 10 C22 10, 16 14, 16 22"
@@ -57,19 +53,33 @@ export function RewardCustomersIllustration({
           strokeLinecap="round"
           fill="none"
         />
-        <path
-          d="M12 60 C12 46, 60 46, 60 60 V66 H12 Z"
-          fill="var(--navy-700)"
-        />
+        <path d="M12 60 C12 46, 60 46, 60 60 V66 H12 Z" fill="var(--navy-700)" />
         <rect x="24" y="56" width="24" height="3" rx="1.5" fill="var(--gold-500)" />
       </g>
 
       {/* Hand / arm holding phone */}
       <g transform="translate(200 60)">
         {/* phone shadow */}
-        <rect x="18" y="18" width="104" height="184" rx="22" fill="var(--navy-900)" opacity="0.08" />
+        <rect
+          x="18"
+          y="18"
+          width="104"
+          height="184"
+          rx="22"
+          fill="var(--navy-900)"
+          opacity="0.08"
+        />
         {/* Phone frame */}
-        <rect x="0" y="0" width="140" height="200" rx="22" fill="var(--navy-900)" stroke="var(--navy-200)" strokeWidth="1.5" />
+        <rect
+          x="0"
+          y="0"
+          width="140"
+          height="200"
+          rx="22"
+          fill="var(--navy-900)"
+          stroke="var(--navy-200)"
+          strokeWidth="1.5"
+        />
         {/* Screen */}
         <rect x="10" y="10" width="120" height="180" rx="16" fill="var(--card)" />
         {/* Notch */}
@@ -83,7 +93,14 @@ export function RewardCustomersIllustration({
 
         {/* Filled stamp card on phone screen */}
         <g transform="translate(22 58)">
-          <rect width="96" height="74" rx="12" fill="var(--gold-50)" stroke="var(--gold-200)" strokeWidth="1.5" />
+          <rect
+            width="96"
+            height="74"
+            rx="12"
+            fill="var(--gold-50)"
+            stroke="var(--gold-200)"
+            strokeWidth="1.5"
+          />
           <text
             x="48"
             y="20"
@@ -128,7 +145,14 @@ export function RewardCustomersIllustration({
 
         {/* 100% progress bar on phone screen */}
         <g transform="translate(22 144)">
-          <rect width="96" height="34" rx="10" fill="var(--navy-25)" stroke="var(--navy-100)" strokeWidth="1.5" />
+          <rect
+            width="96"
+            height="34"
+            rx="10"
+            fill="var(--navy-25)"
+            stroke="var(--navy-100)"
+            strokeWidth="1.5"
+          />
           <text
             x="48"
             y="14"
@@ -160,7 +184,16 @@ export function RewardCustomersIllustration({
         {/* Counter top */}
         <rect x="0" y="80" width="200" height="18" rx="9" fill="var(--navy-200)" />
         {/* Counter body */}
-        <rect x="10" y="98" width="180" height="64" rx="12" fill="var(--card)" stroke="var(--navy-100)" strokeWidth="1.5" />
+        <rect
+          x="10"
+          y="98"
+          width="180"
+          height="64"
+          rx="12"
+          fill="var(--card)"
+          stroke="var(--navy-100)"
+          strokeWidth="1.5"
+        />
         {/* Drawer lines */}
         <rect x="36" y="114" width="128" height="6" rx="3" fill="var(--navy-100)" />
         <rect x="36" y="130" width="96" height="6" rx="3" fill="var(--navy-100)" />
@@ -171,13 +204,19 @@ export function RewardCustomersIllustration({
       {/* Merchant hand reaching across counter with gift */}
       <g transform="translate(400 80)">
         {/* Arm */}
-        <path
-          d="M120 80 Q80 70 40 60 L30 85 Q80 90 120 90 Z"
-          fill="var(--navy-100)"
-        />
+        <path d="M120 80 Q80 70 40 60 L30 85 Q80 90 120 90 Z" fill="var(--navy-100)" />
         {/* Gift box */}
         <g transform="translate(8 32)">
-          <rect x="0" y="10" width="44" height="34" rx="6" fill="var(--gold-500)" stroke="var(--gold-600)" strokeWidth="1.5" />
+          <rect
+            x="0"
+            y="10"
+            width="44"
+            height="34"
+            rx="6"
+            fill="var(--gold-500)"
+            stroke="var(--gold-600)"
+            strokeWidth="1.5"
+          />
           <rect x="0" y="10" width="44" height="10" rx="6" fill="var(--gold-300)" />
           <rect x="19" y="10" width="6" height="34" rx="1" fill="var(--gold-600)" />
           <path
@@ -221,13 +260,7 @@ export function RewardCustomersIllustration({
         <path d="M480 40 L482 46 L488 48 L482 50 L480 56 L478 50 L472 48 L478 46 Z" />
         <path d="M430 200 L432 206 L438 208 L432 210 L430 216 L428 210 L422 208 L428 206 Z" />
       </g>
-      <g
-        stroke="var(--gold-500)"
-        strokeWidth="2"
-        strokeLinecap="round"
-        fill="none"
-        opacity="0.8"
-      >
+      <g stroke="var(--gold-500)" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.8">
         <path d="M170 100 L178 96" />
         <path d="M380 120 L388 124" />
         <path d="M520 170 L528 170" />

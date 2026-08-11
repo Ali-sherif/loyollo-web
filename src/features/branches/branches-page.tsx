@@ -73,8 +73,6 @@ export type BranchFormData = {
   is_main: boolean;
 };
 
-
-
 // Parse profiles.num_locations ("1", "2-5", "6-10", "10+", ...) into a target count.
 function parseTargetCount(v: string | null | undefined): number {
   if (!v) return 1;
@@ -131,9 +129,7 @@ function BranchesPage() {
     (async () => {
       const { data: profile } = await getAuthSupabase()
         .from("profiles")
-        .select(
-          "full_name, onboarding_completed, num_locations, main_location, plan",
-        )
+        .select("full_name, onboarding_completed, num_locations, main_location, plan")
         .eq("id", user.id)
         .maybeSingle();
       if (!profile?.onboarding_completed) {
@@ -149,12 +145,13 @@ function BranchesPage() {
 
       const { data: rows } = await getAuthSupabase()
         .from("branches")
-        .select("id, name, address, city, email, phone, manager_name, is_main, is_active, created_at")
+        .select(
+          "id, name, address, city, email, phone, manager_name, is_main, is_active, created_at",
+        )
         .eq("owner_id", user.id)
         .order("is_main", { ascending: false })
         .order("created_at", { ascending: true });
       setBranches((rows as Branch[] | null) ?? []);
-
 
       const { data: program } = await getAuthSupabase()
         .from("loyalty_programs")
@@ -165,14 +162,8 @@ function BranchesPage() {
       setProgramId(pid);
       if (pid) {
         const [{ data: cs }, { data: rs }] = await Promise.all([
-          getAuthSupabase()
-            .from("customers")
-            .select("status")
-            .eq("loyalty_program_id", pid),
-          getAuthSupabase()
-            .from("rewards")
-            .select("redeemed_count")
-            .eq("loyalty_program_id", pid),
+          getAuthSupabase().from("customers").select("status").eq("loyalty_program_id", pid),
+          getAuthSupabase().from("rewards").select("redeemed_count").eq("loyalty_program_id", pid),
         ]);
         setCustomerCount(cs?.length ?? 0);
         setActiveCustomers(
@@ -257,9 +248,7 @@ function BranchesPage() {
       return;
     }
     setBranches((prev) => {
-      const next = data.is_main
-        ? prev.map((b) => ({ ...b, is_main: false }))
-        : prev.slice();
+      const next = data.is_main ? prev.map((b) => ({ ...b, is_main: false })) : prev.slice();
       return [...next, row as Branch].sort(
         (a, b) =>
           Number(b.is_main) - Number(a.is_main) ||
@@ -328,18 +317,13 @@ function BranchesPage() {
       toast.error(error.message);
       return;
     }
-    setBranches((prev) =>
-      prev.map((x) => (x.id === b.id ? { ...x, is_active: next } : x)),
-    );
+    setBranches((prev) => prev.map((x) => (x.id === b.id ? { ...x, is_active: next } : x)));
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await getAuthSupabase()
-      .from("branches")
-      .delete()
-      .eq("id", deleteTarget.id);
+    const { error } = await getAuthSupabase().from("branches").delete().eq("id", deleteTarget.id);
     setDeleting(false);
     if (error) {
       toast.error(error.message);
@@ -359,12 +343,8 @@ function BranchesPage() {
   }
 
   // Per-branch stats (equal split; TODO(feature) once transactions tracked).
-  const perBranchCustomers = branches.length
-    ? Math.round(customerCount / branches.length)
-    : 0;
-  const perBranchRedemptions = branches.length
-    ? Math.round(rewardsRedeemed / branches.length)
-    : 0;
+  const perBranchCustomers = branches.length ? Math.round(customerCount / branches.length) : 0;
+  const perBranchRedemptions = branches.length ? Math.round(rewardsRedeemed / branches.length) : 0;
 
   return (
     <DashboardShell firstName={firstName} onSignOut={signOut}>
@@ -413,12 +393,10 @@ function BranchesPage() {
         ) : null}
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">
-              Branches
-            </h1>
+            <h1 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">Branches</h1>
             <p className="mt-2 text-[14px] text-[#737373]">
-              Manage your business locations, track performance, and compare
-              loyalty activity across branches.
+              Manage your business locations, track performance, and compare loyalty activity across
+              branches.
             </p>
           </div>
           {!atLimit ? (
@@ -440,7 +418,10 @@ function BranchesPage() {
         <section className="rounded-[16px] bg-white p-4 shadow-[0_1px_2px_rgba(15,28,61,0.04)] sm:p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="relative flex-1 min-w-[220px] max-w-[360px]">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a3a3a3]" aria-hidden />
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#a3a3a3]"
+                aria-hidden
+              />
               <input
                 type="search"
                 value={query}
@@ -501,9 +482,8 @@ function BranchesPage() {
 
           {canAddBeyondTarget && branches.length > 0 ? (
             <p className="mt-4 text-[12px] text-[#737373]">
-              You reached the {target} location{target === 1 ? "" : "s"} declared
-              in onboarding. You can still add more branches as your business
-              grows.
+              You reached the {target} location{target === 1 ? "" : "s"} declared in onboarding. You
+              can still add more branches as your business grows.
             </p>
           ) : null}
         </section>
@@ -616,23 +596,27 @@ function BranchesPage() {
                 manager_name: editTarget.manager_name ?? "",
                 is_main: editTarget.is_main,
               }
-            : { name: "", address: "", city: "", email: "", phone: "", manager_name: "", is_main: false }
+            : {
+                name: "",
+                address: "",
+                city: "",
+                email: "",
+                phone: "",
+                manager_name: "",
+                is_main: false,
+              }
         }
 
         onSubmit={handleEdit}
         onClose={() => setEditTarget(null)}
       />
 
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(o) => !o && setDeleteTarget(null)}
-      >
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete branch?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes “{deleteTarget?.name}” from your locations. This
-              action can’t be undone.
+              This removes “{deleteTarget?.name}” from your locations. This action can’t be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -673,9 +657,7 @@ function BranchCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="truncate text-[15px] font-semibold text-[#0a152f]">
-              {branch.name}
-            </h3>
+            <h3 className="truncate text-[15px] font-semibold text-[#0a152f]">{branch.name}</h3>
             {branch.is_main ? (
               <span className="rounded-full bg-[#fff9e6] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#e29f00]">
                 Main
@@ -722,10 +704,7 @@ function BranchCard({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onEdit}>Edit branch</DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-600 focus:text-red-600"
-              onClick={onDelete}
-            >
+            <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={onDelete}>
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -735,13 +714,7 @@ function BranchCard({
   );
 }
 
-function PlaceholderBranchCard({
-  label,
-  onAdd,
-}: {
-  label: string;
-  onAdd: () => void;
-}) {
+function PlaceholderBranchCard({ label, onAdd }: { label: string; onAdd: () => void }) {
   return (
     <button
       type="button"
@@ -765,8 +738,7 @@ function EmptyBranches({ onAdd }: { onAdd: () => void }) {
       </span>
       <h3 className="text-[16px] font-bold text-[#0a152f]">No branches yet</h3>
       <p className="max-w-[320px] text-[13px] text-[#737373]">
-        Add your first business location to start tracking performance per
-        branch.
+        Add your first business location to start tracking performance per branch.
       </p>
       <button
         type="button"
@@ -780,13 +752,7 @@ function EmptyBranches({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-function Toggle({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (next: boolean) => void;
-}) {
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (next: boolean) => void }) {
   return (
     <button
       type="button"
@@ -806,15 +772,7 @@ function Toggle({
   );
 }
 
-function StatTile({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-}) {
+function StatTile({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
     <div className="rounded-[12px] bg-[#f5f7fb] p-4">
       <div className="flex items-start justify-between gap-2">
@@ -844,7 +802,13 @@ function Donut({
   const total = slices.reduce((s, x) => s + x.count, 0) || 1;
   let acc = 0;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label="Branch performance">
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      role="img"
+      aria-label="Branch performance"
+    >
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#eef1f7" strokeWidth={stroke} />
       {slices.map((s) => {
         const len = (s.count / total) * c;
@@ -865,7 +829,13 @@ function Donut({
           />
         );
       })}
-      <text x="50%" y="46%" textAnchor="middle" className="fill-[#0a152f]" style={{ fontSize: 20, fontWeight: 700 }}>
+      <text
+        x="50%"
+        y="46%"
+        textAnchor="middle"
+        className="fill-[#0a152f]"
+        style={{ fontSize: 20, fontWeight: 700 }}
+      >
         {centerLabel}
       </text>
       <text x="50%" y="60%" textAnchor="middle" className="fill-[#737373]" style={{ fontSize: 12 }}>
@@ -904,8 +874,7 @@ export function BranchDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Give this location a name and address so you can track loyalty
-            activity per branch.
+            Give this location a name and address so you can track loyalty activity per branch.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -1016,6 +985,5 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
-
 
 export default BranchesPage;

@@ -123,20 +123,23 @@ function AboutPage() {
               <br />
               to make loyalty simple
             </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base text-navy-700 sm:text-lg">
-            We believe every small business deserves the same customer
-            retention tools that big brands use, without the complexity, the
-            hardware, or the enterprise price tag.
-          </p>
-          <Button variant="gold" size="lg" className="mt-8 w-full max-w-xs gap-1.5 rounded-full sm:w-auto sm:max-w-none" asChild>
-            <Link to="/signup">
-              Start Free Trial
-              <ArrowUpRight className="h-5 w-5" />
-            </Link>
-          </Button>
+            <p className="mx-auto mt-6 max-w-2xl text-base text-navy-700 sm:text-lg">
+              We believe every small business deserves the same customer retention tools that big
+              brands use, without the complexity, the hardware, or the enterprise price tag.
+            </p>
+            <Button
+              variant="gold"
+              size="lg"
+              className="mt-8 w-full max-w-xs gap-1.5 rounded-full sm:w-auto sm:max-w-none"
+              asChild
+            >
+              <Link to="/signup">
+                Start Free Trial
+                <ArrowUpRight className="h-5 w-5" />
+              </Link>
+            </Button>
           </div>
         </section>
-
 
         {/* Mission — Supporting Local Business Growth */}
         <section className="bg-background py-16">
@@ -146,26 +149,23 @@ function AboutPage() {
                 Our Mission
               </span>
               <h2 className="mt-4 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">
-                Supporting Local Business{" "}
-                <span className="text-gold-500">Growth</span>
+                Supporting Local Business <span className="text-gold-500">Growth</span>
               </h2>
               <div className="mt-6 space-y-5 text-sm leading-relaxed text-muted-foreground sm:text-base">
                 <p>
-                  We believe every small business deserves the tools to
-                  understand its customers, reward loyalty, and create
-                  meaningful connections that last.
+                  We believe every small business deserves the tools to understand its customers,
+                  reward loyalty, and create meaningful connections that last.
                 </p>
                 <p>
-                  Big-box retailers and national chains have spent decades
-                  building sophisticated loyalty programs that keep customers
-                  coming back. Small businesses — the coffee shops, salons, and
-                  restaurants that make neighborhoods feel like home — haven't
+                  Big-box retailers and national chains have spent decades building sophisticated
+                  loyalty programs that keep customers coming back. Small businesses — the coffee
+                  shops, salons, and restaurants that make neighborhoods feel like home — haven't
                   had access to the same tools.
                 </p>
                 <p>
-                  We're changing that. Our system gives every small business
-                  owner the same retention superpowers, without the enterprise
-                  price tag or the six-month implementation.
+                  We're changing that. Our system gives every small business owner the same
+                  retention superpowers, without the enterprise price tag or the six-month
+                  implementation.
                 </p>
               </div>
             </div>
@@ -190,16 +190,10 @@ function AboutPage() {
               <div key={s.label} className="text-center">
                 <div className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
                   <span className="text-white">
-                    <CountUpWhite
-                      target={s.target}
-                      suffix={s.suffix}
-                      decimals={s.decimals ?? 0}
-                    />
+                    <CountUpWhite target={s.target} suffix={s.suffix} decimals={s.decimals ?? 0} />
                   </span>
                 </div>
-                <div className="mt-2 text-sm font-medium text-navy-200">
-                  {s.label}
-                </div>
+                <div className="mt-2 text-sm font-medium text-navy-200">{s.label}</div>
               </div>
             ))}
           </div>
@@ -213,12 +207,11 @@ function AboutPage() {
                 Our Story
               </span>
               <h2 className="mt-4 text-3xl font-bold tracking-tight text-navy-900 sm:text-4xl">
-                Why Businesses{" "}
-                <span className="text-gold-500">Choose Us</span>
+                Why Businesses <span className="text-gold-500">Choose Us</span>
               </h2>
               <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-                A short story about the fight to win customers back — and the
-                simple tool that changes the math.
+                A short story about the fight to win customers back — and the simple tool that
+                changes the math.
               </p>
             </div>
 
@@ -233,19 +226,16 @@ function AboutPage() {
               {/* Chapter 01 — The Challenge */}
               <li className="relative grid gap-6 md:grid-cols-2 md:gap-12">
                 <div className="pl-14 md:pl-0 md:pr-12 md:text-right">
-
                   <ChapterMarker index="01" side="left" icon={TrendingUp} />
                   <h3 className="mt-1 text-xl font-bold text-navy-900 sm:text-2xl">
                     The Challenge
                   </h3>
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                    Salons, single-location restaurants, barbershops, cafes,
-                    and independent retail shops work nonstop to win customers
-                    — but getting them back is the real struggle. With tight
-                    budgets, limited time, and little tech support, most small
-                    businesses rely on crowded ad channels (Facebook,
-                    Instagram, TikTok) that are costly and increasingly
-                    ineffective.
+                    Salons, single-location restaurants, barbershops, cafes, and independent retail
+                    shops work nonstop to win customers — but getting them back is the real
+                    struggle. With tight budgets, limited time, and little tech support, most small
+                    businesses rely on crowded ad channels (Facebook, Instagram, TikTok) that are
+                    costly and increasingly ineffective.
                   </p>
                 </div>
                 <div className="hidden md:block" />
@@ -255,26 +245,23 @@ function AboutPage() {
               <li className="relative grid gap-6 md:grid-cols-2 md:gap-12">
                 <div className="hidden md:block" />
                 <div className="pl-14 md:pl-12">
-
                   <ChapterMarker index="02" side="right" icon={Sparkles} />
                   <h3 className="mt-1 text-xl font-bold text-navy-900 sm:text-2xl">
                     The Inspiration
                   </h3>
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                    There's one simple trick most of them aren't using enough:
-                    loyalty. Imagine a regular who used to pop in once a month
-                    now coming every other week because they're one visit away
-                    from a free cut. Or a customer who spends a little more to
-                    hit a points milestone and grab a discount.
+                    There's one simple trick most of them aren't using enough: loyalty. Imagine a
+                    regular who used to pop in once a month now coming every other week because
+                    they're one visit away from a free cut. Or a customer who spends a little more
+                    to hit a points milestone and grab a discount.
                   </p>
 
                   {/* Pull quote */}
                   <figure className="mt-6 rounded-2xl border border-gold-500/30 bg-gold-500/5 p-6">
                     <Quote className="h-5 w-5 text-gold-500" aria-hidden />
                     <blockquote className="mt-3 text-sm font-semibold leading-snug text-navy-900 sm:text-base">
-                      That's loyalty — not a gimmick, but a relationship tool
-                      that rewards behavior, makes customers feel special, and
-                      turns casual shoppers into repeat visitors.
+                      That's loyalty — not a gimmick, but a relationship tool that rewards behavior,
+                      makes customers feel special, and turns casual shoppers into repeat visitors.
                     </blockquote>
                   </figure>
                 </div>
@@ -283,18 +270,16 @@ function AboutPage() {
               {/* Chapter 03 — What Loyalty Really Means */}
               <li className="relative grid gap-6 md:grid-cols-2 md:gap-12">
                 <div className="pl-14 md:pl-0 md:pr-12 md:text-right">
-
                   <ChapterMarker index="03" side="left" icon={Gift} />
                   <h3 className="mt-1 text-xl font-bold text-navy-900 sm:text-2xl">
                     What Loyalty Really Means
                   </h3>
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                    What is loyalty — in plain terms? A loyalty program is
-                    just a way to say "thanks" every time someone comes back:
-                    points for purchases, rewards for referrals, birthday
-                    treats, exclusive offers. It's simple psychology — people
-                    like getting something extra, and they'll choose the place
-                    that recognizes and rewards them.
+                    What is loyalty — in plain terms? A loyalty program is just a way to say
+                    "thanks" every time someone comes back: points for purchases, rewards for
+                    referrals, birthday treats, exclusive offers. It's simple psychology — people
+                    like getting something extra, and they'll choose the place that recognizes and
+                    rewards them.
                   </p>
                 </div>
                 <div className="hidden md:block" />
@@ -304,15 +289,13 @@ function AboutPage() {
               <li className="relative grid gap-6 md:grid-cols-2 md:gap-12">
                 <div className="hidden md:block" />
                 <div className="pl-14 md:pl-12">
-
                   <ChapterMarker index="04" side="right" icon={Coffee} />
                   <h3 className="mt-1 text-xl font-bold text-navy-900 sm:text-2xl">
                     Proof From The Big Brands
                   </h3>
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                    Big brands prove it works. Those companies stopped relying
-                    only on noisy ads and created an owned channel that
-                    reliably drives revenue.
+                    Big brands prove it works. Those companies stopped relying only on noisy ads and
+                    created an owned channel that reliably drives revenue.
                   </p>
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -325,12 +308,10 @@ function AboutPage() {
                           loading="lazy"
                         />
                       </div>
-                      <h4 className="mt-4 text-sm font-semibold text-navy-900">
-                        Starbucks
-                      </h4>
+                      <h4 className="mt-4 text-sm font-semibold text-navy-900">Starbucks</h4>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Built habitual buyers with its rewards program;
-                        members earn stars often and spend more.
+                        Built habitual buyers with its rewards program; members earn stars often and
+                        spend more.
                       </p>
                     </div>
                     <div className="rounded-2xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]">
@@ -342,12 +323,10 @@ function AboutPage() {
                           loading="lazy"
                         />
                       </div>
-                      <h4 className="mt-4 text-sm font-semibold text-navy-900">
-                        Tim Hortons
-                      </h4>
+                      <h4 className="mt-4 text-sm font-semibold text-navy-900">Tim Hortons</h4>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Uses targeted offers and points to bring customers
-                        back on slow days and increase order size.
+                        Uses targeted offers and points to bring customers back on slow days and
+                        increase order size.
                       </p>
                     </div>
                   </div>
@@ -357,18 +336,15 @@ function AboutPage() {
               {/* Chapter 05 — The Same Idea, Scaled Down */}
               <li className="relative grid gap-6 md:grid-cols-2 md:gap-12">
                 <div className="pl-14 md:pl-0 md:pr-12 md:text-right">
-
                   <ChapterMarker index="05" side="left" icon={Heart} />
                   <h3 className="mt-1 text-xl font-bold text-navy-900 sm:text-2xl">
                     The Same Idea, Scaled Down
                   </h3>
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                    For small businesses it's the same idea, just scaled down.
-                    A barber can fill weekday slots with reward offers; a cafe
-                    can turn occasional visitors into daily regulars; a salon
-                    can boost product sales by adding points to purchases.
-                    Loyalty makes revenue more predictable and marketing far
-                    cheaper.
+                    For small businesses it's the same idea, just scaled down. A barber can fill
+                    weekday slots with reward offers; a cafe can turn occasional visitors into daily
+                    regulars; a salon can boost product sales by adding points to purchases. Loyalty
+                    makes revenue more predictable and marketing far cheaper.
                   </p>
                 </div>
                 <div className="hidden md:block" />
@@ -378,25 +354,19 @@ function AboutPage() {
               <li className="relative grid gap-6 md:grid-cols-2 md:gap-12">
                 <div className="hidden md:block" />
                 <div className="pl-14 md:pl-12">
-
                   <ChapterMarker index="06" side="right" icon={Rocket} />
-                  <h3 className="mt-1 text-xl font-bold text-navy-900 sm:text-2xl">
-                    Our Solution
-                  </h3>
+                  <h3 className="mt-1 text-xl font-bold text-navy-900 sm:text-2xl">Our Solution</h3>
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                    They deserve better. We built a simple, web-based loyalty
-                    platform — no app required — to give these businesses the
-                    tools that actually drive repeat visits: QR check-ins,
-                    points &amp; rewards, automated email &amp; SMS, referral
-                    bonuses, and clear analytics. We partner with small
-                    business owners through fast onboarding, transparent
-                    pricing, and hands-on support.
+                    They deserve better. We built a simple, web-based loyalty platform — no app
+                    required — to give these businesses the tools that actually drive repeat visits:
+                    QR check-ins, points &amp; rewards, automated email &amp; SMS, referral bonuses,
+                    and clear analytics. We partner with small business owners through fast
+                    onboarding, transparent pricing, and hands-on support.
                   </p>
                   <figure className="mt-6 rounded-2xl border border-gold-500/30 bg-gold-500/5 p-6">
                     <Quote className="h-5 w-5 text-gold-500" aria-hidden />
                     <blockquote className="mt-3 text-sm font-semibold leading-snug text-navy-900 sm:text-base">
-                      Reward your customers. Grow steady revenue. We'll handle
-                      the rest.
+                      Reward your customers. Grow steady revenue. We'll handle the rest.
                     </blockquote>
                   </figure>
                 </div>
@@ -404,7 +374,6 @@ function AboutPage() {
             </ol>
           </div>
         </section>
-
 
         {/* What We Stand For — Values */}
         <section className="bg-navy-50/40 py-24">
@@ -424,9 +393,7 @@ function AboutPage() {
                   <div className="grid h-12 w-12 place-items-center rounded-full bg-gold-50 text-gold-500">
                     <Icon className="h-5 w-5" />
                   </div>
-                  <h3 className="mt-6 text-base font-semibold text-navy-900">
-                    {title}
-                  </h3>
+                  <h3 className="mt-6 text-base font-semibold text-navy-900">{title}</h3>
                   <p className="mt-2 text-sm text-muted-foreground">{desc}</p>
                 </div>
               ))}
@@ -452,12 +419,7 @@ function CountUpWhite({
 }) {
   return (
     <span className="[&_span]:!text-white">
-      <CountUp
-        target={target}
-        suffix=""
-        decimals={decimals}
-        startFraction={0.6}
-      />
+      <CountUp target={target} suffix="" decimals={decimals} startFraction={0.6} />
       <span className="!text-gold-500">{suffix}</span>
     </span>
   );

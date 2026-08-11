@@ -5,10 +5,7 @@ import * as React from "react";
 
 import { buildHref, resolveHref } from "@/lib/navigation/paths";
 
-export type AppLinkProps = Omit<
-  React.AnchorHTMLAttributes<HTMLAnchorElement>,
-  "href"
-> & {
+export type AppLinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {
   /** TanStack-style path (`/signin`) or approved Next path (`/auth/sign-in`). */
   to?: string;
   href?: string;
@@ -23,43 +20,41 @@ export type AppLinkProps = Omit<
  * Framework-agnostic link: plain anchor with runtime path resolution.
  * Works in both TanStack (Vite) and Next during dual in-repo coexistence.
  */
-export const Link = React.forwardRef<HTMLAnchorElement, AppLinkProps>(
-  function AppLink(
-    { to, href, params, search, hash, replace, children, onClick, ...rest },
-    ref,
-  ) {
-    let target = buildHref(href ?? to ?? "/", { params, search });
-    if (hash) {
-      const h = hash.startsWith("#") ? hash : `#${hash}`;
-      target = `${target}${h}`;
-    }
+export const Link = React.forwardRef<HTMLAnchorElement, AppLinkProps>(function AppLink(
+  { to, href, params, search, hash, replace, children, onClick, ...rest },
+  ref,
+) {
+  let target = buildHref(href ?? to ?? "/", { params, search });
+  if (hash) {
+    const h = hash.startsWith("#") ? hash : `#${hash}`;
+    target = `${target}${h}`;
+  }
 
-    return (
-      <a
-        ref={ref}
-        href={target}
-        {...rest}
-        onClick={(event) => {
-          onClick?.(event);
-          if (event.defaultPrevented || !replace) return;
-          if (
-            event.button !== 0 ||
-            event.metaKey ||
-            event.altKey ||
-            event.ctrlKey ||
-            event.shiftKey
-          ) {
-            return;
-          }
-          event.preventDefault();
-          window.location.replace(target);
-        }}
-      >
-        {children}
-      </a>
-    );
-  },
-);
+  return (
+    <a
+      ref={ref}
+      href={target}
+      {...rest}
+      onClick={(event) => {
+        onClick?.(event);
+        if (event.defaultPrevented || !replace) return;
+        if (
+          event.button !== 0 ||
+          event.metaKey ||
+          event.altKey ||
+          event.ctrlKey ||
+          event.shiftKey
+        ) {
+          return;
+        }
+        event.preventDefault();
+        window.location.replace(target);
+      }}
+    >
+      {children}
+    </a>
+  );
+});
 
 export type NavigateOptions = {
   to?: string;
@@ -72,11 +67,8 @@ export type NavigateOptions = {
 
 export function useNavigate() {
   return React.useCallback((opts: NavigateOptions | string) => {
-    const options =
-      typeof opts === "string" ? ({ to: opts } satisfies NavigateOptions) : opts;
-    const base =
-      options.to ??
-      (typeof window !== "undefined" ? window.location.pathname : "/");
+    const options = typeof opts === "string" ? ({ to: opts } satisfies NavigateOptions) : opts;
+    const base = options.to ?? (typeof window !== "undefined" ? window.location.pathname : "/");
     const url = buildHref(base, {
       params: options.params,
       search: options.search,

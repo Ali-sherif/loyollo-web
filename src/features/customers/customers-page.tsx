@@ -25,11 +25,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -115,8 +111,7 @@ function CustomersPage() {
         const t = new Date(c.last_activity_at).getTime();
         if (Number.isNaN(t)) return false;
         if (dateRange.from && t < dateRange.from.setHours(0, 0, 0, 0)) return false;
-        if (dateRange.to && t > new Date(dateRange.to).setHours(23, 59, 59, 999))
-          return false;
+        if (dateRange.to && t > new Date(dateRange.to).setHours(23, 59, 59, 999)) return false;
       }
       return true;
     });
@@ -148,7 +143,17 @@ function CustomersPage() {
       return;
     }
     const rows = [
-      ["Name", "Email", "Phone", "Tier", "Points", "Visits", "Status", "Last Visit Date", "Birth Date"],
+      [
+        "Name",
+        "Email",
+        "Phone",
+        "Tier",
+        "Points",
+        "Visits",
+        "Status",
+        "Last Visit Date",
+        "Birth Date",
+      ],
       ...filtered.map((c) => [
         c.full_name,
         c.email ?? "",
@@ -225,13 +230,9 @@ function CustomersPage() {
   const total = customers.length;
   const active = customers.filter((c) => c.status === "active").length;
   const goldVip = customers.filter(
-    (c) =>
-      (c.tier ?? "").toLowerCase() === "gold" ||
-      (c.tier ?? "").toLowerCase() === "vip",
+    (c) => (c.tier ?? "").toLowerCase() === "gold" || (c.tier ?? "").toLowerCase() === "vip",
   ).length;
-  const silver = customers.filter(
-    (c) => (c.tier ?? "").toLowerCase() === "silver",
-  ).length;
+  const silver = customers.filter((c) => (c.tier ?? "").toLowerCase() === "silver").length;
   const atRisk = customers.filter((c) => c.status === "at_risk").length;
 
   const handleAdd = async (data: CustomerFormData) => {
@@ -286,9 +287,7 @@ function CustomersPage() {
       toast.error(error.message);
       return;
     }
-    setCustomers((prev) =>
-      prev.map((c) => (c.id === editTarget.id ? (row as Customer) : c)),
-    );
+    setCustomers((prev) => prev.map((c) => (c.id === editTarget.id ? (row as Customer) : c)));
     setEditTarget(null);
     toast.success("Customer updated");
   };
@@ -296,10 +295,7 @@ function CustomersPage() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await getAuthSupabase()
-      .from("customers")
-      .delete()
-      .eq("id", deleteTarget.id);
+    const { error } = await getAuthSupabase().from("customers").delete().eq("id", deleteTarget.id);
     setDeleting(false);
     if (error) {
       toast.error(error.message);
@@ -325,9 +321,7 @@ function CustomersPage() {
       <div className="mx-auto max-w-[1140px] space-y-6">
         <header className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">
-              Customers
-            </h1>
+            <h1 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">Customers</h1>
             <p className="mt-2 text-[14px] text-[#737373]">
               Manage your loyalty members, track activity, and reach out directly
             </p>
@@ -359,7 +353,12 @@ function CustomersPage() {
           <StatCard label="Active Customers" value={active} icon={Activity} iconColor="#44b678" />
           <StatCard label="New this month" value={goldVip} icon={UserPlus} iconColor="#feb602" />
           <StatCard label="Returning Rate" value={silver} icon={UserCog} iconColor="#a3a3a3" />
-          <StatCard label="At-Risk Customers" value={atRisk} icon={AlertTriangle} iconColor="#e53935" />
+          <StatCard
+            label="At-Risk Customers"
+            value={atRisk}
+            icon={AlertTriangle}
+            iconColor="#e53935"
+          />
         </section>
 
         {isEmpty ? (
@@ -377,7 +376,8 @@ function CustomersPage() {
                 Build Your Customer Community!
               </h2>
               <p className="text-[16px] text-[#737373]">
-                Start enrolling customers through QR codes or manual entry to grow your loyalty program.
+                Start enrolling customers through QR codes or manual entry to grow your loyalty
+                program.
               </p>
             </div>
             <button
@@ -409,12 +409,7 @@ function CustomersPage() {
         )}
       </div>
 
-      <AddCustomerDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        onSubmit={handleAdd}
-        mode="add"
-      />
+      <AddCustomerDialog open={addOpen} onOpenChange={setAddOpen} onSubmit={handleAdd} mode="add" />
       <AddCustomerDialog
         open={!!editTarget}
         onOpenChange={(o) => !o && setEditTarget(null)}
@@ -423,16 +418,13 @@ function CustomersPage() {
         initial={editTarget}
       />
 
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(o) => !o && setDeleteTarget(null)}
-      >
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this customer?</AlertDialogTitle>
             <AlertDialogDescription>
-              "{deleteTarget?.full_name}" will be permanently removed from your
-              loyalty program along with their points and activity history.
+              "{deleteTarget?.full_name}" will be permanently removed from your loyalty program
+              along with their points and activity history.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -455,12 +447,7 @@ function CustomersPage() {
 }
 
 type SortKey =
-  | "name_asc"
-  | "name_desc"
-  | "revenue_desc"
-  | "revenue_asc"
-  | "points_desc"
-  | "points_asc";
+  "name_asc" | "name_desc" | "revenue_desc" | "revenue_asc" | "points_desc" | "points_asc";
 
 type TierFilter = "all" | "vip" | "gold" | "silver" | "bronze";
 type StatusTab = "all" | "active" | "at_risk" | "churned";
@@ -522,11 +509,8 @@ function CustomersTable({
 }) {
   const navigate = useNavigate();
 
-
-  const activeSortLabel =
-    SORT_OPTIONS.find((s) => s.value === sort)?.label ?? "Sort";
-  const activeTierLabel =
-    TIER_OPTIONS.find((t) => t.value === tier)?.label ?? "All tiers";
+  const activeSortLabel = SORT_OPTIONS.find((s) => s.value === sort)?.label ?? "Sort";
+  const activeTierLabel = TIER_OPTIONS.find((t) => t.value === tier)?.label ?? "All tiers";
 
   const dateLabel = (() => {
     if (dateRange.from && dateRange.to)
@@ -633,9 +617,7 @@ function CustomersTable({
               <Calendar
                 mode="range"
                 selected={{ from: dateRange.from, to: dateRange.to }}
-                onSelect={(r) =>
-                  setDateRange({ from: r?.from, to: r?.to })
-                }
+                onSelect={(r) => setDateRange({ from: r?.from, to: r?.to })}
                 numberOfMonths={2}
                 className={cn("p-3 pointer-events-auto")}
               />
@@ -682,19 +664,13 @@ function CustomersTable({
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td
-                  colSpan={9}
-                  className="px-3 py-10 text-center text-[13px] text-[#737373]"
-                >
+                <td colSpan={9} className="px-3 py-10 text-center text-[13px] text-[#737373]">
                   No customers match the current filters.
                 </td>
               </tr>
             ) : (
               filtered.map((c) => (
-                <tr
-                  key={c.id}
-                  className="border-t border-[#eef1f7] text-[14px] text-[#0a152f]"
-                >
+                <tr key={c.id} className="border-t border-[#eef1f7] text-[14px] text-[#0a152f]">
                   <td className="px-3 py-4">
                     <div className="flex items-center gap-3">
                       <Avatar name={c.full_name} />
@@ -702,15 +678,11 @@ function CustomersTable({
                         <div className="truncate text-[14px] font-semibold text-[#0a152f]">
                           {c.full_name}
                         </div>
-                        <div className="truncate text-[13px] text-[#737373]">
-                          {c.email ?? "—"}
-                        </div>
+                        <div className="truncate text-[13px] text-[#737373]">{c.email ?? "—"}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-3 py-4 text-[13px] text-[#525252]">
-                    {c.phone ?? "—"}
-                  </td>
+                  <td className="px-3 py-4 text-[13px] text-[#525252]">{c.phone ?? "—"}</td>
                   <td className="px-3 py-4">
                     <TierBadge tier={c.tier} />
                   </td>
@@ -718,12 +690,9 @@ function CustomersTable({
                     {c.points.toLocaleString()}
                   </td>
                   <td className="px-3 py-4 text-[13px] font-semibold text-[#0a152f]">
-                    {/* TODO(feature): revenue tracking not yet wired */}
-                    —
+                    {/* TODO(feature): revenue tracking not yet wired */}—
                   </td>
-                  <td className="px-3 py-4 text-[13px] text-[#0a152f]">
-                    {c.visits}
-                  </td>
+                  <td className="px-3 py-4 text-[13px] text-[#0a152f]">{c.visits}</td>
                   <td className="px-3 py-4 text-[13px] text-[#525252]">
                     {formatLastVisit(c.last_activity_at)}
                   </td>
@@ -752,12 +721,8 @@ function CustomersTable({
                         >
                           View profile
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => onEdit(c)}>
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => navigate({ to: "/campaigns" })}
-                        >
+                        <DropdownMenuItem onSelect={() => onEdit(c)}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => navigate({ to: "/campaigns" })}>
                           Send Campaign
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -779,18 +744,9 @@ function CustomersTable({
   );
 }
 
-
-function Th({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <th
-      className={`px-3 py-4 text-left text-[13px] font-medium text-[#525252] ${className}`}
-    >
+    <th className={`px-3 py-4 text-left text-[13px] font-medium text-[#525252] ${className}`}>
       {children}
     </th>
   );
@@ -812,10 +768,7 @@ function Avatar({ name }: { name: string }) {
 
 function TierBadge({ tier }: { tier: string | null }) {
   const key = (tier ?? "").toLowerCase();
-  const config: Record<
-    string,
-    { label: string; bg: string; fg: string; icon: React.ReactNode }
-  > = {
+  const config: Record<string, { label: string; bg: string; fg: string; icon: React.ReactNode }> = {
     vip: {
       label: "VIP",
       bg: "#f3ecff",
@@ -873,11 +826,7 @@ function StatusPill({ status }: { status: string }) {
       className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-medium capitalize"
       style={{ backgroundColor: c.bg, color: c.fg }}
     >
-      <span
-        className="h-2 w-2 rounded-full"
-        style={{ backgroundColor: c.dot }}
-        aria-hidden
-      />
+      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c.dot }} aria-hidden />
       {c.label}
     </span>
   );
@@ -1053,6 +1002,5 @@ function Field({
     </label>
   );
 }
-
 
 export default CustomersPage;

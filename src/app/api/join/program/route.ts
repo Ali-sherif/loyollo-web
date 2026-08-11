@@ -1,7 +1,4 @@
-import {
-  enrollCustomer,
-  getJoinProgram,
-} from "@/lib/server/join-service";
+import { enrollCustomer, getJoinProgram } from "@/lib/server/join-service";
 import { logger } from "@/lib/server/logger";
 
 export const runtime = "nodejs";

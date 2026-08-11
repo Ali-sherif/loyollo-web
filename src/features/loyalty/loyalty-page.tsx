@@ -201,7 +201,9 @@ function LoyaltyPage() {
         setDoubleBirthdays(!!existing.double_points_birthdays);
         setVisitsRequired(existing.visits_required ? String(existing.visits_required) : "");
         setRewardOnCompletion((existing.reward_on_completion as string | null) ?? "");
-        setMinSpendPerVisit(existing.min_spend_per_visit ? String(existing.min_spend_per_visit) : "");
+        setMinSpendPerVisit(
+          existing.min_spend_per_visit ? String(existing.min_spend_per_visit) : "",
+        );
         setCardExpiryDays(existing.card_expiry_days ? String(existing.card_expiry_days) : "");
         setMaxVisitsPerDay(existing.max_visits_per_day ? String(existing.max_visits_per_day) : "");
         setAfterRewardAction((existing.after_reward_action as string | null) ?? "");
@@ -211,7 +213,9 @@ function LoyaltyPage() {
         const ex = existing as unknown as Record<string, unknown>;
         setTierMeasuredBy((ex.tier_measured_by as string | null) || "points");
         setTierResetPeriod((ex.tier_reset_period as string | null) || "never");
-        setNotifyTierUpgrade(ex.notify_tier_upgrade === undefined ? true : !!ex.notify_tier_upgrade);
+        setNotifyTierUpgrade(
+          ex.notify_tier_upgrade === undefined ? true : !!ex.notify_tier_upgrade,
+        );
         setTierDowngradeProtection(!!ex.tier_downgrade_protection);
       }
       setReady(true);
@@ -264,7 +268,10 @@ function LoyaltyPage() {
   }, [programId]);
 
   const joinUrl = React.useMemo(
-    () => (programId ? `${typeof window !== "undefined" ? window.location.origin : ""}/join/${programId}` : ""),
+    () =>
+      programId
+        ? `${typeof window !== "undefined" ? window.location.origin : ""}/join/${programId}`
+        : "",
     [programId],
   );
 
@@ -284,8 +291,7 @@ function LoyaltyPage() {
     } else if (programType === "visit") {
       if (!visitsRequired || Number(visitsRequired) <= 0)
         next.visitsRequired = "Enter the number of visits required.";
-      if (!rewardOnCompletion.trim())
-        next.rewardOnCompletion = "Choose a reward on completion.";
+      if (!rewardOnCompletion.trim()) next.rewardOnCompletion = "Choose a reward on completion.";
       if (minSpendPerVisit !== "" && Number(minSpendPerVisit) < 0)
         next.minSpendPerVisit = "Minimum spend can't be negative.";
       if (cardExpiryDays !== "" && Number(cardExpiryDays) < 0)
@@ -304,9 +310,7 @@ function LoyaltyPage() {
         pointsEarned !== "" &&
         Number(pointsEarned) > 0
       : programType === "visit"
-        ? visitsRequired !== "" &&
-          Number(visitsRequired) > 0 &&
-          rewardOnCompletion.trim() !== ""
+        ? visitsRequired !== "" && Number(visitsRequired) > 0 && rewardOnCompletion.trim() !== ""
         : true;
 
   function buildProgramPayload() {
@@ -383,7 +387,14 @@ function LoyaltyPage() {
     }
     setProgramId(data.id as string);
     return data.id as string;
-  }, [programId, user, tierMeasuredBy, tierResetPeriod, notifyTierUpgrade, tierDowngradeProtection]);
+  }, [
+    programId,
+    user,
+    tierMeasuredBy,
+    tierResetPeriod,
+    notifyTierUpgrade,
+    tierDowngradeProtection,
+  ]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -465,7 +476,6 @@ function LoyaltyPage() {
     }
   }
 
-
   if (loading || !ready) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#eef1f7]">
@@ -479,9 +489,7 @@ function LoyaltyPage() {
       <div className="mx-auto max-w-[1140px]">
         {/* Title */}
         <div className="pt-2">
-          <h1 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">
-            Loyalty Program
-          </h1>
+          <h1 className="text-[20px] font-bold leading-[1.2] text-[#0a152f]">Loyalty Program</h1>
           <p className="mt-2 text-[14px] leading-[1.4] text-[#525252]">
             Create and manage loyalty programs that keep customers engaged and coming back.
           </p>
@@ -517,17 +525,11 @@ function LoyaltyPage() {
 
         {tab === "rewards" ? (
           <div className="mt-6">
-            <RewardsSection
-              programId={programId}
-              ensureProgramSaved={ensureProgramSaved}
-            />
+            <RewardsSection programId={programId} ensureProgramSaved={ensureProgramSaved} />
           </div>
         ) : tab === "referrals" ? (
           <div className="mt-6">
-            <ReferralsSection
-              programId={programId}
-              ensureProgramSaved={ensureProgramSaved}
-            />
+            <ReferralsSection programId={programId} ensureProgramSaved={ensureProgramSaved} />
           </div>
         ) : tab === "qr-experience" ? (
           <div className="mt-6">
@@ -580,20 +582,14 @@ function LoyaltyPage() {
                         </span>
                         <span
                           className={`flex h-5 w-5 items-center justify-center rounded-full border ${
-                            selected
-                              ? "border-[#44b678] bg-[#44b678]"
-                              : "border-[#d4d4d4] bg-white"
+                            selected ? "border-[#44b678] bg-[#44b678]" : "border-[#d4d4d4] bg-white"
                           }`}
                           aria-hidden
                         >
-                          {selected && (
-                            <Check className="h-3 w-3 text-white" strokeWidth={3} />
-                          )}
+                          {selected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                         </span>
                       </div>
-                      <p className="mt-4 text-[16px] font-semibold text-[#0a152f]">
-                        {t.title}
-                      </p>
+                      <p className="mt-4 text-[16px] font-semibold text-[#0a152f]">{t.title}</p>
                       <p className="mt-1 text-[13px] leading-[1.4] text-[#737373]">
                         {t.description}
                       </p>
@@ -652,7 +648,9 @@ function LoyaltyPage() {
                       <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <h2 className="text-[16px] font-semibold text-[#0a152f]">QR code settings</h2>
+                            <h2 className="text-[16px] font-semibold text-[#0a152f]">
+                              QR code settings
+                            </h2>
                             <p className="mt-1 text-[14px] text-[#737373]">
                               Customers scan this to join and earn points
                             </p>
@@ -663,15 +661,11 @@ function LoyaltyPage() {
                             className="shrink-0 rounded-full text-[13px] font-semibold text-[#0a152f] hover:bg-[#eef1f7]"
                             asChild
                           >
-                            <Link
-                              to="/loyalty-program"
-                              search={{ tab: "qr-experience" }}
-                            >
+                            <Link to="/loyalty-program" search={{ tab: "qr-experience" }}>
                               Customize your QR
                             </Link>
                           </Button>
                         </div>
-
 
                         {programId && qrDataUrl ? (
                           <>
@@ -689,9 +683,7 @@ function LoyaltyPage() {
                               </div>
                             </div>
 
-                            <p className="mt-3 break-all text-[12px] text-[#737373]">
-                              {joinUrl}
-                            </p>
+                            <p className="mt-3 break-all text-[12px] text-[#737373]">{joinUrl}</p>
 
                             <div className="mt-5 grid grid-cols-2 gap-3">
                               <button
@@ -723,7 +715,8 @@ function LoyaltyPage() {
                               <QrCode className="h-6 w-6" aria-hidden />
                             </span>
                             <p className="text-[13px] leading-[1.5] text-[#525252]">
-                              Create your loyalty program to generate a QR code your customers can scan to join.
+                              Create your loyalty program to generate a QR code your customers can
+                              scan to join.
                             </p>
                           </div>
                         )}
@@ -781,360 +774,361 @@ function LoyaltyPage() {
                 </div>
               </>
             ) : (
+              <>
+                {/* Grid: rules + right column */}
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_410px]">
+                  <div className="flex flex-col gap-6">
+                    {programType === "visit" ? (
+                      /* Visit rules */
+                      <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
+                        <h2 className="text-[16px] font-semibold text-[#0a152f]">Visit rules</h2>
+                        <p className="mt-1 text-[14px] text-[#737373]">
+                          Define how many visits are needed and what counts as a visit.
+                        </p>
 
-            <>
-            {/* Grid: rules + right column */}
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_410px]">
-              <div className="flex flex-col gap-6">
-                {programType === "visit" ? (
-                  /* Visit rules */
-                  <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
-                    <h2 className="text-[16px] font-semibold text-[#0a152f]">Visit rules</h2>
-                    <p className="mt-1 text-[14px] text-[#737373]">
-                      Define how many visits are needed and what counts as a visit.
-                    </p>
+                        <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                          <Field
+                            id="visits-required"
+                            label="Visits required"
+                            helper="Number of stamps needed to unlock the reward"
+                            error={errors.visitsRequired}
+                            suffix="visit(s)"
+                            value={visitsRequired}
+                            onChange={setVisitsRequired}
+                            placeholder="0"
+                            inputMode="numeric"
+                          />
+                          <SelectField
+                            id="reward-on-completion"
+                            label="Reward on completion"
+                            helper="Choose from your Rewards catalog"
+                            error={errors.rewardOnCompletion}
+                            value={rewardOnCompletion}
+                            onChange={setRewardOnCompletion}
+                            placeholder="Select Option"
+                            options={[
+                              { value: "free_item", label: "Free item" },
+                              { value: "discount", label: "Discount" },
+                              { value: "custom", label: "Custom reward" },
+                            ]}
+                          />
+                          <Field
+                            id="min-spend-per-visit"
+                            label="Minimum spend per visit"
+                            helper="Visits below this amount won't count toward a stamp"
+                            error={errors.minSpendPerVisit}
+                            prefix="$"
+                            value={minSpendPerVisit}
+                            onChange={setMinSpendPerVisit}
+                            placeholder="0.00"
+                            inputMode="decimal"
+                          />
+                          <Field
+                            id="card-expiry-days"
+                            label="Card expiry"
+                            helper="Stamp progress resets after this many days of inactivity"
+                            error={errors.cardExpiryDays}
+                            suffix="day(s)"
+                            value={cardExpiryDays}
+                            onChange={setCardExpiryDays}
+                            placeholder="0"
+                            inputMode="numeric"
+                          />
+                          <Field
+                            id="max-visits-per-day"
+                            label="Max visits per day"
+                            helper="Prevents multiple stamps from a single visit"
+                            error={errors.maxVisitsPerDay}
+                            suffix="visit(s)"
+                            value={maxVisitsPerDay}
+                            onChange={setMaxVisitsPerDay}
+                            placeholder="0"
+                            inputMode="numeric"
+                          />
+                          <SelectField
+                            id="after-reward-action"
+                            label="After reward is claimed"
+                            helper="What happens once a customer redeems their reward"
+                            value={afterRewardAction}
+                            onChange={setAfterRewardAction}
+                            placeholder="Select Option"
+                            options={[
+                              { value: "reset", label: "Reset the card" },
+                              { value: "continue", label: "Continue earning" },
+                            ]}
+                          />
+                        </div>
 
-                    <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                      <Field
-                        id="visits-required"
-                        label="Visits required"
-                        helper="Number of stamps needed to unlock the reward"
-                        error={errors.visitsRequired}
-                        suffix="visit(s)"
-                        value={visitsRequired}
-                        onChange={setVisitsRequired}
-                        placeholder="0"
-                        inputMode="numeric"
-                      />
-                      <SelectField
-                        id="reward-on-completion"
-                        label="Reward on completion"
-                        helper="Choose from your Rewards catalog"
-                        error={errors.rewardOnCompletion}
-                        value={rewardOnCompletion}
-                        onChange={setRewardOnCompletion}
-                        placeholder="Select Option"
-                        options={[
-                          { value: "free_item", label: "Free item" },
-                          { value: "discount", label: "Discount" },
-                          { value: "custom", label: "Custom reward" },
-                        ]}
-                      />
-                      <Field
-                        id="min-spend-per-visit"
-                        label="Minimum spend per visit"
-                        helper="Visits below this amount won't count toward a stamp"
-                        error={errors.minSpendPerVisit}
-                        prefix="$"
-                        value={minSpendPerVisit}
-                        onChange={setMinSpendPerVisit}
-                        placeholder="0.00"
-                        inputMode="decimal"
-                      />
-                      <Field
-                        id="card-expiry-days"
-                        label="Card expiry"
-                        helper="Stamp progress resets after this many days of inactivity"
-                        error={errors.cardExpiryDays}
-                        suffix="day(s)"
-                        value={cardExpiryDays}
-                        onChange={setCardExpiryDays}
-                        placeholder="0"
-                        inputMode="numeric"
-                      />
-                      <Field
-                        id="max-visits-per-day"
-                        label="Max visits per day"
-                        helper="Prevents multiple stamps from a single visit"
-                        error={errors.maxVisitsPerDay}
-                        suffix="visit(s)"
-                        value={maxVisitsPerDay}
-                        onChange={setMaxVisitsPerDay}
-                        placeholder="0"
-                        inputMode="numeric"
-                      />
-                      <SelectField
-                        id="after-reward-action"
-                        label="After reward is claimed"
-                        helper="What happens once a customer redeems their reward"
-                        value={afterRewardAction}
-                        onChange={setAfterRewardAction}
-                        placeholder="Select Option"
-                        options={[
-                          { value: "reset", label: "Reset the card" },
-                          { value: "continue", label: "Continue earning" },
-                        ]}
-                      />
-                    </div>
+                        <hr className="my-6 border-[#eef1f7]" />
 
-                    <hr className="my-6 border-[#eef1f7]" />
-
-                    <ToggleRow
-                      title="Bonus stamp on sign-up"
-                      description="New members start with 1 stamp already filled"
-                      checked={bonusStampSignup}
-                      onChange={setBonusStampSignup}
-                    />
-                    <div className="mt-5">
-                      <ToggleRow
-                        title="Double stamp on weekends"
-                        description="Encourage visits during slower weekend hours"
-                        checked={doubleStampWeekends}
-                        onChange={setDoubleStampWeekends}
-                      />
-                    </div>
-                    <div className="mt-5">
-                      <ToggleRow
-                        title="Notify customer when 1 visit away"
-                        description="Sends an automatic push notification or SMS"
-                        checked={notifyOneVisitAway}
-                        onChange={setNotifyOneVisitAway}
-                      />
-                    </div>
-                  </section>
-                ) : (
-                  /* Points rules */
-                  <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
-                    <h2 className="text-[16px] font-semibold text-[#0a152f]">Points rules</h2>
-                    <p className="mt-1 text-[14px] text-[#737373]">
-                      Define how points are earned and when they expire.
-                    </p>
-
-                    <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                      <Field
-                        id="spend-amount"
-                        label="Spend amount"
-                        helper="The dollar amount required to earn points"
-                        error={errors.spendAmount}
-                        prefix="$"
-                        value={spendAmount}
-                        onChange={setSpendAmount}
-                        placeholder="0.00"
-                        inputMode="decimal"
-                      />
-                      <Field
-                        id="points-earned"
-                        label="Points earned"
-                        helper="Points awarded per spend amount"
-                        error={errors.pointsEarned}
-                        suffix="point(s)"
-                        value={pointsEarned}
-                        onChange={setPointsEarned}
-                        placeholder="0"
-                        inputMode="numeric"
-                      />
-                      <Field
-                        id="min-spend"
-                        label="Minimum spend to earn"
-                        helper="No points awarded below this amount"
-                        error={errors.minSpend}
-                        prefix="$"
-                        value={minSpend}
-                        onChange={setMinSpend}
-                        placeholder="0.00"
-                        inputMode="decimal"
-                      />
-                      <Field
-                        id="points-expiry"
-                        label="Points expiry"
-                        helper="Points expire after inactivity period"
-                        error={errors.pointsExpiry}
-                        suffix="month(s)"
-                        value={pointsExpiry}
-                        onChange={setPointsExpiry}
-                        placeholder="0"
-                        inputMode="numeric"
-                      />
-                      <div className="sm:col-span-2 sm:max-w-[calc(50%-10px)]">
-                        <Field
-                          id="grace-period"
-                          label={
-                            <>
-                              Grace Period{" "}
-                              <span className="font-normal italic text-[#737373]">(Optional)</span>
-                            </>
-                          }
-                          helper="Number of days customers can still redeem their points after they expire."
-                          error={errors.gracePeriod}
-                          suffix="month(s)"
-                          value={gracePeriod}
-                          onChange={setGracePeriod}
-                          placeholder="0"
-                          inputMode="numeric"
+                        <ToggleRow
+                          title="Bonus stamp on sign-up"
+                          description="New members start with 1 stamp already filled"
+                          checked={bonusStampSignup}
+                          onChange={setBonusStampSignup}
                         />
-                      </div>
-                    </div>
+                        <div className="mt-5">
+                          <ToggleRow
+                            title="Double stamp on weekends"
+                            description="Encourage visits during slower weekend hours"
+                            checked={doubleStampWeekends}
+                            onChange={setDoubleStampWeekends}
+                          />
+                        </div>
+                        <div className="mt-5">
+                          <ToggleRow
+                            title="Notify customer when 1 visit away"
+                            description="Sends an automatic push notification or SMS"
+                            checked={notifyOneVisitAway}
+                            onChange={setNotifyOneVisitAway}
+                          />
+                        </div>
+                      </section>
+                    ) : (
+                      /* Points rules */
+                      <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
+                        <h2 className="text-[16px] font-semibold text-[#0a152f]">Points rules</h2>
+                        <p className="mt-1 text-[14px] text-[#737373]">
+                          Define how points are earned and when they expire.
+                        </p>
 
-                    <hr className="my-6 border-[#eef1f7]" />
+                        <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                          <Field
+                            id="spend-amount"
+                            label="Spend amount"
+                            helper="The dollar amount required to earn points"
+                            error={errors.spendAmount}
+                            prefix="$"
+                            value={spendAmount}
+                            onChange={setSpendAmount}
+                            placeholder="0.00"
+                            inputMode="decimal"
+                          />
+                          <Field
+                            id="points-earned"
+                            label="Points earned"
+                            helper="Points awarded per spend amount"
+                            error={errors.pointsEarned}
+                            suffix="point(s)"
+                            value={pointsEarned}
+                            onChange={setPointsEarned}
+                            placeholder="0"
+                            inputMode="numeric"
+                          />
+                          <Field
+                            id="min-spend"
+                            label="Minimum spend to earn"
+                            helper="No points awarded below this amount"
+                            error={errors.minSpend}
+                            prefix="$"
+                            value={minSpend}
+                            onChange={setMinSpend}
+                            placeholder="0.00"
+                            inputMode="decimal"
+                          />
+                          <Field
+                            id="points-expiry"
+                            label="Points expiry"
+                            helper="Points expire after inactivity period"
+                            error={errors.pointsExpiry}
+                            suffix="month(s)"
+                            value={pointsExpiry}
+                            onChange={setPointsExpiry}
+                            placeholder="0"
+                            inputMode="numeric"
+                          />
+                          <div className="sm:col-span-2 sm:max-w-[calc(50%-10px)]">
+                            <Field
+                              id="grace-period"
+                              label={
+                                <>
+                                  Grace Period{" "}
+                                  <span className="font-normal italic text-[#737373]">
+                                    (Optional)
+                                  </span>
+                                </>
+                              }
+                              helper="Number of days customers can still redeem their points after they expire."
+                              error={errors.gracePeriod}
+                              suffix="month(s)"
+                              value={gracePeriod}
+                              onChange={setGracePeriod}
+                              placeholder="0"
+                              inputMode="numeric"
+                            />
+                          </div>
+                        </div>
 
-                    <ToggleRow
-                      title="Bonus points on sign-up"
-                      description="Give new members a welcome point boost"
-                      checked={bonusSignup}
-                      onChange={setBonusSignup}
-                    />
-                    <div className="mt-5">
-                      <ToggleRow
-                        title="Double points on birthdays"
-                        description="Automatically applied during their birthday month"
-                        checked={doubleBirthdays}
-                        onChange={setDoubleBirthdays}
+                        <hr className="my-6 border-[#eef1f7]" />
+
+                        <ToggleRow
+                          title="Bonus points on sign-up"
+                          description="Give new members a welcome point boost"
+                          checked={bonusSignup}
+                          onChange={setBonusSignup}
+                        />
+                        <div className="mt-5">
+                          <ToggleRow
+                            title="Double points on birthdays"
+                            description="Automatically applied during their birthday month"
+                            checked={doubleBirthdays}
+                            onChange={setDoubleBirthdays}
+                          />
+                        </div>
+                      </section>
+                    )}
+
+                    {programType === "visit" ? (
+                      <VisitsProgressSection
+                        programId={programId}
+                        visitsRequired={Number(visitsRequired) || 0}
                       />
-                    </div>
-                  </section>
-                )}
-
-                {programType === "visit" ? (
-                  <VisitsProgressSection
-                    programId={programId}
-                    visitsRequired={Number(visitsRequired) || 0}
-                  />
-                ) : null}
-              </div>
-
-              {/* Right column */}
-              <div className="flex flex-col gap-6">
-                <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h2 className="text-[16px] font-semibold text-[#0a152f]">QR code settings</h2>
-                      <p className="mt-1 text-[14px] text-[#737373]">
-                        Customers scan this to join and earn points
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0 rounded-full text-[13px] font-semibold text-[#0a152f] hover:bg-[#eef1f7]"
-                      asChild
-                    >
-                      <Link
-                        to="/loyalty-program"
-                        search={{ tab: "qr-experience" }}
-                      >
-                        Customize your QR
-                      </Link>
-                    </Button>
+                    ) : null}
                   </div>
 
-
-                  {programId && qrDataUrl ? (
-                    <>
-                      <div className="mt-5 flex items-start gap-4 rounded-[12px] bg-[#fafafa] p-4">
-                        <img
-                          src={qrDataUrl}
-                          alt="Loyalty program QR code"
-                          width={110}
-                          height={110}
-                          className="h-[110px] w-[110px] rounded-[8px] bg-white ring-1 ring-[#eef1f7]"
-                        />
-                        <div className="flex flex-col gap-3">
-                          <Stat label="Total scans" value={String(totalScans)} />
-                          <Stat label="Scans this week" value={String(scansThisWeek)} />
+                  {/* Right column */}
+                  <div className="flex flex-col gap-6">
+                    <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h2 className="text-[16px] font-semibold text-[#0a152f]">
+                            QR code settings
+                          </h2>
+                          <p className="mt-1 text-[14px] text-[#737373]">
+                            Customers scan this to join and earn points
+                          </p>
                         </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="shrink-0 rounded-full text-[13px] font-semibold text-[#0a152f] hover:bg-[#eef1f7]"
+                          asChild
+                        >
+                          <Link to="/loyalty-program" search={{ tab: "qr-experience" }}>
+                            Customize your QR
+                          </Link>
+                        </Button>
                       </div>
 
-                      <p className="mt-3 break-all text-[12px] text-[#737373]">
-                        {joinUrl}
-                      </p>
+                      {programId && qrDataUrl ? (
+                        <>
+                          <div className="mt-5 flex items-start gap-4 rounded-[12px] bg-[#fafafa] p-4">
+                            <img
+                              src={qrDataUrl}
+                              alt="Loyalty program QR code"
+                              width={110}
+                              height={110}
+                              className="h-[110px] w-[110px] rounded-[8px] bg-white ring-1 ring-[#eef1f7]"
+                            />
+                            <div className="flex flex-col gap-3">
+                              <Stat label="Total scans" value={String(totalScans)} />
+                              <Stat label="Scans this week" value={String(scansThisWeek)} />
+                            </div>
+                          </div>
 
-                      <div className="mt-5 grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          onClick={handleDownloadPng}
-                          className="inline-flex items-center justify-center gap-2 rounded-full bg-[#feb602] px-4 py-3 text-sm font-semibold text-[#0a152f] transition hover:bg-[#e29f00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60"
-                        >
-                          <Download className="h-4 w-4 text-[#0a152f]" aria-hidden /> Download PNG
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handlePrintPdf}
-                          className="inline-flex items-center justify-center gap-2 rounded-full bg-[#44b678] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#3aa068] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#44b678]/60"
-                        >
-                          <Printer className="h-4 w-4" aria-hidden /> Print PDF
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleShare}
-                        className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#eef1f7] px-4 py-3 text-sm font-semibold text-[#0a152f] transition hover:bg-[#e0e6f2] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60"
-                      >
-                        <Share2 className="h-4 w-4" aria-hidden /> Share QR Code
-                      </button>
-                    </>
-                  ) : (
-                    <div className="mt-5 flex flex-col items-center justify-center gap-3 rounded-[12px] border-2 border-dashed border-[#d7ddea] bg-[#fafafa] px-5 py-8 text-center">
-                      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#8698bb] ring-1 ring-[#eef1f7]">
-                        <QrCode className="h-6 w-6" aria-hidden />
-                      </span>
-                      <p className="text-[13px] leading-[1.5] text-[#525252]">
-                        Create your loyalty program to generate a QR code your customers can scan to join.
-                      </p>
-                    </div>
-                  )}
-                </section>
+                          <p className="mt-3 break-all text-[12px] text-[#737373]">{joinUrl}</p>
 
-                {programType === "visit" ? (
-                  <StampCardPreview
-                    businessName={businessName}
-                    visitsRequired={Number(visitsRequired) || 0}
-                    rewardDescription={rewardLabel(rewardOnCompletion)}
-                  />
-                ) : null}
+                          <div className="mt-5 grid grid-cols-2 gap-3">
+                            <button
+                              type="button"
+                              onClick={handleDownloadPng}
+                              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#feb602] px-4 py-3 text-sm font-semibold text-[#0a152f] transition hover:bg-[#e29f00] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60"
+                            >
+                              <Download className="h-4 w-4 text-[#0a152f]" aria-hidden /> Download
+                              PNG
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handlePrintPdf}
+                              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#44b678] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#3aa068] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#44b678]/60"
+                            >
+                              <Printer className="h-4 w-4" aria-hidden /> Print PDF
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleShare}
+                            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#eef1f7] px-4 py-3 text-sm font-semibold text-[#0a152f] transition hover:bg-[#e0e6f2] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60"
+                          >
+                            <Share2 className="h-4 w-4" aria-hidden /> Share QR Code
+                          </button>
+                        </>
+                      ) : (
+                        <div className="mt-5 flex flex-col items-center justify-center gap-3 rounded-[12px] border-2 border-dashed border-[#d7ddea] bg-[#fafafa] px-5 py-8 text-center">
+                          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#8698bb] ring-1 ring-[#eef1f7]">
+                            <QrCode className="h-6 w-6" aria-hidden />
+                          </span>
+                          <p className="text-[13px] leading-[1.5] text-[#525252]">
+                            Create your loyalty program to generate a QR code your customers can
+                            scan to join.
+                          </p>
+                        </div>
+                      )}
+                    </section>
 
-                {programType === "visit" ? (
-                  <>
-                    <VisitStatsPanel
-                      stampsIssued={stampsIssuedThisMonth}
-                      cardsCompleted={cardsCompleted}
-                      customersOneVisitAway={customersOneVisitAway}
-                    />
-                    <CompletionFunnelPanel />
-                  </>
-                ) : (
-                  <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
-                    <h2 className="text-[16px] font-semibold text-[#0a152f]">Program stats</h2>
-                    <div className="mt-5 flex flex-col gap-3">
-                      <StatCard icon={CoinsIcon} label="Total points issued" value="0" />
-                      <StatCard icon={GiftIcon} label="Points redeemed" value="0" />
-                      <StatCard icon={Activity} label="Avg. points per visit" value="0" />
-                    </div>
-                  </section>
+                    {programType === "visit" ? (
+                      <StampCardPreview
+                        businessName={businessName}
+                        visitsRequired={Number(visitsRequired) || 0}
+                        rewardDescription={rewardLabel(rewardOnCompletion)}
+                      />
+                    ) : null}
+
+                    {programType === "visit" ? (
+                      <>
+                        <VisitStatsPanel
+                          stampsIssued={stampsIssuedThisMonth}
+                          cardsCompleted={cardsCompleted}
+                          customersOneVisitAway={customersOneVisitAway}
+                        />
+                        <CompletionFunnelPanel />
+                      </>
+                    ) : (
+                      <section className="rounded-[16px] bg-white p-5 shadow-[0_1px_3px_rgba(10,13,18,0.1)]">
+                        <h2 className="text-[16px] font-semibold text-[#0a152f]">Program stats</h2>
+                        <div className="mt-5 flex flex-col gap-3">
+                          <StatCard icon={CoinsIcon} label="Total points issued" value="0" />
+                          <StatCard icon={GiftIcon} label="Points redeemed" value="0" />
+                          <StatCard icon={Activity} label="Avg. points per visit" value="0" />
+                        </div>
+                      </section>
+                    )}
+                  </div>
+                </div>
+
+                {formError && (
+                  <div
+                    role="alert"
+                    className="rounded-[12px] border border-red-200 bg-red-50 p-4 text-[14px] text-red-700"
+                  >
+                    {formError}
+                  </div>
                 )}
-              </div>
-            </div>
 
-            {formError && (
-              <div
-                role="alert"
-                className="rounded-[12px] border border-red-200 bg-red-50 p-4 text-[14px] text-red-700"
-              >
-                {formError}
-              </div>
-            )}
-
-            <div className="flex flex-wrap items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => navigate({ to: "/dashboard" })}
-                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#0a152f] shadow-[0_1px_2px_rgba(15,28,61,0.04)] transition hover:bg-[#eef1f7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={!canSubmit || saving}
-                className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-[#0a152f] shadow-[0_4px_14px_rgba(254,182,2,0.35)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
-                  !canSubmit || saving
-                    ? "bg-[#feb602]/50 cursor-not-allowed"
-                    : "bg-[#feb602] hover:bg-[#e29f00]"
-                }`}
-              >
-                {saving && <Loader2 className="h-4 w-4 animate-spin text-[#0a152f]" aria-hidden />}
-                {saving ? "Saving…" : "Save Program"}
-              </button>
-            </div>
-            </>
+                <div className="flex flex-wrap items-center justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate({ to: "/dashboard" })}
+                    className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#0a152f] shadow-[0_1px_2px_rgba(15,28,61,0.04)] transition hover:bg-[#eef1f7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!canSubmit || saving}
+                    className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-[#0a152f] shadow-[0_4px_14px_rgba(254,182,2,0.35)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+                      !canSubmit || saving
+                        ? "bg-[#feb602]/50 cursor-not-allowed"
+                        : "bg-[#feb602] hover:bg-[#e29f00]"
+                    }`}
+                  >
+                    {saving && (
+                      <Loader2 className="h-4 w-4 animate-spin text-[#0a152f]" aria-hidden />
+                    )}
+                    {saving ? "Saving…" : "Save Program"}
+                  </button>
+                </div>
+              </>
             )}
           </form>
         )}
@@ -1159,9 +1153,7 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={`rounded-[8px] px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#feb602]/60 ${
-        active
-          ? "bg-[#feb602] text-white"
-          : "text-[#0a152f] hover:bg-[#eef1f7]"
+        active ? "bg-[#feb602] text-white" : "text-[#0a152f] hover:bg-[#eef1f7]"
       }`}
     >
       {children}
@@ -1387,16 +1379,8 @@ function VisitStatsPanel({
     <section className="rounded-[12px] border border-[#d7ddea] bg-white p-5">
       <h2 className="text-[20px] font-semibold text-[#0a152f]">Visits stats</h2>
       <div className="mt-5 flex flex-col gap-3">
-        <VisitStatCard
-          icon={Stamp}
-          label="Stamps issued this month"
-          value={String(stampsIssued)}
-        />
-        <VisitStatCard
-          icon={Layers}
-          label="Cards completed"
-          value={String(cardsCompleted)}
-        />
+        <VisitStatCard icon={Stamp} label="Stamps issued this month" value={String(stampsIssued)} />
+        <VisitStatCard icon={Layers} label="Cards completed" value={String(cardsCompleted)} />
         <VisitStatCard
           icon={Clock}
           label="Customers 1 visit away"
@@ -1448,9 +1432,7 @@ function CompletionFunnelPanel() {
 
   return (
     <section className="flex flex-col gap-6 rounded-[12px] border border-[#d7ddea] bg-white p-5">
-      <h2 className="text-[20px] font-semibold leading-none text-[#0a152f]">
-        Completion funnel
-      </h2>
+      <h2 className="text-[20px] font-semibold leading-none text-[#0a152f]">Completion funnel</h2>
       <div className="flex flex-col gap-3">
         <FunnelStatCard icon={Users} label="Customers on card" value={customersOnCard} />
         <FunnelStatCard icon={Stamp} label="Reached 1+ stamps" value={reachedOneStamp} />
@@ -1476,13 +1458,9 @@ function FunnelStatCard({
         <p className="flex-1 text-[14px] text-[#737373]">{label}</p>
         <Icon className="h-6 w-6 shrink-0 text-[#44b678]" aria-hidden />
       </div>
-      <p className="text-[20px] font-semibold leading-none text-[#0a152f]">
-        {value}
-      </p>
+      <p className="text-[20px] font-semibold leading-none text-[#0a152f]">{value}</p>
     </div>
   );
 }
-
-
 
 export default LoyaltyPage;

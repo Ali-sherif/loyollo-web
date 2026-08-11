@@ -47,10 +47,22 @@ export function Hero() {
         <div className="absolute top-72 left-[8%] h-1.5 w-1.5 rounded-full bg-success-500/70 animate-hero-float-slower" />
         <div className="absolute bottom-40 right-[10%] h-2 w-2 rounded-full bg-gold-500/60 animate-hero-float-slow" />
 
-        <svg className="absolute top-16 right-[22%] h-4 w-4 text-gold-500/50 animate-hero-float-slow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          className="absolute top-16 right-[22%] h-4 w-4 text-gold-500/50 animate-hero-float-slow"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path d="M12 2v20M2 12h20" />
         </svg>
-        <svg className="absolute bottom-56 left-[18%] h-3 w-3 text-navy-500/40 animate-hero-float" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          className="absolute bottom-56 left-[18%] h-3 w-3 text-navy-500/40 animate-hero-float"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path d="M12 2v20M2 12h20" />
         </svg>
 
@@ -60,27 +72,42 @@ export function Hero() {
           fill="none"
           preserveAspectRatio="none"
         >
-          <path d="M0 120 C 300 20, 900 220, 1200 60" stroke="#0A152F" strokeWidth="1.5" strokeDasharray="4 6" />
+          <path
+            d="M0 120 C 300 20, 900 220, 1200 60"
+            stroke="#0A152F"
+            strokeWidth="1.5"
+            strokeDasharray="4 6"
+          />
         </svg>
 
         <div className="absolute top-[46%] left-[4%] hidden items-center gap-2 rounded-xl border border-border bg-card/90 px-3 py-2 shadow-[var(--shadow-soft)] backdrop-blur md:flex animate-hero-float-card-slow">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold-500/15 text-xs">★</span>
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold-500/15 text-xs">
+            ★
+          </span>
           <div className="text-left">
             <div className="text-[10px] font-semibold leading-none text-navy-900">+250 pts</div>
-            <div className="mt-0.5 text-[9px] leading-none text-muted-foreground">Reward earned</div>
+            <div className="mt-0.5 text-[9px] leading-none text-muted-foreground">
+              Reward earned
+            </div>
           </div>
         </div>
         <div className="absolute top-[52%] right-[4%] hidden items-center gap-2 rounded-xl border border-border bg-card/90 px-3 py-2 shadow-[var(--shadow-soft)] backdrop-blur md:flex animate-hero-float-card">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-success-500/15 text-xs">🎁</span>
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-success-500/15 text-xs">
+            🎁
+          </span>
           <div className="text-left">
             <div className="text-[10px] font-semibold leading-none text-navy-900">New reward</div>
             <div className="mt-0.5 text-[9px] leading-none text-muted-foreground">Free coffee</div>
           </div>
         </div>
         <div className="absolute top-[72%] left-[3%] hidden items-center gap-2 rounded-xl border border-border bg-card/90 px-3 py-2 shadow-[var(--shadow-soft)] backdrop-blur lg:flex animate-hero-float-card-slower">
-          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-navy-900 text-[10px] font-semibold text-white">QR</span>
+          <span className="flex h-6 w-6 items-center justify-center rounded-md bg-navy-900 text-[10px] font-semibold text-white">
+            QR
+          </span>
           <div className="text-left">
-            <div className="text-[10px] font-semibold leading-none text-navy-900">Scan check-in</div>
+            <div className="text-[10px] font-semibold leading-none text-navy-900">
+              Scan check-in
+            </div>
             <div className="mt-0.5 text-[9px] leading-none text-muted-foreground">Visit #12</div>
           </div>
         </div>
@@ -88,7 +115,8 @@ export function Hero() {
 
       <div className="relative mx-auto max-w-7xl px-6 pt-16 pb-10 text-center">
         <h1 className="mx-auto max-w-4xl text-4xl font-bold leading-[1.1] tracking-tight text-navy-900 sm:text-5xl md:text-6xl">
-          Turn First-Time Visitors Into <span className="text-gold-500">Regulars</span>&nbsp;— In Minutes
+          Turn First-Time Visitors Into <span className="text-gold-500">Regulars</span>&nbsp;— In
+          Minutes
         </h1>
 
         <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
@@ -104,9 +132,9 @@ export function Hero() {
         </div>
 
         <p className="mx-auto mt-6 max-w-2xl text-base text-navy-700 sm:text-lg">
-          Replace paper loyalty cards with a digital loyalty experience in minutes. Reward repeat customers, 
-          collect valuable customer insights, and grow your business with a simple QR-based 
-          loyalty platform built for small businesses.
+          Replace paper loyalty cards with a digital loyalty experience in minutes. Reward repeat
+          customers, collect valuable customer insights, and grow your business with a simple
+          QR-based loyalty platform built for small businesses.
         </p>
 
         <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center">

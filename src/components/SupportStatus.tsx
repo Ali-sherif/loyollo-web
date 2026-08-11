@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { addDays, format, isSameDay, setHours, setMinutes, setSeconds, setMilliseconds } from "date-fns";
+import {
+  addDays,
+  format,
+  isSameDay,
+  setHours,
+  setMinutes,
+  setSeconds,
+  setMilliseconds,
+} from "date-fns";
 import { cn } from "@/lib/utils";
 
 // Single source of truth for support hours.
@@ -39,9 +47,7 @@ function formatTime(date: Date) {
   return format(date, "h:mm a");
 }
 
-type Status =
-  | { open: true; closesAt: Date }
-  | { open: false; opensAt: Date };
+type Status = { open: true; closesAt: Date } | { open: false; opensAt: Date };
 
 function computeStatus(now: Date): Status {
   const todayDow = now.getDay();
@@ -108,9 +114,8 @@ export function SupportStatus({ className }: { className?: string }) {
           <span className="relative inline-block h-2.5 w-2.5 rounded-full bg-success-500" />
         </span>
         <span>
-          Support is currently{" "}
-          <span className="font-semibold text-success-600">online</span> · Available until{" "}
-          {formatTime(status.closesAt)}
+          Support is currently <span className="font-semibold text-success-600">online</span> ·
+          Available until {formatTime(status.closesAt)}
         </span>
       </div>
     );
@@ -120,8 +125,7 @@ export function SupportStatus({ className }: { className?: string }) {
     <div className={cn("flex items-center gap-2 text-sm text-navy-900", className)}>
       <span className="inline-block h-2.5 w-2.5 rounded-full bg-navy-300" />
       <span>
-        Support is currently{" "}
-        <span className="font-semibold text-muted-foreground">offline</span> ·{" "}
+        Support is currently <span className="font-semibold text-muted-foreground">offline</span> ·{" "}
         {humanOpensAt(now, status.opensAt)}
       </span>
     </div>

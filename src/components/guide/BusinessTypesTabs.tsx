@@ -48,8 +48,8 @@ export function BusinessTypesTabs() {
             Multiple <span className="text-gold-500">Business Types</span>
           </h2>
           <p className="mt-4 text-base text-muted-foreground">
-            No matter your industry, you can create rewarding customer
-            experiences and grow customer loyalty with ease.
+            No matter your industry, you can create rewarding customer experiences and grow customer
+            loyalty with ease.
           </p>
         </div>
 
@@ -111,9 +111,7 @@ export function BusinessTypesTabs() {
               <span className="grid h-14 w-14 place-items-center rounded-full border-2 bg-[#FFF9E6] text-gold-500 border-[#FFE48A]">
                 <b.icon className="h-6 w-6" />
               </span>
-              <span className="text-sm font-semibold text-navy-900">
-                {b.label}
-              </span>
+              <span className="text-sm font-semibold text-navy-900">{b.label}</span>
             </div>
           ))}
         </div>

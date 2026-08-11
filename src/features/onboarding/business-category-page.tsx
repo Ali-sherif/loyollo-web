@@ -5,10 +5,7 @@ import * as React from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import { OnboardingLeftPanelDecor } from "@/components/onboarding/OnboardingLeftPanelDecor";
-import {
-  BUSINESS_CATEGORIES,
-  type BusinessCategory,
-} from "@/data/businessTypes";
+import { BUSINESS_CATEGORIES, type BusinessCategory } from "@/data/businessTypes";
 import { cn } from "@/lib/utils";
 
 const TOTAL_STEPS = 4;
@@ -42,9 +39,7 @@ function BusinessCategoryPage() {
     (async () => {
       const { data } = await getAuthSupabase()
         .from("profiles")
-        .select(
-          "onboarding_completed, num_locations, business_type, business_category",
-        )
+        .select("onboarding_completed, num_locations, business_type, business_category")
         .eq("id", user.id)
         .maybeSingle();
       if (cancelled) return;
@@ -125,17 +120,14 @@ function BusinessCategoryPage() {
         <aside className="relative flex w-full flex-col items-center justify-center gap-8 overflow-hidden rounded-[32px] bg-[#0a152f] p-5 text-white lg:h-auto lg:w-[320px] lg:rounded-[40px] lg:p-7">
           <OnboardingLeftPanelDecor />
           <div className="relative flex items-center justify-center rounded-full bg-[#0f1c3d] px-10 py-5">
-            <span className="text-base font-semibold leading-none text-[#feb602]">
-              LOGO
-            </span>
+            <span className="text-base font-semibold leading-none text-[#feb602]">LOGO</span>
           </div>
           <div className="relative flex w-full flex-col items-center gap-4 text-center">
             <h2 className="text-[24px] font-bold leading-[1.2] text-white">
               Let&rsquo;s Setup Your Account
             </h2>
             <p className="text-base font-normal text-[#eef1f7]">
-              Just a few quick steps to personalize your experience and launch
-              your loyalty program.
+              Just a few quick steps to personalize your experience and launch your loyalty program.
             </p>
           </div>
         </aside>
@@ -153,27 +145,12 @@ function BusinessCategoryPage() {
               {Array.from({ length: TOTAL_STEPS }).map((_, i) => {
                 const step = i + 1;
                 if (step === CURRENT_STEP) {
-                  return (
-                    <span
-                      key={i}
-                      className="h-2 w-8 rounded-full bg-[#feb602]"
-                    />
-                  );
+                  return <span key={i} className="h-2 w-8 rounded-full bg-[#feb602]" />;
                 }
                 if (step < CURRENT_STEP) {
-                  return (
-                    <span
-                      key={i}
-                      className="h-2 w-2 rounded-full bg-[#44b678]"
-                    />
-                  );
+                  return <span key={i} className="h-2 w-2 rounded-full bg-[#44b678]" />;
                 }
-                return (
-                  <span
-                    key={i}
-                    className="h-2 w-2 rounded-full bg-[#d7ddea]"
-                  />
-                );
+                return <span key={i} className="h-2 w-2 rounded-full bg-[#d7ddea]" />;
               })}
             </div>
 
@@ -182,8 +159,8 @@ function BusinessCategoryPage() {
                 What type of {category.label} business do you run?
               </h1>
               <p className="text-sm text-[#737373]">
-                Pick the sub-type that best describes your business. To change
-                your category, go Back to the previous step.
+                Pick the sub-type that best describes your business. To change your category, go
+                Back to the previous step.
               </p>
             </div>
 
@@ -217,10 +194,7 @@ function BusinessCategoryPage() {
                       )}
                     >
                       <Icon
-                        className={cn(
-                          "h-5 w-5",
-                          isSel ? "text-[#e29f00]" : "text-[#0a152f]",
-                        )}
+                        className={cn("h-5 w-5", isSel ? "text-[#e29f00]" : "text-[#0a152f]")}
                         aria-hidden
                       />
                     </span>
@@ -239,9 +213,7 @@ function BusinessCategoryPage() {
                   <span className="font-semibold">{selectedSubType}</span>
                 </>
               ) : (
-                <span className="text-[#737373]">
-                  No sub-type selected yet
-                </span>
+                <span className="text-[#737373]">No sub-type selected yet</span>
               )}
             </div>
 
@@ -276,15 +248,12 @@ function BusinessCategoryPage() {
           </div>
 
           <div className="flex items-center justify-center py-2">
-            <p className="text-base text-[#737373]">
-              *Your data stays private and encrypted.
-            </p>
+            <p className="text-base text-[#737373]">*Your data stays private and encrypted.</p>
           </div>
         </section>
       </div>
     </div>
   );
 }
-
 
 export default BusinessCategoryPage;

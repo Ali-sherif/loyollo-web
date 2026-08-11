@@ -74,8 +74,7 @@ function mergeSettings(qr: Record<string, unknown> | null, brand: string): Appli
       form_fields[k] = { enabled: !!v.enabled, required: !!v.required };
     }
   }
-  const str = (v: unknown, fb: string) =>
-    typeof v === "string" && v.trim().length > 0 ? v : fb;
+  const str = (v: unknown, fb: string) => (typeof v === "string" && v.trim().length > 0 ? v : fb);
   const bool = (v: unknown, fb: boolean) => (typeof v === "boolean" ? v : fb);
   return {
     logo_url: (qr?.logo_url as string | null) ?? null,
@@ -107,14 +106,20 @@ function JoinPage({ programId }: { programId: string }) {
   const fetchProgram = getJoinProgram;
   const enrollFn = enrollCustomer;
 
-  const { data: program, isLoading, isError } = useQuery({
+  const {
+    data: program,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["join-program", programId],
     queryFn: () => fetchProgram({ programId }),
     retry: false,
   });
 
   const brand =
-    (program?.qr as { business_name_override?: string | null } | null)?.business_name_override?.trim() ||
+    (
+      program?.qr as { business_name_override?: string | null } | null
+    )?.business_name_override?.trim() ||
     program?.businessName ||
     program?.name ||
     "this business";
@@ -149,14 +154,14 @@ function JoinPage({ programId }: { programId: string }) {
     setSubmitting(true);
     try {
       const res = await enrollFn({
-          programId,
-          fullName,
-          email: ff.email.enabled ? email.trim() : "",
-          phone: ff.phone.enabled ? phone.trim() : "",
-          birthday: ff.birthday.enabled ? birthday.trim() : "",
-          gender: ff.gender.enabled ? gender.trim() : "",
-          city: ff.city.enabled ? city.trim() : "",
-          customFieldValue: ff.custom_field.enabled ? customVal.trim() : "",
+        programId,
+        fullName,
+        email: ff.email.enabled ? email.trim() : "",
+        phone: ff.phone.enabled ? phone.trim() : "",
+        birthday: ff.birthday.enabled ? birthday.trim() : "",
+        gender: ff.gender.enabled ? gender.trim() : "",
+        city: ff.city.enabled ? city.trim() : "",
+        customFieldValue: ff.custom_field.enabled ? customVal.trim() : "",
       });
       setEnrolled(res);
     } catch (err) {
@@ -206,7 +211,8 @@ function JoinPage({ programId }: { programId: string }) {
             </div>
             <h1 className="mt-5 text-[24px] font-bold text-[#0a152f]">Congratulations! 🎉</h1>
             <p className="mt-2 text-[15px] leading-[1.5] text-[#525252]">
-              You've earned <strong className="text-[#0a152f]">{earnedReward.name}</strong> from {brand}.
+              You've earned <strong className="text-[#0a152f]">{earnedReward.name}</strong> from{" "}
+              {brand}.
             </p>
             <div
               className="mt-6 rounded-2xl border-2 p-5"
@@ -234,7 +240,11 @@ function JoinPage({ programId }: { programId: string }) {
             className="mx-auto flex h-14 w-14 items-center justify-center rounded-full"
             style={{ backgroundColor: `${settings.secondary_color}22` }}
           >
-            <CheckCircle2 className="h-7 w-7" style={{ color: settings.secondary_color }} aria-hidden />
+            <CheckCircle2
+              className="h-7 w-7"
+              style={{ color: settings.secondary_color }}
+              aria-hidden
+            />
           </div>
           <h1 className="mt-5 text-[22px] font-bold text-[#0a152f]">
             {alreadyEnrolled ? "Check-in confirmed!" : "You're in!"}
@@ -254,21 +264,29 @@ function JoinPage({ programId }: { programId: string }) {
                     +{progress.visitsAdded} this visit
                   </p>
                 ) : alreadyEnrolled ? (
-                  <p className="mt-1 text-[12px] text-[#64748b]">Come back tomorrow to earn another visit</p>
+                  <p className="mt-1 text-[12px] text-[#64748b]">
+                    Come back tomorrow to earn another visit
+                  </p>
                 ) : (
-                  <p className="mt-1 text-[12px] text-[#64748b]">Start earning on your next visit</p>
+                  <p className="mt-1 text-[12px] text-[#64748b]">
+                    Start earning on your next visit
+                  </p>
                 )}
               </>
             ) : (
               <>
-                <p className="text-[12px] uppercase tracking-wide text-[#64748b]">Your points balance</p>
+                <p className="text-[12px] uppercase tracking-wide text-[#64748b]">
+                  Your points balance
+                </p>
                 <p className="mt-1 text-[32px] font-bold text-[#0a152f]">{progress.points}</p>
                 {progress.pointsAdded ? (
                   <p className="mt-1 text-[12px]" style={{ color: settings.secondary_color }}>
                     +{progress.pointsAdded} this visit
                   </p>
                 ) : (
-                  <p className="mt-1 text-[12px] text-[#64748b]">Start earning on your next visit</p>
+                  <p className="mt-1 text-[12px] text-[#64748b]">
+                    Start earning on your next visit
+                  </p>
                 )}
               </>
             )}
@@ -290,9 +308,7 @@ function JoinPage({ programId }: { programId: string }) {
             className="mx-auto h-16 w-16 rounded-2xl object-cover"
           />
         ) : (
-          <div
-            className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#0f1c3d]"
-          >
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#0f1c3d]">
             <Sparkles className="h-6 w-6" style={{ color: settings.primary_color }} aria-hidden />
           </div>
         )}
@@ -300,7 +316,9 @@ function JoinPage({ programId }: { programId: string }) {
           <h1 className="mt-5 text-[22px] font-bold text-[#0a152f]">{settings.welcome_headline}</h1>
         ) : null}
         {settings.show_program_description ? (
-          <p className="mt-2 text-[14px] leading-[1.5] text-[#525252]">{settings.short_description}</p>
+          <p className="mt-2 text-[14px] leading-[1.5] text-[#525252]">
+            {settings.short_description}
+          </p>
         ) : null}
       </div>
 
@@ -310,9 +328,7 @@ function JoinPage({ programId }: { programId: string }) {
             <StampCardPreviewCompact
               businessName={brand}
               visitsRequired={program.config.visits_required || 0}
-              rewardDescription={
-                rewardLabel(program.config.reward_on_completion) || "Your reward"
-              }
+              rewardDescription={rewardLabel(program.config.reward_on_completion) || "Your reward"}
               accentColor={settings.primary_color}
             />
           ) : program?.config?.program_type === "points" ? (
@@ -321,11 +337,7 @@ function JoinPage({ programId }: { programId: string }) {
               style={{ backgroundColor: `${settings.primary_color}18` }}
             >
               <div className="flex items-center gap-3">
-                <Gift
-                  className="h-5 w-5"
-                  style={{ color: settings.primary_color }}
-                  aria-hidden
-                />
+                <Gift className="h-5 w-5" style={{ color: settings.primary_color }} aria-hidden />
                 <p className="text-[13px] text-[#0a152f]">
                   {program.config.spend_amount > 0 && program.config.points_earned > 0
                     ? `Spend $${program.config.spend_amount}, earn ${program.config.points_earned} ${program.config.points_earned === 1 ? "point" : "points"}`
@@ -338,14 +350,8 @@ function JoinPage({ programId }: { programId: string }) {
               className="flex items-center gap-3 rounded-xl p-3"
               style={{ backgroundColor: `${settings.primary_color}18` }}
             >
-              <Gift
-                className="h-5 w-5"
-                style={{ color: settings.primary_color }}
-                aria-hidden
-              />
-              <p className="text-[13px] text-[#0a152f]">
-                Unlock rewards as you progress.
-              </p>
+              <Gift className="h-5 w-5" style={{ color: settings.primary_color }} aria-hidden />
+              <p className="text-[13px] text-[#0a152f]">Unlock rewards as you progress.</p>
             </div>
           )}
         </div>
@@ -476,7 +482,8 @@ function JoinPage({ programId }: { programId: string }) {
 
         {settings.show_terms ? (
           <p className="text-center text-[11px] leading-[1.5] text-[#94a3b8]">
-            By joining, you agree to receive loyalty updates from {brand}. You can unsubscribe at any time.
+            By joining, you agree to receive loyalty updates from {brand}. You can unsubscribe at
+            any time.
           </p>
         ) : null}
       </form>
@@ -530,13 +537,15 @@ function Shell({
     >
       <div className="w-full max-w-md overflow-hidden rounded-[24px] bg-white shadow-[0_4px_20px_rgba(15,28,61,0.06)]">
         {cover ? (
-          <div className="h-32 w-full bg-cover bg-center" style={{ backgroundImage: `url(${cover})` }} />
+          <div
+            className="h-32 w-full bg-cover bg-center"
+            style={{ backgroundImage: `url(${cover})` }}
+          />
         ) : null}
         <div className="p-8">{children}</div>
       </div>
     </div>
   );
 }
-
 
 export default JoinPage;

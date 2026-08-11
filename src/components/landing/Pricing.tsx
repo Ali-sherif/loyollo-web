@@ -84,7 +84,6 @@ const hoverRingStyles = {
   navy: "hover:ring-[#0F1C3D]",
 } as const;
 
-
 function BillingToggle({
   period,
   onChange,
@@ -148,7 +147,6 @@ export function Pricing() {
                   : "border-border bg-card",
                 idx === 0 && !plan.featured && "md:order-first",
               )}
-
             >
               {plan.featured && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-success-500 px-3 py-1 text-xs font-semibold text-white shadow">
@@ -171,12 +169,7 @@ export function Pricing() {
               <ul className="mt-8 space-y-3">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm text-navy-800">
-                    <Check
-                      className={cn(
-                        "mt-0.5 h-4 w-4 shrink-0",
-                        accentStyles[plan.accent],
-                      )}
-                    />
+                    <Check className={cn("mt-0.5 h-4 w-4 shrink-0", accentStyles[plan.accent])} />
                     <span>{f}</span>
                   </li>
                 ))}
@@ -184,7 +177,9 @@ export function Pricing() {
 
               <div className="mt-10">
                 <Button
-                  variant={plan.accent === "success" ? "success" : plan.accent === "navy" ? "navy" : "gold"}
+                  variant={
+                    plan.accent === "success" ? "success" : plan.accent === "navy" ? "navy" : "gold"
+                  }
                   size="lg"
                   className="w-full"
                   asChild

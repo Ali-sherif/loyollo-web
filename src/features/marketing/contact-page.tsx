@@ -32,7 +32,6 @@ import {
   MapPin,
   Mail,
   Send,
-  
 } from "lucide-react";
 import { SupportStatus, SUPPORT_HOURS_DISPLAY } from "@/components/SupportStatus";
 import { InteractiveMap } from "@/components/InteractiveMap";
@@ -127,10 +126,7 @@ function ContactPage() {
       <Navbar />
 
       {/* Hero */}
-      <section
-        className="relative overflow-hidden"
-        style={{ background: "var(--gradient-hero)" }}
-      >
+      <section className="relative overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <div
             className="absolute inset-0 opacity-[0.06]"
@@ -152,8 +148,8 @@ function ContactPage() {
             We're Here To <span className="text-gold-500">Help</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base text-navy-700 sm:text-lg">
-            Whether you're exploring our platform or looking for support, we'd love
-            to hear from you and answer any questions you may have.
+            Whether you're exploring our platform or looking for support, we'd love to hear from you
+            and answer any questions you may have.
           </p>
 
           {/* Support cards */}
@@ -165,7 +161,12 @@ function ContactPage() {
                   key={c.title}
                   className="flex flex-col rounded-2xl border border-border bg-card p-6 transition-shadow hover:shadow-[var(--shadow-soft)]"
                 >
-                  <div className={cn("flex h-14 w-14 items-center justify-center rounded-full border", circleStyles[c.accent])}>
+                  <div
+                    className={cn(
+                      "flex h-14 w-14 items-center justify-center rounded-full border",
+                      circleStyles[c.accent],
+                    )}
+                  >
                     <Icon className={cn("h-6 w-6", accentStyles[c.accent])} />
                   </div>
                   <h3 className={cn("mt-4 text-xl font-semibold", accentStyles[c.accent])}>
@@ -179,7 +180,9 @@ function ContactPage() {
                       <span>{c.meta}</span>
                     </div>
                     <Button
-                      variant={c.accent === "success" ? "success" : c.accent === "navy" ? "navy" : "gold"}
+                      variant={
+                        c.accent === "success" ? "success" : c.accent === "navy" ? "navy" : "gold"
+                      }
                       size="sm"
                       className={cn("gap-1.5 rounded-full", c.accent === "gold" && "text-white")}
                     >
@@ -313,7 +316,12 @@ function ContactPage() {
                   {SUPPORT_HOURS_DISPLAY.map((row) => (
                     <li key={row.label} className="flex items-center justify-between">
                       <span className="text-muted-foreground">{row.label}</span>
-                      <span className={cn("font-medium", row.closed ? "text-[#E53935]" : "text-navy-900")}>
+                      <span
+                        className={cn(
+                          "font-medium",
+                          row.closed ? "text-[#E53935]" : "text-navy-900",
+                        )}
+                      >
                         {row.value}
                       </span>
                     </li>
@@ -395,6 +403,5 @@ function FieldLabel({
     </div>
   );
 }
-
 
 export default ContactPage;

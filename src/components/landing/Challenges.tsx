@@ -111,9 +111,7 @@ export function Challenges() {
             })}
           </div>
         </div>
-
       </div>
-
     </section>
   );
 }

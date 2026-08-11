@@ -19,8 +19,10 @@ const buttonVariants = cva(
         gold: "bg-gold-500 text-navy-900 shadow-[var(--shadow-glow)] hover:bg-gold-600 font-semibold",
         navy: "bg-navy-800 text-white shadow-sm hover:bg-navy-900 font-semibold",
         success: "bg-success-500 text-white shadow-sm hover:bg-success-600 font-semibold",
-        ghostNavy: "bg-transparent text-navy-900 border border-navy-200 hover:bg-navy-50 font-semibold",
-        ghostLight: "bg-white/10 text-white border border-white/20 hover:bg-white/15 font-semibold backdrop-blur",
+        ghostNavy:
+          "bg-transparent text-navy-900 border border-navy-200 hover:bg-navy-50 font-semibold",
+        ghostLight:
+          "bg-white/10 text-white border border-white/20 hover:bg-white/15 font-semibold backdrop-blur",
       },
       size: {
         default: "h-9 px-4 py-2",
@@ -29,7 +31,6 @@ const buttonVariants = cva(
         xl: "h-12 rounded-xl px-8 text-base",
         icon: "h-9 w-9",
       },
-
     },
     defaultVariants: {
       variant: "default",

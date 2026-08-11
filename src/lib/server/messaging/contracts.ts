@@ -33,14 +33,10 @@ export type SendSmsInput = {
 };
 
 export type SendResult =
-  | { ok: true; providerMessageId?: string }
-  | { ok: false; error: string; code: MessagingErrorCode };
+  { ok: true; providerMessageId?: string } | { ok: false; error: string; code: MessagingErrorCode };
 
 export type MessagingErrorCode =
-  | "EMAIL_TRANSPORT_STUB"
-  | "SMS_TRANSPORT_NOT_CONFIGURED"
-  | "RENDER_FAILED"
-  | "INVALID_INPUT";
+  "EMAIL_TRANSPORT_STUB" | "SMS_TRANSPORT_NOT_CONFIGURED" | "RENDER_FAILED" | "INVALID_INPUT";
 
 export type EmailTransport = {
   sendEmail(input: SendEmailInput): Promise<SendResult>;

@@ -19,11 +19,7 @@ export function CTA() {
         />
         <div className="relative">
           <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#15264F] text-gold-300">
-            <img
-              src={iconAsset}
-              alt="Loyollo"
-              className="h-6 w-auto object-contain"
-            />
+            <img src={iconAsset} alt="Loyollo" className="h-6 w-auto object-contain" />
           </div>
           <h2 className="mx-auto mt-6 max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">
             Start Building Customer <span className="text-gold-300">Loyalty</span> Today
@@ -36,7 +32,9 @@ export function CTA() {
             <Button variant="gold" size="lg" className="w-full sm:w-auto" asChild>
               <Link to="/signup">Start Free Trial</Link>
             </Button>
-            <Button variant="ghostLight" size="lg" className="w-full sm:w-auto">Book a demo</Button>
+            <Button variant="ghostLight" size="lg" className="w-full sm:w-auto">
+              Book a demo
+            </Button>
           </div>
           <p className="mt-6 text-xs text-navy-200">
             No credit card required • 14-day free trial • Cancel anytime

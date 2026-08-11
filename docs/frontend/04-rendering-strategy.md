@@ -15,10 +15,10 @@ Aligned with [ADR-003](../architecture/decisions/ADR-003-rendering-strategy.md).
 9. Use `loading.tsx` / Suspense at segment boundaries; `error.tsx` for unexpected failures; `not-found.tsx` for missing resources ([ADR-002](../architecture/decisions/ADR-002-app-router.md)).
 10. Public pages are the primary SEO target via the Metadata API; authenticated pages need only basic metadata.
 
-| Route class             | Default                                                                                | Cache policy                                                    | Client islands                      |
-| ----------------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------- |
-| Marketing/legal         | Static Server Component                                                                | Build/static; ISR/revalidate only if content changes            | navigation, observers, map          |
-| Public join             | Dynamic Server Component initial read                                                  | Short cache/ISR only if freshness is accepted                   | enrollment form/QR interactions     |
-| Authentication          | Server shell + Client Component form                                                   | No-store                                                        | Auth operations, timers             |
-| Protected application   | Dynamic Server Components where session auth permits; otherwise client fetch transition | No-store/private                                                | forms, tables, charts, browser APIs |
-| BFF / scheduled APIs    | Route Handlers only when frontend-specific need exists                                 | Never cache mutations                                           | none                                |
+| Route class           | Default                                                                                 | Cache policy                                         | Client islands                      |
+| --------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------------------------- |
+| Marketing/legal       | Static Server Component                                                                 | Build/static; ISR/revalidate only if content changes | navigation, observers, map          |
+| Public join           | Dynamic Server Component initial read                                                   | Short cache/ISR only if freshness is accepted        | enrollment form/QR interactions     |
+| Authentication        | Server shell + Client Component form                                                    | No-store                                             | Auth operations, timers             |
+| Protected application | Dynamic Server Components where session auth permits; otherwise client fetch transition | No-store/private                                     | forms, tables, charts, browser APIs |
+| BFF / scheduled APIs  | Route Handlers only when frontend-specific need exists                                  | Never cache mutations                                | none                                |

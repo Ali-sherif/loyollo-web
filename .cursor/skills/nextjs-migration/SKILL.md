@@ -72,13 +72,16 @@ Follow `docs/frontend/12-migration-plan.md` slices in order. For each slice:
 
 ```markdown
 ## Migration status
+
 - Coding allowed: yes/no
 - Open Critical gates: …
 - Current slice: N — title (or "gate clearing")
 
 ## Next action
+
 - …
 
 ## Docs cited
+
 - …
 ```

@@ -48,10 +48,9 @@ export const sendPasswordChangedEmail = createServerFn({ method: "POST" })
     const messageId = `pw-changed-${userId}-${Date.now()}`;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: unsubToken, error: tokErr } = await supabaseAdmin.rpc(
-      "mint_unsubscribe_token",
-      { p_email: profile.email },
-    );
+    const { data: unsubToken, error: tokErr } = await supabaseAdmin.rpc("mint_unsubscribe_token", {
+      p_email: profile.email,
+    });
     if (tokErr) throw new Error(tokErr.message);
 
     const { error: enqErr } = await supabaseAdmin.rpc("enqueue_email", {

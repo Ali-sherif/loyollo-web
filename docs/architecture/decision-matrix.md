@@ -4,7 +4,7 @@
 | ---- | ----------------- | ---------------------------------- | ----------------------------------------------------------------- | -------- | ------------- | ------------------- | ---------------- |
 | D-01 | Next.js line      | TanStack Start 1.x                 | Next.js 16.3.x; React/React DOM 19.2.x; TypeScript 6.0.x          | Critical | Hard          | DECIDED             | ADR-001          |
 | D-02 | Node line         | Unpinned; Node 22 types installed  | Node 24 LTS for Node deploys; workerd via OpenNext if Cloudflare  | Critical | Moderate      | DECIDED             | ADR-001, ADR-008 |
-| D-03 | Router            | TanStack file router               | App Router; review inventory; approved map is URL contract        | Critical | Very Hard     | DECIDED             | ADR-002, D-01    |
+| D-03 | Router            | TanStack file router               | App Router; **approved** production map in `02-route-migration.md` (restructured) | Critical | Very Hard     | DECIDED             | ADR-002, D-01    |
 | D-04 | Hosting           | Lovable/Nitro Cloudflare default   | Initial target Vercel (Node 24); Cloudflare/OpenNext secondary    | Critical | Hard          | DECIDED             | ADR-008, D-24    |
 | D-05 | Auth ownership    | Supabase + client localStorage     | Backend owns authz; cookies where applicable; Next route gates    | Critical | Hard          | DECIDED             | ADR-005          |
 | D-06 | Protected routes  | Client redirects                   | Next.js route protection + session-aware render; backend is truth | High     | Moderate      | DECIDED             | D-05             |
@@ -30,4 +30,4 @@
 | D-26 | Email provider    | Lovable email transport            | Concrete provider deferred; **ACCEPTED RISK** with messaging adapter stubs under `src/lib/server/messaging/` | Critical | Moderate | ACCEPTED RISK | D-21, D-24, D-25 |
 | D-27 | SMS provider      | Unconfigured (`SMS provider...`)   | Channel/templates preserved; **ACCEPTED RISK** with stub that fails explicitly until provider chosen | High | Moderate | ACCEPTED RISK | D-25 |
 
-High-impact hard-to-reverse decisions that remain open: production route map, testing baselines (D-20), email handler cutover paths (D-21), cutover/rollback (D-23). Architecture ADRs 001–010 are decided; email/SMS providers are ACCEPTED RISK with stubs.
+High-impact hard-to-reverse decisions that remain open: testing baselines (D-20), email handler cutover paths (D-21), cutover/rollback (D-23). Architecture ADRs 001–010 are decided; production route map is approved; email/SMS providers are ACCEPTED RISK with stubs.

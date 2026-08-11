@@ -15,7 +15,7 @@
 | High     | CDN/Lovable assets break after withdrawal                               | Vendor/re-host assets before removing manifests                          |
 | High     | Email/SMS provider undecided                                            | Mitigated: **ACCEPTED RISK** + adapter stubs; SMS fails explicitly until configured |
 | High     | Frontend duplicates backend authorization                               | Backend remains source of truth; Next only route-gates                   |
-| High     | Unapproved URL redesigns after route map freeze                         | Approve route map; treat as production contract thereafter               |
+| High     | Unapproved URL redesigns after route map freeze                         | Mitigated: production map **APPROVED** in `02-route-migration.md`        |
 | High     | Cloudflare workerd dependency incompatibility                           | OpenNext production preview only if Cloudflare is later chosen           |
 | High     | Client-only current route protection                                    | Next.js route protection + backend authorization                         |
 | High     | npm/Bun lockfile ambiguity                                              | Mitigated: npm is canonical; remove `bun.lock` at implementation start   |

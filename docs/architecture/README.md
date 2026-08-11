@@ -15,7 +15,8 @@
 - **RECOMMENDED:** Preserve Supabase schema and contracts. Keep the existing backend as the primary API; Next.js orchestrates and protects routes but does not replace backend ownership.
 - **DECIDED:** App Router, rendering/caching, data/state, auth ownership, server/API boundaries, and project structure ([ADR-002](decisions/ADR-002-app-router.md) through [ADR-007](decisions/ADR-007-project-structure.md)).
 - **DECIDED:** Canonical package manager is npm (`package-lock.json`); remove `bun.lock` at implementation start.
-- **NEEDS INVESTIGATION / APPROVAL:** Production route map, cookie/SSR session spike, production runtime configuration, RLS/storage policy behavior, and queue scheduling.
+- **DECIDED:** Production route map approved and restructured — [02-route-migration.md](../frontend/02-route-migration.md).
+- **NEEDS INVESTIGATION / APPROVAL:** Cookie/SSR session spike, production runtime configuration, RLS/storage policy behavior, and queue scheduling.
 
 ## Critical decisions
 
@@ -32,7 +33,7 @@
 
 ## Recommended decision order
 
-`Approve route map → auth session/cookie spike → messaging adapter stubs (at implementation) → server-function mapping acceptance → migration slices`
+`Auth session/cookie spike → messaging adapter stubs (at implementation) → server-function mapping acceptance → migration slices`
 
 ## Indices
 

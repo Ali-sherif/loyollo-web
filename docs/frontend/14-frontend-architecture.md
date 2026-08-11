@@ -40,7 +40,7 @@ flowchart TD
 - Server Actions only with clear benefit; orchestrate backend calls; do not become the business API.
 - Backend owns authz; Next.js owns route protection, session-aware rendering, redirects ([ADR-005](../architecture/decisions/ADR-005-authentication.md)).
 - Thin `app/`; domain logic in `features/` ([ADR-007](../architecture/decisions/ADR-007-project-structure.md)).
-- Review/approve route map before freezing URLs ([ADR-002](../architecture/decisions/ADR-002-app-router.md)).
+- Production route map approved ([02-route-migration.md](02-route-migration.md)); further URL changes need an explicit contract update ([ADR-002](../architecture/decisions/ADR-002-app-router.md)).
 - No visual redesign; messaging under `src/lib/server/messaging/`; no direct provider deps from features ([ADR-010](../architecture/decisions/ADR-010-style-and-template-parity.md)).
 - Initial hosting is Vercel; email/SMS providers are **ACCEPTED RISK** with adapter stubs.
 

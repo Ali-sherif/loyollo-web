@@ -37,4 +37,4 @@ flowchart TD
   Routes --> Cutover
 ```
 
-Hosting (Vercel) and runtime pins (Next.js 16.3.x, React 19.2.x, TypeScript 6.0.x, Node 24 LTS) are decided. Email/SMS providers are **ACCEPTED RISK** behind messaging adapter stubs. Approve the route map before freezing cutover URLs. Style/template parity is already decided and must gate every migrated surface. Backend remains the primary API; Next.js adds BFF only where justified.
+Hosting (Vercel) and runtime pins (Next.js 16.3.x, React 19.2.x, TypeScript 6.0.x, Node 24 LTS) are decided. Email/SMS providers are **ACCEPTED RISK** behind messaging adapter stubs. Production route map is **APPROVED** ([02-route-migration.md](../frontend/02-route-migration.md)). Style/template parity is already decided and must gate every migrated surface. Backend remains the primary API; Next.js adds BFF only where justified.

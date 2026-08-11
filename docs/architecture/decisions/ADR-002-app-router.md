@@ -48,4 +48,4 @@ This is not a filename-only conversion: TanStack route APIs, navigation, generat
 
 ## Verification
 
-Every inventory row must map to one approved target route, metadata policy, auth policy, and 404/error/loading behavior. The approved route map is the production URL contract.
+Every inventory row maps to one approved target route in [02-route-migration.md](../../frontend/02-route-migration.md), with metadata policy, auth policy, and 404/error/loading behavior. That approved route map is the production URL contract.

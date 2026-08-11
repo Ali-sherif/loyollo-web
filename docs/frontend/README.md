@@ -56,11 +56,12 @@ flowchart LR
 - RSC by default; small Client islands; static/SSR/ISR per route ([ADR-003](../architecture/decisions/ADR-003-rendering-strategy.md)).
 - Hybrid data fetching: RSC initial reads; TanStack Query for interactive server state ([ADR-004](../architecture/decisions/ADR-004-data-and-state.md)).
 - Thin `app/`; domain logic in `features/` ([ADR-007](../architecture/decisions/ADR-007-project-structure.md)).
+- Production route map **APPROVED** ([02-route-migration.md](02-route-migration.md)).
 
 **Still required before coding**
 
-- Approve production route map (candidate in [02-route-migration.md](02-route-migration.md)).
 - Cookie/SSR session spike and remaining checklist Critical items.
+
 ## Documents
 
 1. [Current frontend](01-current-frontend.md)
@@ -81,4 +82,4 @@ flowchart LR
 16. [Dependency compatibility](16-dependency-compatibility.md)
 17. [Messaging templates](17-messaging-templates.md)
 
-**Next step:** approve the production route map, then clear remaining Critical checklist items (auth spike, baselines, cutover). Do not create the Next.js application yet.
+**Next step:** clear remaining Critical checklist items (auth cookie/SSR spike, parity baselines, cutover/rollback). Do not create the Next.js application yet.

@@ -13,7 +13,7 @@
 ## Before coding
 
 1. Approve proposed ADRs 002–007 (or record ACCEPTED RISK) — **done: DECIDED as written**.
-2. Approve the production route map (pre-launch restructuring allowed until then).
+2. Production route map **APPROVED** (restructured App Router URLs in [02-route-migration.md](02-route-migration.md)).
 3. Email/SMS: **ACCEPTED RISK** with adapter stubs in `src/lib/server/messaging/` (no real provider until later).
 4. Canonical package manager selected: npm (`package-lock.json`; remove `bun.lock` at implementation start).
 5. Prove cookie/SSR session spike for auth.

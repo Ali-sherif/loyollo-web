@@ -51,5 +51,6 @@
 - [Pre-implementation checklist](pre-implementation-checklist.md)
 - [Parity baselines](parity-baselines.md)
 - [Go-live / cutover](cutover.md)
+- [Multi-model / multi-agent workflow](multi-agent-workflow.md)
 - [Spikes — Auth Cookie/SSR](spikes/auth-ssr-spike.md)
 - [Frontend blueprint](../frontend/README.md)

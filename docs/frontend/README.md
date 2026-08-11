@@ -91,6 +91,6 @@ flowchart LR
 16. [Dependency compatibility](16-dependency-compatibility.md)
 17. [Messaging templates](17-messaging-templates.md)
 
-**Next step:** slice 2 — Vendor/re-host Lovable/CDN assets (`src/assets/*.asset.json` + CDN URLs); broken-image scan at acceptance. Prove D-28 cookie/SSR session during server-infra / auth; keep [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md) open until PASSED.
+**Next step:** slice 2 — Vendor/re-host Lovable/CDN assets (`src/assets/*.asset.json` + CDN URLs); broken-image scan at acceptance. Prove D-28 cookie/SSR session during server-infra / auth; keep [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md) open until PASSED. Multi-agent start/roles: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md).
 
 **Migration Go / No-Go:** **GO**.

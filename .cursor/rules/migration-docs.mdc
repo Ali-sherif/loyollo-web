@@ -25,3 +25,7 @@ Source of truth: `docs/architecture/` and `docs/frontend/`. Do not invent a para
 ## Execution order
 
 Follow dependency-aware slices in `docs/frontend/12-migration-plan.md`. Do not skip foundation/auth/messaging gates. Do not delete TanStack/Lovable code until production smoke + rollback window + explicit user approval.
+
+## Multi-model / multi-agent
+
+Multiple AI models are allowed. They must follow `docs/architecture/multi-agent-workflow.md`: one docs plan, one owner per overlapping path, slice-scoped work. Parallel agents start at **slice 2** (assets); optional non-colliding work is messaging stubs or D-28 spike — not domain route ports until 2–4 baselines exist.

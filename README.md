@@ -84,7 +84,7 @@ src/
 ├── integrations/supabase/  # browser + server clients, types
 ├── lib/                    # server functions, email templates, utilities
 ├── data/                   # static domain data
-├── assets/                 # local SVGs + hosted.ts URL map (binaries in public/assets)
+├── assets/                 # local images / logos (vendored in slice 2)
 └── styles.css              # Tailwind tokens and global styles
 ```
 

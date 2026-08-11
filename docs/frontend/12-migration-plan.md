@@ -1,4 +1,4 @@
-# Incremental Migration Plan
+﻿# Incremental Migration Plan
 
 ## Locked product constraints
 
@@ -12,19 +12,22 @@
 
 ## Before coding
 
-1. Approve proposed ADRs 002–007 (or record ACCEPTED RISK) — **done: DECIDED as written**.
+1. Approve proposed ADRs 002ΓÇô007 (or record ACCEPTED RISK) ΓÇö **done: DECIDED as written**.
 2. Production route map **APPROVED** (restructured App Router URLs in [02-route-migration.md](02-route-migration.md)).
 3. Email/SMS: **ACCEPTED RISK** with adapter stubs in `src/lib/server/messaging/` (no real provider until later).
 4. Canonical package manager selected: npm (`package-lock.json`; remove `bun.lock` at implementation start).
-5. Cookie/SSR session spike for auth — **ACCEPTED RISK** / remains **BLOCKED** until proven **after** migration start ([auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)).
-6. Characterization / visual / email baselines — **ACCEPTED RISK** minimal ([parity-baselines.md](../architecture/parity-baselines.md)).
-7. Asset vendoring — **DONE** (slice 2): `public/assets/`, `public/og/`, `src/assets/hosted.ts`.
-8. Go-live/cutover (D-23) — **DECIDED** ([cutover.md](../architecture/cutover.md)); pre-launch, no dual production frontends; rollback owner **ACCEPTED RISK** (not a GO gate).
+5. Cookie/SSR session spike for auth ΓÇö **ACCEPTED RISK** / remains **BLOCKED** until proven **after** migration start ([auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)).
+6. Characterization / visual / email baselines ΓÇö **ACCEPTED RISK** minimal ([parity-baselines.md](../architecture/parity-baselines.md)).
+7. Go-live/cutover (D-23) ΓÇö **DECIDED** ([cutover.md](../architecture/cutover.md)); pre-launch, no dual production frontends; rollback owner **ACCEPTED RISK** (not a GO gate).
+
+## Multi-model / multi-agent
+
+Multiple AI models may execute this plan. Rules and parallelization map: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md). **Do not** invent a second slice order. **Current parallel start:** slice 2 (required); optional second lane = slice 4 messaging stubs **or** D-28 spike ΓÇö not route ports (5+) until 2ΓÇô4 baselines exist.
 
 ## Dependency-aware slices
 
-1. Foundation spike: Next 16.3.x, TypeScript 6.0.x, Node 24 / Vercel, Tailwind/assets parity, root layout, `error`/`not-found`/`loading`, Metadata API, environment validation. — **done:** `src/app` (layout/page/error/not-found/loading), `next.config.ts`, `tsconfig.next.json`, `src/config/env.ts` (public + server), PostCSS/Tailwind via `src/styles.css`, `.nvmrc` 24 / `engines.node >=24`, scripts `dev:next` / `build:next` / `typecheck:next` (TanStack `dev`/`build` retained in-repo until retirement — not production coexistence).
-2. Vendor/re-host assets currently tied to Lovable/CDN manifests. — **done:** 18 former `*.asset.json` binaries + OG preview under `public/assets/` and `public/og/`; URL map in `src/assets/hosted.ts`; TanStack/Next importers and metadata use local paths; Lovable CDN manifests removed.
+1. Foundation spike: Next 16.3.x, TypeScript 6.0.x, Node 24 / Vercel, Tailwind/assets parity, root layout, `error`/`not-found`/`loading`, Metadata API, environment validation. ΓÇö **done:** `src/app` (layout/page/error/not-found/loading), `next.config.ts`, `tsconfig.next.json`, `src/config/env.ts` (public + server), PostCSS/Tailwind via `src/styles.css`, `.nvmrc` 24 / `engines.node >=24`, scripts `dev:next` / `build:next` / `typecheck:next` (TanStack `dev`/`build` retained in-repo until retirement ΓÇö not production coexistence).
+2. Vendor/re-host assets currently tied to Lovable/CDN manifests. ΓÇö **done:** binaries under `src/assets/` (no `*.asset.json` / `__l5e`); OG at `public/og-image.png`; imports use local files; `npm run scan:assets` acceptance.
 3. Server infrastructure: backend/Supabase factories, secret isolation, auth proof (route protection + session-aware rendering), portable logging.
 4. Messaging skeleton under `src/lib/server/messaging/` that renders existing templates without Lovable SDKs or direct provider coupling.
 5. Static marketing/legal routes with visual and SEO metadata parity.
@@ -41,7 +44,7 @@
 
 ## Go-live and cutover
 
-**DECIDED** — see [cutover.md](../architecture/cutover.md): pre-launch product; **first production** is Next.js on Vercel with the **approved** route map; **no** dual production frontends (TanStack/Lovable may remain as in-repo source until retirement). Replace `/lovable/email/*` with first-party API paths at auth/messaging slices; no dual writes. Named rollback owner is **ACCEPTED RISK** (not a pre-implementation gate); prefer per-slice Next deploy rollback operationally.
+**DECIDED** ΓÇö see [cutover.md](../architecture/cutover.md): pre-launch product; **first production** is Next.js on Vercel with the **approved** route map; **no** dual production frontends (TanStack/Lovable may remain as in-repo source until retirement). Replace `/lovable/email/*` with first-party API paths at auth/messaging slices; no dual writes. Named rollback owner is **ACCEPTED RISK** (not a pre-implementation gate); prefer per-slice Next deploy rollback operationally.
 
 ## Retirement
 

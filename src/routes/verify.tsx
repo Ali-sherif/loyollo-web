@@ -2,9 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import * as React from "react";
 import { ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { hostedAssets } from "@/assets/hosted";
-
-const loyolloLogoSignup = hostedAssets.loyolloLogoSignup;
+import loyolloLogoSignup from "@/assets/loyollo-logo-signup.svg";
 
 export const Route = createFileRoute("/verify")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -132,7 +130,7 @@ function VerifyPage() {
       <div className="mx-auto flex w-full max-w-[720px] flex-col items-center justify-center gap-10 rounded-[40px] bg-[#eef1f7] px-6 py-10 sm:px-12 lg:px-20 lg:py-12">
         {/* Logo */}
         <img
-          src={loyolloLogoSignup.url}
+          src={loyolloLogoSignup}
           alt="Loyollo"
           className="h-8 w-auto md:h-10"
         />

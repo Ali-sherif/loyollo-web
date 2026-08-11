@@ -1,4 +1,4 @@
-# Architecture Decision Matrix
+﻿# Architecture Decision Matrix
 
 | ID   | Decision          | Current state                      | Proposed decision                                                 | Impact   | Reversibility | Status              | Dependencies     |
 | ---- | ----------------- | ---------------------------------- | ----------------------------------------------------------------- | -------- | ------------- | ------------------- | ---------------- |
@@ -35,14 +35,14 @@
 | D-31 | Public enrollment rate limits | No approved edge/server limit contract | Edge/server rate limit (Vercel/Cloudflare/Upstash); HTTP 429; frontend notification + disable submit | Critical | Moderate | DECIDED | ADR-012, D-07, D-08 |
 | D-32 | Campaign / messaging runtime | Lovable queue transport + TanStack send paths | Background processing outside Next (backend/messaging); queue tech deferred by workload; no Lovable transport | Critical | Hard | DECIDED | ADR-013, ADR-009, D-07, D-26 |
 
-Critical checklist items for GO are DECIDED or ACCEPTED RISK. **Remaining open proof (not a GO blocker):** D-28 cookie/SSR session remains **BLOCKED** until authenticated `getUser()` SSR is proven after migration start ([auth-ssr-spike.md](spikes/auth-ssr-spike.md)). Architecture ADRs 001–013 are decided where applicable; production route map is approved; email/SMS providers are ACCEPTED RISK with stubs; D-20 baselines and rollback-owner are ACCEPTED RISK; **asset vendoring DONE (slice 2)**; env Vercel confirm remains ACCEPTED RISK until UI check; D-21 email handlers and D-23 pre-launch go-live are DECIDED.
+Critical checklist items for GO are DECIDED or ACCEPTED RISK. **Remaining open proof (not a GO blocker):** D-28 cookie/SSR session remains **BLOCKED** until authenticated `getUser()` SSR is proven after migration start ([auth-ssr-spike.md](spikes/auth-ssr-spike.md)). Architecture ADRs 001ΓÇô013 are decided where applicable; production route map is approved; email/SMS providers are ACCEPTED RISK with stubs; D-20 baselines, env Vercel confirm, and rollback-owner are ACCEPTED RISK; **asset vendoring DONE (slice 2)**; D-21 email handlers and D-23 pre-launch go-live are DECIDED.
 
 ## Migration Go / No-Go
 
 **GO** for migration implementation and root Next.js application creation (slice 1+).
 
-- Cookie/SSR spike (D-28): **ACCEPTED RISK** — remains **BLOCKED** until proven after migration start (service-role or confirmed test user).
-- Characterization / visual / email baselines (D-20): **ACCEPTED RISK** — [parity-baselines.md](parity-baselines.md).
-- Email handlers (D-21) / go-live (D-23): **DECIDED** — pre-launch framing in [cutover.md](cutover.md) (no dual production frontends); rollback owner **ACCEPTED RISK** (not a gate).
-- Asset vendoring: **DONE** (slice 2 — `public/assets/`, `public/og/`, `src/assets/hosted.ts`). Env inventory: **ACCEPTED RISK** (confirm Vercel values at deploy without secrets in git).
+- Cookie/SSR spike (D-28): **ACCEPTED RISK** ΓÇö remains **BLOCKED** until proven after migration start (service-role or confirmed test user).
+- Characterization / visual / email baselines (D-20): **ACCEPTED RISK** ΓÇö [parity-baselines.md](parity-baselines.md).
+- Email handlers (D-21) / go-live (D-23): **DECIDED** ΓÇö pre-launch framing in [cutover.md](cutover.md) (no dual production frontends); rollback owner **ACCEPTED RISK** (not a gate).
+- Asset vendoring: **DONE (slice 2)** ΓÇö local assets + `public/og-image.png`; env inventory still **ACCEPTED RISK** (confirm Vercel values at deploy without secrets in git).
 - RLS/storage (D-29), server-function mapping (D-30), enrollment rate limits (D-31), campaign runtime (D-32): **DECIDED**.

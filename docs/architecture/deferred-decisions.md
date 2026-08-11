@@ -1,4 +1,4 @@
-# Deferred Decisions
+﻿# Deferred Decisions
 
 | Decision                         | Why deferred                                                                                       | Revisit trigger                                 |
 | -------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
@@ -12,8 +12,8 @@
 | Internationalization             | Current app is English-only                                                                        | Product localization requirement                |
 | Durable job platform             | **Ownership DECIDED** ([ADR-013](decisions/ADR-013-campaign-messaging-runtime.md)): workers outside Next.js; **product still deferred** by workload | Workload/ops evidence; choose queue vendor without Lovable transport |
 | Portable observability vendor    | Lovable `window.__lovableEvents` will be removed; replacement vendor not required for architecture | Production observability needs after Vercel cutover |
-| Asset vendoring (Lovable/CDN)    | **DONE (slice 2):** binaries under `public/assets/` + `public/og/`; URL map in [`src/assets/hosted.ts`](../../src/assets/hosted.ts); Lovable `.asset.json` / `/__l5e` / R2 OG URLs removed from app code | Revisit only if new marketing assets are introduced |
-| Vercel env confirm               | **ACCEPTED RISK:** inventory documented ([env.md](../deployment/env.md)); **remember** — set/confirm Dev / Preview / Production in Vercel UI before Next deploy; never paste secrets into git/chat | Values confirmed in Vercel UI for the Next project |
+| Asset vendoring (Lovable/CDN)    | **DONE (slice 2):** local binaries in `src/assets/`; OG in `public/og-image.png`; manifests removed; `npm run scan:assets` ([10-styling-and-assets.md](../frontend/10-styling-and-assets.md)) | Revisit only if a new marketing asset is introduced via an external CDN |
+| Vercel env confirm               | **ACCEPTED RISK:** inventory documented ([env.md](../deployment/env.md)); **remember** ΓÇö set/confirm Dev / Preview / Production in Vercel UI before Next deploy; never paste secrets into git/chat | Values confirmed in Vercel UI for the Next project |
 | Cookie/SSR session proof (D-28)  | **ACCEPTED RISK:** migration may start; remains **BLOCKED** until authenticated cookie SSR proven ([auth-ssr-spike.md](spikes/auth-ssr-spike.md)) | Service-role or confirmed test user + validate harness PASS |
 | Rollback owner / prod acceptance | **ACCEPTED RISK:** not required as a pre-implementation GO gate ([cutover.md](cutover.md)) | Final go-live DNS/webhook activation |
 | Cloudflare Workers path          | Initial host is Vercel; OpenNext/`workerd` remains secondary                                       | Explicit decision to evaluate Workers            |

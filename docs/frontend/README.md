@@ -1,4 +1,4 @@
-# Frontend Migration Blueprint
+﻿# Frontend Migration Blueprint
 
 This documentation describes migration from TanStack Start to Next.js. It does not authorize implementation. Architecture decisions live in [`docs/architecture/`](../architecture/README.md); this folder is the frontend blueprint.
 
@@ -60,16 +60,16 @@ flowchart LR
 - Production route map **APPROVED** ([02-route-migration.md](02-route-migration.md)).
 - RLS/storage Phase 1 retain existing policies; Phase 2 Backend-only access **DECIDED** ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md)).
 - Public enrollment rate limits **DECIDED** ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)).
-- Campaign/messaging background runtime **DECIDED** — outside Next.js ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)).
+- Campaign/messaging background runtime **DECIDED** ΓÇö outside Next.js ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)).
 
 **ACCEPTED RISK (remain open in docs)**
 
-- Cookie/SSR session spike (**BLOCKED** until PASSED after migration start — [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)); prove during foundation / server-infra / auth with service-role or confirmed test user.
-- Minimal parity baselines ([parity-baselines.md](../architecture/parity-baselines.md)); asset vendoring **DONE (slice 2)**; env confirm at Vercel deploy; rollback owner not a GO gate.
+- Cookie/SSR session spike (**BLOCKED** until PASSED after migration start ΓÇö [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)); prove during foundation / server-infra / auth with service-role or confirmed test user.
+- Minimal parity baselines ([parity-baselines.md](../architecture/parity-baselines.md)); asset vendoring **done** (slice 2); env confirm at Vercel deploy; rollback owner not a GO gate.
 
 **DECIDED (go-live / cutover)**
 
-- Pre-launch D-23: first production is Next on Vercel; no dual production frontends; first-party email BFF cutover — [cutover.md](../architecture/cutover.md).
+- Pre-launch D-23: first production is Next on Vercel; no dual production frontends; first-party email BFF cutover ΓÇö [cutover.md](../architecture/cutover.md).
 
 ## Documents
 
@@ -91,6 +91,6 @@ flowchart LR
 16. [Dependency compatibility](16-dependency-compatibility.md)
 17. [Messaging templates](17-messaging-templates.md)
 
-**Next step:** slice 3 — server infrastructure (backend/Supabase factories, secret isolation, auth cookie/SSR proof D-28); keep [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md) open until PASSED.
+**Next step:** slice 3 ΓÇö Server infrastructure (backend/Supabase factories, secret isolation, auth proof / D-28 cookie SSR, portable logging). Slice 2 assets **done** (`npm run scan:assets`). Keep [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md) open until PASSED. Multi-agent roles: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md).
 
 **Migration Go / No-Go:** **GO**.

@@ -1,8 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Mail, MapPin, Phone } from "lucide-react";
-import { hostedAssets } from "@/assets/hosted";
-
-const loyolloLogoWhite = hostedAssets.loyolloLogoWhite;
+import loyolloLogoWhite from "@/assets/loyollo-logo-white.svg";
 
 type FooterLink = { label: string; href: string };
 
@@ -37,7 +35,7 @@ export function Footer() {
         <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-4">
           <div className="sm:col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center">
-              <img src={loyolloLogoWhite.url} alt="Loyollo" className="h-7 w-auto md:h-9" />
+              <img src={loyolloLogoWhite} alt="Loyollo" className="h-7 w-auto md:h-9" />
             </Link>
             <p className="mt-4 text-sm text-navy-200">
               Digital loyalty programs built for small businesses that want to grow.

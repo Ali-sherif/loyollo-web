@@ -98,8 +98,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Create and manage digital loyalty programs in minutes. Reward repeat customers, collect insights, and grow with a QR-based platform built for small businesses." },
       { property: "og:description", content: "Create and manage digital loyalty programs in minutes. Reward repeat customers, collect insights, and grow with a QR-based platform built for small businesses." },
       { name: "twitter:description", content: "Create and manage digital loyalty programs in minutes. Reward repeat customers, collect insights, and grow with a QR-based platform built for small businesses." },
-      { property: "og:image", content: "/og/og-preview.png" },
-      { name: "twitter:image", content: "/og/og-preview.png" },
+      { property: "og:image", content: "/og-image.png" },
+      { name: "twitter:image", content: "/og-image.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

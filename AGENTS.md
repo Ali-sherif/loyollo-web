@@ -15,7 +15,10 @@ Lead from documentation — do not invent a parallel plan:
 
 - Architecture / gates: `docs/architecture/` (start with `README.md` and `pre-implementation-checklist.md`)
 - Frontend blueprint: `docs/frontend/` (especially `12-migration-plan.md`)
+- Multi-model / multi-agent: `docs/architecture/multi-agent-workflow.md` (multiple models OK; one plan; slice owners)
 - Always-apply rule: `.cursor/rules/migration-docs.mdc`
 - Workflow skill: `.cursor/skills/nextjs-migration/SKILL.md`
 
 Do not remove TanStack/Lovable until production smoke + rollback window + explicit user approval. Critical checklist items are cleared (DECIDED or ACCEPTED RISK); D-28 cookie/SSR remains documented BLOCKED until proven after migration start.
+
+**Parallel agents start here:** slice 2 (vendor/re-host Lovable/CDN assets). Optional second lane: messaging stubs (slice 4) or D-28 auth spike — not slices 5+ routes until 2–4 baselines exist.

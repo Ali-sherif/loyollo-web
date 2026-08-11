@@ -18,9 +18,7 @@ import {
 
 
 
-import { hostedAssets } from "@/assets/hosted";
-
-const loyolloLogoWhite = hostedAssets.loyolloLogoWhiteSidebar;
+import loyolloLogoWhite from "@/assets/loyollo-logo-white-sidebar.svg";
 import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -117,7 +115,7 @@ function DashboardSidebar({
     <aside className="hidden w-[220px] shrink-0 flex-col bg-[#0f1c3d] px-4 py-6 text-[#b0bcd4] md:flex">
       <div className="mb-8 flex justify-center">
         <img
-          src={loyolloLogoWhite.url}
+          src={loyolloLogoWhite}
           alt="Loyollo"
           className="h-8 w-auto"
         />
@@ -166,7 +164,7 @@ function MobileNavDrawer({
       />
       <aside className="absolute inset-y-0 left-0 flex w-[260px] max-w-[80vw] flex-col bg-[#0f1c3d] px-4 py-6 text-[#b0bcd4] shadow-xl">
         <div className="mb-6 flex items-center justify-between">
-          <img src={loyolloLogoWhite.url} alt="Loyollo" className="h-8 w-auto" />
+          <img src={loyolloLogoWhite} alt="Loyollo" className="h-8 w-auto" />
           <button
             type="button"
             onClick={onClose}

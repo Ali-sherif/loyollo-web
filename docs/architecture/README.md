@@ -1,7 +1,7 @@
-# Architecture Audit
+﻿# Architecture Audit
 
 **Audit date:** 2026-08-10 (gates updated 2026-08-11)  
-**Scope:** architecture + frontend blueprint; Critical gates cleared — migration slices authorized (GO).
+**Scope:** architecture + frontend blueprint; Critical gates cleared ΓÇö migration slices authorized (GO).
 
 ## Executive summary
 
@@ -15,10 +15,10 @@
 - **RECOMMENDED:** Preserve Supabase schema and contracts. Keep the existing backend as the primary API; Next.js orchestrates and protects routes but does not replace backend ownership.
 - **DECIDED:** App Router, rendering/caching, data/state, auth ownership, server/API boundaries, and project structure ([ADR-002](decisions/ADR-002-app-router.md) through [ADR-007](decisions/ADR-007-project-structure.md)).
 - **DECIDED:** Canonical package manager is npm (`package-lock.json`); remove `bun.lock` at implementation start.
-- **DECIDED:** Production route map approved and restructured — [02-route-migration.md](../frontend/02-route-migration.md).
-- **DECIDED:** RLS/storage for this migration — retain existing Lovable policies in Phase 1; Phase 2 custom Backend APIs own all data/storage access. See [ADR-011](decisions/ADR-011-rls-storage-strategy.md).
-- **DECIDED:** Go-live/cutover (D-23) — pre-launch; first prod is Next on Vercel; no dual production frontends; first-party email BFF; no dual writes. See [cutover.md](cutover.md).
-- **ACCEPTED RISK:** Cookie/SSR session spike (**BLOCKED** until proven after migration start — [spikes/auth-ssr-spike.md](spikes/auth-ssr-spike.md)); minimal parity baselines ([parity-baselines.md](parity-baselines.md)); **asset vendoring DONE (slice 2)** and **Vercel env confirm** (open until UI check) — see [deferred-decisions.md](deferred-decisions.md); rollback owner not a GO gate.
+- **DECIDED:** Production route map approved and restructured ΓÇö [02-route-migration.md](../frontend/02-route-migration.md).
+- **DECIDED:** RLS/storage for this migration ΓÇö retain existing Lovable policies in Phase 1; Phase 2 custom Backend APIs own all data/storage access. See [ADR-011](decisions/ADR-011-rls-storage-strategy.md).
+- **DECIDED:** Go-live/cutover (D-23) ΓÇö pre-launch; first prod is Next on Vercel; no dual production frontends; first-party email BFF; no dual writes. See [cutover.md](cutover.md).
+- **ACCEPTED RISK:** Cookie/SSR session spike (**BLOCKED** until proven after migration start ΓÇö [spikes/auth-ssr-spike.md](spikes/auth-ssr-spike.md)); minimal parity baselines ([parity-baselines.md](parity-baselines.md)); **Vercel env confirm** (open until UI check) ΓÇö see [deferred-decisions.md](deferred-decisions.md); rollback owner not a GO gate. **DONE:** asset vendoring (slice 2).
 - **Go / No-Go:** **GO** for migration implementation and root Next.js app creation. D-28 remains documented open/BLOCKED until PASSED.
 
 ## Critical decisions
@@ -39,9 +39,9 @@
 
 ## Recommended decision order
 
-`Messaging adapter stubs (at implementation) → migration slices; prove cookie/SSR session (D-28) during foundation / server-infra / auth (remains open until PASSED)`
+`Messaging adapter stubs (at implementation) ΓåÆ migration slices; prove cookie/SSR session (D-28) during foundation / server-infra / auth (remains open until PASSED)`
 
-(Server-function → Backend API / Server Action / BFF mapping is **DECIDED** — [15-server-function-mapping.md](../frontend/15-server-function-mapping.md).)
+(Server-function ΓåÆ Backend API / Server Action / BFF mapping is **DECIDED** ΓÇö [15-server-function-mapping.md](../frontend/15-server-function-mapping.md).)
 
 ## Indices
 
@@ -51,5 +51,6 @@
 - [Pre-implementation checklist](pre-implementation-checklist.md)
 - [Parity baselines](parity-baselines.md)
 - [Go-live / cutover](cutover.md)
-- [Spikes — Auth Cookie/SSR](spikes/auth-ssr-spike.md)
+- [Multi-model / multi-agent workflow](multi-agent-workflow.md)
+- [Spikes ΓÇö Auth Cookie/SSR](spikes/auth-ssr-spike.md)
 - [Frontend blueprint](../frontend/README.md)

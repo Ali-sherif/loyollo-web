@@ -41,15 +41,13 @@ import {
   CalendarClock,
   Sparkles,
 } from "lucide-react";
-import { hostedAssets } from "@/assets/hosted";
-
-const iconAsset = hostedAssets.loyolloIconWhite;
-const customerProfileImg = hostedAssets.customers;
-const loyaltyProgramImg = hostedAssets.loyaltyProgram;
-const campaignBuilderImg = hostedAssets.campaigns;
-const analyticsAsset = hostedAssets.analyticsOverview;
-const branchesAsset = hostedAssets.branches;
-const automationImg = hostedAssets.campaigns2;
+import iconAsset from "@/assets/loyollo-icon-white.svg";
+import customerProfileImg from "@/assets/Customers.png";
+import loyaltyProgramImg from "@/assets/Loyalty_Program.png";
+import campaignBuilderImg from "@/assets/Campaigns.png";
+import analyticsAsset from "@/assets/Analytics_-_Overview.png";
+import branchesAsset from "@/assets/Branches.png";
+import automationImg from "@/assets/Campaigns-2.png";
 
 export const Route = createFileRoute("/features")({
   head: () => ({
@@ -486,7 +484,7 @@ function FeaturesPage() {
           title="Know Every Customer, Personally"
           description="Build deep customer relationships with tools designed to understand, segment, and grow your audience."
           groups={customerMgmt}
-          image={customerProfileImg.url}
+          image={customerProfileImg}
           imageAlt="Customer profile view showing lifetime value, tier status, and activity timeline"
           imageLayout="split-right"
         />
@@ -499,7 +497,7 @@ function FeaturesPage() {
             title="Rewards That Keep Customers Coming Back"
             description="Choose the loyalty model that fits your business — points, stamps, tiers, or referrals."
             groups={loyaltyPrograms}
-            image={loyaltyProgramImg.url}
+            image={loyaltyProgramImg}
             imageAlt="Points program builder with reward tiers and a live stamp card preview"
             imageLayout="split-left"
           />
@@ -512,7 +510,7 @@ function FeaturesPage() {
           title="Reach the Right Customer at the Right Time"
           description="Launch beautiful campaigns that drive real visits, redemptions, and revenue."
           groups={campaigns}
-          image={campaignBuilderImg.url}
+          image={campaignBuilderImg}
           imageAlt="Email campaign builder with a live preview of a designed win-back email"
           imageLayout="banner"
         />
@@ -525,7 +523,7 @@ function FeaturesPage() {
             title="See What's Working — and What Isn't"
             description="Turn every visit, reward, and campaign into insight you can act on."
             groups={analytics}
-            image={analyticsAsset.url}
+            image={analyticsAsset}
             imageAlt="Analytics dashboard with revenue trend, customer segments, and top rewards charts"
             imageLayout="split-right"
           />
@@ -541,7 +539,7 @@ function FeaturesPage() {
           title="One Platform for Every Location"
           description="Run a consistent loyalty program across every branch, with the visibility to manage it all."
           groups={multiLocation}
-          image={branchesAsset.url}
+          image={branchesAsset}
           imageAlt="Multi-location dashboard comparing branch performance with a location map"
           imageLayout="split-left"
         />
@@ -554,7 +552,7 @@ function FeaturesPage() {
             title="Let Loyalty Run Itself"
             description="Automate the moments that matter so your team can focus on running the business."
             groups={automation}
-            image={automationImg.url}
+            image={automationImg}
             imageAlt="Automation workflow builder showing a birthday rewards flow with scheduled automations"
             imageLayout="banner"
           />
@@ -603,7 +601,7 @@ function FeaturesPage() {
             />
             <div className="relative">
               <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#15264F] text-gold-300">
-                <img src={iconAsset.url} alt="Loyollo" className="h-6 w-auto object-contain" />
+                <img src={iconAsset} alt="Loyollo" className="h-6 w-auto object-contain" />
               </div>
               <h2 className="mx-auto mt-6 max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">
                 Ready to Turn First-Time Customers Into{" "}

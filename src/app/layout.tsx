@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Figtree } from "next/font/google";
 
-import { ogPreviewImage } from "@/assets/hosted";
 import "@/styles.css";
 
 const figtree = Figtree({
@@ -13,7 +12,8 @@ const figtree = Figtree({
 const siteDescription =
   "Create and manage digital loyalty programs in minutes. Reward repeat customers, collect insights, and grow with a QR-based platform built for small businesses.";
 
-const ogImage = ogPreviewImage;
+/** First-party OG image (vendored from Lovable CDN in slice 2 — ADR-009). */
+const ogImage = "/og-image.png";
 
 export const metadata: Metadata = {
   title: {

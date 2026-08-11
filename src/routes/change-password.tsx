@@ -5,9 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { passwordFeedback } from "@/lib/password";
-import { hostedAssets } from "@/assets/hosted";
-
-const loyolloLogoSignup = hostedAssets.loyolloLogoSignup;
+import loyolloLogoSignup from "@/assets/loyollo-logo-signup.svg";
 
 export const Route = createFileRoute("/change-password")({
   head: () => ({
@@ -94,7 +92,7 @@ function ChangePasswordPage() {
     <div className="bg-[#eef1f7] p-3 sm:p-6 lg:p-12">
       <div className="mx-auto flex w-full max-w-[720px] flex-col items-center justify-center gap-10 rounded-[40px] bg-[#eef1f7] px-6 py-10 sm:px-12 lg:px-20 lg:py-12">
         <img
-          src={loyolloLogoSignup.url}
+          src={loyolloLogoSignup}
           alt="Loyollo"
           className="h-8 w-auto md:h-10"
         />

@@ -16,6 +16,7 @@ dist-ssr
 .nitro
 .next
 out
+*.tsbuildinfo
 *.local
 
 # Environment files (never commit secrets; keep templates)

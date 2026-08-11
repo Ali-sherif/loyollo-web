@@ -13,7 +13,16 @@ description: >-
 
 - Architecture: `docs/architecture/` (ADRs, checklist, decision matrix)
 - Frontend blueprint: `docs/frontend/` (especially `12-migration-plan.md`, `13-migration-risks.md`)
+- Multi-model / multi-agent execution: `docs/architecture/multi-agent-workflow.md`
 - Docs authorize planning and gate work; they do **not** authorize implementation until Critical gates clear
+
+## Multi-model / multi-agent
+
+- Multiple models are allowed (lead / implementer / reviewer / spike).
+- They share one plan: never invent a parallel migration.
+- One overlapping path → one owner. Prefer one slice per agent.
+- Parallelize only as mapped in `docs/architecture/multi-agent-workflow.md`.
+- **Current start for parallel agents:** slice 2 (assets) required; optional parallel = messaging stubs (slice 4) **or** D-28 spike — not route ports (5+).
 
 ## Workflow
 

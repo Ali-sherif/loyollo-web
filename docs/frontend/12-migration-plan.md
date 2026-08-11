@@ -20,6 +20,10 @@
 6. Characterization / visual / email baselines — **ACCEPTED RISK** minimal ([parity-baselines.md](../architecture/parity-baselines.md)).
 7. Go-live/cutover (D-23) — **DECIDED** ([cutover.md](../architecture/cutover.md)); pre-launch, no dual production frontends; rollback owner **ACCEPTED RISK** (not a GO gate).
 
+## Multi-model / multi-agent
+
+Multiple AI models may execute this plan. Rules and parallelization map: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md). **Do not** invent a second slice order. **Current parallel start:** slice 2 (required); optional second lane = slice 4 messaging stubs **or** D-28 spike — not route ports (5+) until 2–4 baselines exist.
+
 ## Dependency-aware slices
 
 1. Foundation spike: Next 16.3.x, TypeScript 6.0.x, Node 24 / Vercel, Tailwind/assets parity, root layout, `error`/`not-found`/`loading`, Metadata API, environment validation. — **done:** `src/app` (layout/page/error/not-found/loading), `next.config.ts`, `tsconfig.next.json`, `src/config/env.ts` (public + server), PostCSS/Tailwind via `src/styles.css`, `.nvmrc` 24 / `engines.node >=24`, scripts `dev:next` / `build:next` / `typecheck:next` (TanStack `dev`/`build` retained in-repo until retirement — not production coexistence).

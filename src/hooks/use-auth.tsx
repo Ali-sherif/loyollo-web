@@ -1,6 +1,7 @@
 import * as React from "react";
 import type { Session, User, AuthError } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { getAuthSupabase } from "@/integrations/supabase/auth-client";
+import { resolveHref } from "@/lib/navigation/paths";
 
 type AuthContextValue = {
   session: Session | null;
@@ -56,6 +57,7 @@ function friendlyError(error: AuthError | Error | null): string | null {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = React.useState<Session | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const supabase = React.useMemo(() => getAuthSupabase(), []);
 
   React.useEffect(() => {
     // Set up listener FIRST
@@ -71,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [supabase]);
 
   const value = React.useMemo<AuthContextValue>(
     () => ({
@@ -82,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async signUp({ email, password, fullName, businessName, phone }) {
         const redirectTo =
           typeof window !== "undefined"
-            ? `${window.location.origin}/verify`
+            ? `${window.location.origin}${resolveHref("/verify")}`
             : undefined;
         const { error } = await supabase.auth.signUp({
           email,
@@ -118,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async resendVerification(email) {
         const redirectTo =
           typeof window !== "undefined"
-            ? `${window.location.origin}/verify`
+            ? `${window.location.origin}${resolveHref("/verify")}`
             : undefined;
         const { error } = await supabase.auth.resend({
           type: "signup",
@@ -159,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async resetPasswordForEmail(email) {
         const redirectTo =
           typeof window !== "undefined"
-            ? `${window.location.origin}/reset-password`
+            ? `${window.location.origin}${resolveHref("/reset-password")}`
             : undefined;
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo,
@@ -171,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: friendlyError(error) };
       },
     }),
-    [session, loading],
+    [session, loading, supabase],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

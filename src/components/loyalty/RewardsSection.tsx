@@ -1,5 +1,6 @@
+import { assetSrc } from "@/lib/asset-src";
 import * as React from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@/lib/navigation";
 import { toast } from "sonner";
 import {
   Coffee,
@@ -50,7 +51,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { supabase } from "@/integrations/supabase/client";
+import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import telescopeImg from "@/assets/telescope-empty-state.png";
 
 type Reward = {
@@ -158,7 +159,7 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await getAuthSupabase()
       .from("rewards")
       .select("*")
       .eq("loyalty_program_id", programId)
@@ -182,7 +183,7 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
       setApplyingKey(null);
       return;
     }
-    const { error } = await supabase.from("rewards").insert({
+    const { error } = await getAuthSupabase().from("rewards").insert({
       loyalty_program_id: pid,
       name: t.name,
       description: t.description,
@@ -209,7 +210,7 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
   async function handleDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await supabase
+    const { error } = await getAuthSupabase()
       .from("rewards")
       .delete()
       .eq("id", deleteTarget.id);
@@ -226,7 +227,7 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
   async function toggleStatus(r: Reward) {
     const next = r.status === "disabled" ? "live" : "disabled";
     setRewards((prev) => prev.map((x) => (x.id === r.id ? { ...x, status: next } : x)));
-    const { error } = await supabase
+    const { error } = await getAuthSupabase()
       .from("rewards")
       .update({ status: next })
       .eq("id", r.id);
@@ -499,7 +500,7 @@ export function RewardsSection({ programId, ensureProgramSaved }: Props) {
         {rewards.length === 0 ? (
           <div className="mt-6 flex flex-col items-center text-center">
             <img
-              src={telescopeImg}
+              src={assetSrc(telescopeImg)}
               alt=""
               width={149}
               height={110}
@@ -737,8 +738,8 @@ function RewardDialog({
       status,
     };
     const { error } = editing
-      ? await supabase.from("rewards").update(payload).eq("id", editing.id)
-      : await supabase.from("rewards").insert(payload);
+      ? await getAuthSupabase().from("rewards").update(payload).eq("id", editing.id)
+      : await getAuthSupabase().from("rewards").insert(payload);
     setSaving(false);
     if (error) {
       toast.error(error.message || "Couldn't save reward");

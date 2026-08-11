@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@/lib/navigation";
 import {
   Search,
   Bell,
@@ -20,7 +20,8 @@ import {
 
 import loyolloLogoWhite from "@/assets/loyollo-logo-white-sidebar.svg";
 import { formatDistanceToNow } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
+import { getAuthSupabase } from "@/integrations/supabase/auth-client";
+import { resolveHref } from "@/lib/navigation/paths";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 
@@ -55,8 +56,9 @@ export function DashboardShell({
 
   React.useEffect(() => {
     let mounted = true;
+    const supabase = getAuthSupabase();
     (async () => {
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData } = await getAuthSupabase().auth.getUser();
       const userId = userData?.user?.id;
       if (!userId) return;
       const { data } = await supabase
@@ -108,8 +110,11 @@ function DashboardSidebar({
   onSignOut: () => Promise<{ error: unknown } | void> | void;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isActive = (item: NavItem) =>
-    !!item.to && (pathname === item.to || pathname.startsWith(item.to + "/"));
+  const isActive = (item: NavItem) => {
+    if (!item.to) return false;
+    const href = resolveHref(item.to);
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   return (
     <aside className="hidden w-[220px] shrink-0 flex-col bg-[#0f1c3d] px-4 py-6 text-[#b0bcd4] md:flex">
@@ -127,7 +132,10 @@ function DashboardSidebar({
         <SidebarItem
           icon={SettingsIcon}
           label="Settings"
-          active={pathname === "/settings" || pathname.startsWith("/settings/")}
+          active={
+            pathname === resolveHref("/settings") ||
+            pathname.startsWith(`${resolveHref("/settings")}/`)
+          }
           to="/settings"
         />
         <SidebarItem
@@ -151,8 +159,11 @@ function MobileNavDrawer({
   onSignOut: () => Promise<{ error: unknown } | void> | void;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isActive = (item: NavItem) =>
-    !!item.to && (pathname === item.to || pathname.startsWith(item.to + "/"));
+  const isActive = (item: NavItem) => {
+    if (!item.to) return false;
+    const href = resolveHref(item.to);
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   if (!open) return null;
   return (
@@ -181,7 +192,10 @@ function MobileNavDrawer({
           <SidebarItem
             icon={SettingsIcon}
             label="Settings"
-            active={pathname === "/settings" || pathname.startsWith("/settings/")}
+            active={
+              pathname === resolveHref("/settings") ||
+              pathname.startsWith(`${resolveHref("/settings")}/`)
+            }
             to="/settings"
           />
           <SidebarItem
@@ -353,11 +367,12 @@ function NotificationsBell() {
   const [open, setOpen] = React.useState(false);
   const [items, setItems] = React.useState<NotificationRow[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const supabase = React.useMemo(() => getAuthSupabase(), []);
 
   const load = React.useCallback(async () => {
     setLoading(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
+      const { data: userData } = await getAuthSupabase().auth.getUser();
       const userId = userData?.user?.id;
       if (!userId) {
         setItems([]);
@@ -373,7 +388,7 @@ function NotificationsBell() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [supabase]);
 
   React.useEffect(() => {
     load();
@@ -387,14 +402,14 @@ function NotificationsBell() {
 
   const markRead = async (id: string) => {
     setItems((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    await supabase.from("notifications").update({ read: true }).eq("id", id);
+    await getAuthSupabase().from("notifications").update({ read: true }).eq("id", id);
   };
 
   const markAllRead = async () => {
     const unreadIds = items.filter((n) => !n.read).map((n) => n.id);
     if (unreadIds.length === 0) return;
     setItems((prev) => prev.map((n) => ({ ...n, read: true })));
-    await supabase.from("notifications").update({ read: true }).in("id", unreadIds);
+    await getAuthSupabase().from("notifications").update({ read: true }).in("id", unreadIds);
   };
 
   const handleClick = async (n: NotificationRow) => {

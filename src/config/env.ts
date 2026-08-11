@@ -51,6 +51,11 @@ export function requirePublicSupabaseEnv(): {
   };
 }
 
+/** Alias for anon/publishable key used by Next cookie factories. */
+export function requireAnonKey(): string {
+  return requirePublicSupabaseEnv().anonKey;
+}
+
 /** Prefer NEXT_PUBLIC URL; fall back to server SUPABASE_URL for SSR factories. */
 export function requireSupabaseUrl(): string {
   const publicEnv = getPublicEnv();

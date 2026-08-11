@@ -22,7 +22,7 @@ description: >-
 - They share one plan: never invent a parallel migration.
 - One overlapping path → one owner. Prefer one slice per agent.
 - Parallelize only as mapped in `docs/architecture/multi-agent-workflow.md`.
-- **Current start for parallel agents:** slice 2 (assets) required; optional parallel = messaging stubs (slice 4) **or** D-28 spike — not route ports (5+).
+- **Current start for parallel agents:** slice 5 (marketing/legal); optional parallel = D-28 spike **or** auth email BFF (slice 6) — one owner per overlapping path. Slices 1–4 baselines exist.
 
 ## Workflow
 

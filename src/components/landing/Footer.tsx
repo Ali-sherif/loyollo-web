@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link } from "@/lib/navigation";
 import { Mail, MapPin, Phone } from "lucide-react";
 import loyolloLogoWhite from "@/assets/loyollo-logo-white.svg";
 

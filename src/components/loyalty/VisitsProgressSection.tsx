@@ -1,6 +1,7 @@
+import { assetSrc } from "@/lib/asset-src";
 import * as React from "react";
 import { Info, ArrowRight, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import telescopeImg from "@/assets/telescope-empty-state.png";
 
 type ProgressRow = {
@@ -39,13 +40,13 @@ function useVisitsProgress(programId: string | null, visitsRequired: number) {
     setLoading(true);
     (async () => {
       // TODO(feature): replace with a real query, e.g.
-      //   supabase.from("loyalty_stamp_progress")
+      //   getAuthSupabase().from("loyalty_stamp_progress")
       //     .select("stamps_earned, customer_count, status")
       //     .eq("loyalty_program_id", programId)
       // and map results to ProgressRow[]. The enrollment / scan tables
       // don't exist yet, so we intentionally return [] to render the
       // empty state.
-      void supabase; // keep import used
+      void getAuthSupabase(); // keep import used
       void visitsRequired;
       if (cancelled) return;
       setRows([]);
@@ -96,7 +97,7 @@ export function VisitsProgressSection({ programId, visitsRequired }: Props) {
       ) : !hasData ? (
         <div className="mt-6 flex flex-col items-center text-center">
           <img
-            src={telescopeImg}
+            src={assetSrc(telescopeImg)}
             alt=""
             width={149}
             height={110}

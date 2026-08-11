@@ -18,7 +18,7 @@
 - **DECIDED:** Production route map approved and restructured ΓÇö [02-route-migration.md](../frontend/02-route-migration.md).
 - **DECIDED:** RLS/storage for this migration ΓÇö retain existing Lovable policies in Phase 1; Phase 2 custom Backend APIs own all data/storage access. See [ADR-011](decisions/ADR-011-rls-storage-strategy.md).
 - **DECIDED:** Go-live/cutover (D-23) ΓÇö pre-launch; first prod is Next on Vercel; no dual production frontends; first-party email BFF; no dual writes. See [cutover.md](cutover.md).
-- **ACCEPTED RISK:** Cookie/SSR session spike (**BLOCKED** until proven after migration start ΓÇö [spikes/auth-ssr-spike.md](spikes/auth-ssr-spike.md)); minimal parity baselines ([parity-baselines.md](parity-baselines.md)); **Vercel env confirm** (open until UI check) ΓÇö see [deferred-decisions.md](deferred-decisions.md); rollback owner not a GO gate. **DONE:** asset vendoring (slice 2).
+- **ACCEPTED RISK:** Cookie/SSR session spike (**BLOCKED** until proven after migration start ΓÇö [spikes/auth-ssr-spike.md](spikes/auth-ssr-spike.md)); minimal parity baselines ([parity-baselines.md](parity-baselines.md)); **Vercel env confirm** (open until UI check) ΓÇö see [deferred-decisions.md](deferred-decisions.md); rollback owner not a GO gate. **DONE:** asset vendoring (slice 2); server infra scaffolding + messaging stubs (slices 3–4).
 - **Go / No-Go:** **GO** for migration implementation and root Next.js app creation. D-28 remains documented open/BLOCKED until PASSED.
 
 ## Critical decisions

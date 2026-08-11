@@ -1,3 +1,4 @@
+import { assetSrc } from "@/lib/asset-src";
 import * as React from "react";
 import { toast } from "sonner";
 import {
@@ -11,7 +12,7 @@ import {
   ArrowLeft,
 
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import telescopeImg from "@/assets/telescope-empty-state.png";
 import type { Tier } from "@/components/loyalty/TierSection";
 import {
@@ -161,7 +162,7 @@ export function TierBasedFlow(props: Props) {
       setCreatingFromTemplate(null);
       return;
     }
-    const { error } = await supabase.from("loyalty_program_tiers").insert({
+    const { error } = await getAuthSupabase().from("loyalty_program_tiers").insert({
       loyalty_program_id: pid,
       name: t.name,
       color: t.color,
@@ -198,7 +199,7 @@ export function TierBasedFlow(props: Props) {
   async function handleDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await supabase
+    const { error } = await getAuthSupabase()
       .from("loyalty_program_tiers")
       .delete()
       .eq("id", deleteTarget.id);
@@ -752,7 +753,7 @@ function MembersCloseToUpgradingPanel() {
       {!hasData ? (
         <div className="mt-6 flex flex-col items-center text-center">
           <img
-            src={telescopeImg}
+            src={assetSrc(telescopeImg)}
             alt=""
             width={149}
             height={110}

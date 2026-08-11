@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Link } from "@tanstack/react-router";
+import { Link } from "@/lib/navigation";
 import iconAsset from "@/assets/loyollo-icon-white.svg";
 
 export function CTA() {

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link } from "@tanstack/react-router";
+import { Link } from "@/lib/navigation";
 import {
   Users,
   UserCheck,
@@ -14,7 +14,7 @@ import {
   Send,
   ChevronDown,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 
 /**
  * "Setup Complete" dashboard state.
@@ -95,17 +95,17 @@ export function SetupCompleteDashboard({
   React.useEffect(() => {
     (async () => {
       const [{ data: cs }, { data: rs }, { data: cps }] = await Promise.all([
-        supabase
+        getAuthSupabase()
           .from("customers")
           .select(
             "id, full_name, email, tier, points, visits, status, last_activity_at, created_at",
           )
           .eq("loyalty_program_id", programId),
-        supabase
+        getAuthSupabase()
           .from("rewards")
           .select("id, name, point_cost, redeemed_count")
           .eq("loyalty_program_id", programId),
-        supabase
+        getAuthSupabase()
           .from("campaigns")
           .select(
             "id, name, channel, status, audience, sent_count, opened_count, revenue_cents, sent_at",

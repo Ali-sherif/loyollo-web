@@ -1,3 +1,4 @@
+import { assetSrc } from "@/lib/asset-src";
 import * as React from "react";
 import { toast } from "sonner";
 import { Crown, Pencil, Trash2, Info, Tag, Loader2, Check } from "lucide-react";
@@ -25,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import telescopeImg from "@/assets/telescope-empty-state.png";
 
 export type Tier = {
@@ -88,7 +89,7 @@ export function TierSection({ programId }: Props) {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await getAuthSupabase()
       .from("loyalty_program_tiers")
       .select("*")
       .eq("loyalty_program_id", programId)
@@ -117,7 +118,7 @@ export function TierSection({ programId }: Props) {
   async function handleDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await supabase
+    const { error } = await getAuthSupabase()
       .from("loyalty_program_tiers")
       .delete()
       .eq("id", deleteTarget.id);
@@ -167,7 +168,7 @@ export function TierSection({ programId }: Props) {
       ) : !hasTiers ? (
         <div className="mt-6 flex flex-col items-center text-center">
           <img
-            src={telescopeImg}
+            src={assetSrc(telescopeImg)}
             alt=""
             width={149}
             height={110}
@@ -395,11 +396,11 @@ export function TierDialog({
       sort_order: Math.floor(th),
     };
     const { error } = editing
-      ? await supabase
+      ? await getAuthSupabase()
           .from("loyalty_program_tiers")
           .update(payload)
           .eq("id", editing.id)
-      : await supabase.from("loyalty_program_tiers").insert(payload);
+      : await getAuthSupabase().from("loyalty_program_tiers").insert(payload);
     setSaving(false);
     if (error) {
       toast.error(error.message || "Couldn't save tier");

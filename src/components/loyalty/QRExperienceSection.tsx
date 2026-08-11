@@ -1,7 +1,7 @@
 import * as React from "react";
 import { toast } from "sonner";
 import { Loader2, Upload, Image as ImageIcon, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Accordion,
@@ -140,7 +140,7 @@ export function QRExperienceSection({ programId, ensureProgramSaved, programConf
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await getAuthSupabase()
       .from("qr_page_settings")
       .select("*")
       .eq("loyalty_program_id", programId)
@@ -215,7 +215,7 @@ export function QRExperienceSection({ programId, ensureProgramSaved, programConf
       return;
     }
     setSaving(key);
-    const { data, error } = await supabase
+    const { data, error } = await getAuthSupabase()
       .from("qr_page_settings")
       .upsert(
         { loyalty_program_id: pid, ...payload },
@@ -246,11 +246,11 @@ export function QRExperienceSection({ programId, ensureProgramSaved, programConf
     try {
       const ext = (file.name.split(".").pop() || "png").toLowerCase();
       const path = `${user.id}/${kind}-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
+      const { error: upErr } = await getAuthSupabase().storage
         .from("qr-branding")
         .upload(path, file, { upsert: true, contentType: file.type });
       if (upErr) throw upErr;
-      const { data: signed, error: signErr } = await supabase.storage
+      const { data: signed, error: signErr } = await getAuthSupabase().storage
         .from("qr-branding")
         .createSignedUrl(path, 60 * 60 * 24 * 365);
       if (signErr || !signed) throw signErr ?? new Error("Could not sign URL");

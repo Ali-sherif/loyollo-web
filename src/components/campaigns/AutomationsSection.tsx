@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -132,7 +132,7 @@ export function AutomationsSection({ ownerId }: { ownerId: string }) {
 
   React.useEffect(() => {
     (async () => {
-      const { data, error } = await supabase
+      const { data, error } = await getAuthSupabase()
         .from("campaign_automations")
         .select("id, owner_id, type, name, enabled, config, created_at, updated_at")
         .eq("owner_id", ownerId)
@@ -160,7 +160,7 @@ export function AutomationsSection({ ownerId }: { ownerId: string }) {
 
   const handleToggle = async (row: Automation, next: boolean) => {
     setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, enabled: next } : r)));
-    const { error } = await supabase
+    const { error } = await getAuthSupabase()
       .from("campaign_automations")
       .update({ enabled: next })
       .eq("id", row.id);
@@ -173,7 +173,7 @@ export function AutomationsSection({ ownerId }: { ownerId: string }) {
   };
 
   const handleCreate = async (type: AutomationType, name: string) => {
-    const { data, error } = await supabase
+    const { data, error } = await getAuthSupabase()
       .from("campaign_automations")
       .insert({ owner_id: ownerId, type, name: name.trim(), enabled: true })
       .select("id, owner_id, type, name, enabled, config, created_at, updated_at")
@@ -189,7 +189,7 @@ export function AutomationsSection({ ownerId }: { ownerId: string }) {
 
   const handleEdit = async (name: string) => {
     if (!editTarget) return;
-    const { data, error } = await supabase
+    const { data, error } = await getAuthSupabase()
       .from("campaign_automations")
       .update({ name: name.trim() })
       .eq("id", editTarget.id)
@@ -207,7 +207,7 @@ export function AutomationsSection({ ownerId }: { ownerId: string }) {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleting(true);
-    const { error } = await supabase
+    const { error } = await getAuthSupabase()
       .from("campaign_automations")
       .delete()
       .eq("id", deleteTarget.id);

@@ -1,6 +1,7 @@
+import { assetSrc } from "@/lib/asset-src";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Check } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link } from "@/lib/navigation";
 import { CountUp } from "@/components/landing/CountUp";
 import dashboardHero from "@/assets/dashboard-hero.png";
 
@@ -125,7 +126,7 @@ export function Hero() {
           <div className="relative overflow-hidden rounded-2xl border border-white/40 bg-white/30 p-2 shadow-[var(--shadow-card)] backdrop-blur-md">
             <div className="overflow-hidden rounded-xl border border-border bg-card">
               <img
-                src={dashboardHero}
+                src={assetSrc(dashboardHero)}
                 alt="Loyalty program dashboard preview"
                 className="block w-full"
                 loading="eager"

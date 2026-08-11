@@ -33,21 +33,21 @@ Switch models freely **between** roles or slices. Do not switch mid-slice withou
 | Slice | Title | Parallel? |
 | --- | --- | --- |
 | 1 | Foundation | **Done** — do not re-scaffold |
-| 2 | Vendor/re-host Lovable/CDN assets | **Primary next** — one implementer |
-| 3 | Server infrastructure + auth proof (D-28) | May start **after or lightly alongside** slice 2 only if file ownership is split (`src/lib/server/*`, auth factories vs `src/assets/*`) |
-| 4 | Messaging skeleton (`src/lib/server/messaging/`) | Parallel with slice 2 **only** if no shared files with the asset owner; do not invent a provider |
-| 5+ | Routes / domains | **Serial after** slices 2–4 land enough shared infra; one domain slice per agent max |
+| 2 | Vendor/re-host Lovable/CDN assets | **Done** |
+| 3 | Server infrastructure + auth proof (D-28) | **Done (scaffolding)** — cookie/SSR proof still **BLOCKED** (D-28) |
+| 4 | Messaging skeleton (`src/lib/server/messaging/`) | **Done** (stubs; no real provider) |
+| 5+ | Routes / domains | **Done (ported)** — Next is default `npm run dev` / `npm run build`; TanStack kept as `dev:tanstack` until retirement approval |
 
 **Forbidden parallel pairs:** two agents on the same route tree; redesign + migration; Lovable deletion + active feature ports.
 
 ## Where parallel agents start now
 
-1. **Lead:** confirm GO from [pre-implementation-checklist.md](pre-implementation-checklist.md) and cite [12-migration-plan.md](../frontend/12-migration-plan.md).
-2. **Implementer A (required):** **slice 2** — inventory `src/assets/*.asset.json` + CDN URLs; vendor/re-host; broken-image scan ([10-styling-and-assets.md](../frontend/10-styling-and-assets.md)).
-3. **Implementer B (optional, non-blocking):** **slice 4 prep** — messaging contracts/stubs under `src/lib/server/messaging/` only, **or** D-28 spike evidence under [spikes/auth-ssr-spike.md](spikes/auth-ssr-spike.md) (needs credentials; do not fake PASS).
-4. **Reviewer:** after each PR, check parity + ADR compliance; no new architecture.
+1. **Lead:** production smoke on Vercel + confirm env UI values ([docs/deployment/env.md](../deployment/env.md)).
+2. **Optional:** D-28 cookie/SSR proof (needs credentials; do not fake PASS).
+3. **Do not** delete TanStack/Lovable packages or `src/routes` until smoke + rollback window + **explicit user approval**.
+4. **Reviewer:** visual/messaging parity vs TanStack source; ADR compliance.
 
-Do **not** start marketing/auth/dashboard route ports (slices 5+) until slice 2 is accepted and server/messaging baselines exist for the routes you touch.
+Route port slices 5–13 are in the Next App Router tree. Default scripts point at Next; TanStack remains in-repo via `dev:tanstack` / `build:tanstack`.
 
 ## Handoff checklist (every agent turn)
 

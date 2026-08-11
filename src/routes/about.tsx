@@ -6,8 +6,8 @@ import { Footer } from "@/components/landing/Footer";
 import { CTA } from "@/components/landing/CTA";
 import { CountUp } from "@/components/landing/CountUp";
 import { Button } from "@/components/ui/button";
-import starbucksLogo from "@/assets/starbucks-logo.webp.asset.json";
-import timHortonsLogo from "@/assets/tim-hortons-logo.webp.asset.json";
+import starbucksLogo from "@/assets/starbucks-logo.webp";
+import timHortonsLogo from "@/assets/tim-hortons-logo.webp";
 import {
   Store,
   Zap,
@@ -319,7 +319,7 @@ function AboutPage() {
                     <div className="rounded-2xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]">
                       <div className="grid h-10 w-10 place-items-center rounded-full bg-white">
                         <img
-                          src={starbucksLogo.url}
+                          src={starbucksLogo}
                           alt="Starbucks logo"
                           className="h-8 w-8 object-contain"
                           loading="lazy"
@@ -336,7 +336,7 @@ function AboutPage() {
                     <div className="rounded-2xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]">
                       <div className="grid h-10 w-10 place-items-center overflow-hidden rounded-full bg-white">
                         <img
-                          src={timHortonsLogo.url}
+                          src={timHortonsLogo}
                           alt="Tim Hortons logo"
                           className="h-full w-full object-cover"
                           loading="lazy"

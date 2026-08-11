@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
-import iconAsset from "@/assets/loyollo-icon-white.svg.asset.json";
+import iconAsset from "@/assets/loyollo-icon-white.svg";
 
 export function CTA() {
   return (
@@ -20,7 +20,7 @@ export function CTA() {
         <div className="relative">
           <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#15264F] text-gold-300">
             <img
-              src={iconAsset.url}
+              src={iconAsset}
               alt="Loyollo"
               className="h-6 w-auto object-contain"
             />

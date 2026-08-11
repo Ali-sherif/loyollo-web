@@ -23,7 +23,7 @@
 ## Dependency-aware slices
 
 1. Foundation spike: Next 16.3.x, TypeScript 6.0.x, Node 24 / Vercel, Tailwind/assets parity, root layout, `error`/`not-found`/`loading`, Metadata API, environment validation. — **done:** `src/app` (layout/page/error/not-found/loading), `next.config.ts`, `tsconfig.next.json`, `src/config/env.ts` (public + server), PostCSS/Tailwind via `src/styles.css`, `.nvmrc` 24 / `engines.node >=24`, scripts `dev:next` / `build:next` / `typecheck:next` (TanStack `dev`/`build` retained in-repo until retirement — not production coexistence).
-2. Vendor/re-host assets currently tied to Lovable/CDN manifests.
+2. Vendor/re-host assets currently tied to Lovable/CDN manifests. — **done:** binaries under `src/assets/` (no `*.asset.json` / `__l5e`); OG at `public/og-image.png`; imports use local files; `npm run scan:assets` acceptance.
 3. Server infrastructure: backend/Supabase factories, secret isolation, auth proof (route protection + session-aware rendering), portable logging.
 4. Messaging skeleton under `src/lib/server/messaging/` that renders existing templates without Lovable SDKs or direct provider coupling.
 5. Static marketing/legal routes with visual and SEO metadata parity.

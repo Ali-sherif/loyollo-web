@@ -15,6 +15,7 @@
     "build:next": "next build",
     "start:next": "next start",
     "typecheck:next": "tsc -p tsconfig.next.json --noEmit",
+    "scan:assets": "node scripts/scan-assets.mjs",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

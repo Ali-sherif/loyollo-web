@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="248" height="141" viewBox="0 0 248 141">
+  <defs>
+    <style>
+      .cls-1, .cls-2, .cls-3, .cls-4 {
+        fill-rule: evenodd;
+      }
+
+      .cls-1 {
+        filter: url(#filter);
+      }
+
+      .cls-2 {
+        filter: url(#filter-2);
+      }
+
+      .cls-3 {
+        filter: url(#filter-3);
+      }
+
+      .cls-4 {
+        filter: url(#filter-4);
+      }
+    </style>
+    <filter id="filter" x="0.188" y="24.469" width="91.406" height="95.969" filterUnits="userSpaceOnUse">
+      <feFlood result="flood" flood-color="#fff"/>
+      <feComposite result="composite" operator="in" in2="SourceGraphic"/>
+      <feBlend result="blend" in2="SourceGraphic"/>
+    </filter>
+    <filter id="filter-2" x="100.906" y="4.406" width="14.406" height="116.188" filterUnits="userSpaceOnUse">
+      <feFlood result="flood" flood-color="#fff"/>
+      <feComposite result="composite" operator="in" in2="SourceGraphic"/>
+      <feBlend result="blend" in2="SourceGraphic"/>
+    </filter>
+    <filter id="filter-3" x="133.219" y="4.406" width="14.406" height="116.188" filterUnits="userSpaceOnUse">
+      <feFlood result="flood" flood-color="#fff"/>
+      <feComposite result="composite" operator="in" in2="SourceGraphic"/>
+      <feBlend result="blend" in2="SourceGraphic"/>
+    </filter>
+    <filter id="filter-4" x="156.844" y="24.469" width="91.406" height="95.969" filterUnits="userSpaceOnUse">
+      <feFlood result="flood" flood-color="#fff"/>
+      <feComposite result="composite" operator="in" in2="SourceGraphic"/>
+      <feBlend result="blend" in2="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="Artboard_3" data-name="Artboard 3">
+    <g>
+      <image id="Shape_1_copy_3" data-name="Shape 1 copy 3" x="5" width="81" height="26" xlink:href="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFEAAAAaCAYAAADPELCZAAAFEUlEQVRogcTPIQqAQBhE4W9NgtFgs+wZvLpn0SaYF2STFrX8Z9CB4U14ZdI9N35MhwkZY3BAH23DSbhwouLAjoIFK7bYz6d38AIAAP//vNChDcAgAAXRZzoCK7BGDYPjMHgWYIXapiHBVkE4983l505HHKEibqS5A65F74sHDRUFGX3T73/wAQAA//+iRyAqMjAwGDMwMAQxMDA4QwMNlLJoCUCp8TUDA8NlBgaGTQwMDOuhKZf6gIGBAQAAAP//olUgcjEwMJgwMDBEMTAwhDIwMAjRONAIgWcMDAynGRgYFkED9Q/VTGZgYAAAAAD//6J2IILKMF8GBoYqBgYGA2oaTEVwiIGBYTEDA8N8BgaGvxSby8DAAAAAAP//olYgggwJZGBgqGdgYNClhoF0AIcZGBhWMDAwLIFWVuQBBgYGAAAAAP//okYggrJrBTTlDWhVTya4xMDAUMDAwHCEgYHhN8lmMDAwAAAAAP//ItfTTNDKAhSLoNg0GqIBCAJ6DAwMu6A1uj7JuhkYGAAAAAD//yInJYJq1nYGBoYiKjRN0AGoqfKFgYHhGwMDw3doygC1DUG1LcguUIXFBm078tGglge1OyczMDBMZ2BgeEWUDgYGBgAAAAD//6zWoQ2AUAwFwBsAjcUwA44NkMzCjjg0E4D6HkWaVIEgEJ5v0zRpem+XOGBC/2nEewLQS9puTSxv2FFwXEricVWo0STM4wo6tAn0PxK+HDE/NsMJAAD//yIlECugKZBSAAqc7QwMDJsZGBiuQBvIlNaSIE8IMDAweDMwMFhBI1mbQjNBlQ0oVfYxMDC8w6mKgYEBAAAA//8iJhD1oIHnQUG5B8qWoKbFJAYGhlPQlEbL7hkoq4PcC0pNdtAUSy64yMDA4MnAwPAcqwEMDAwAAAAA//8iFIjWDAwMO6FlEDngIwMDwzQGBobl0KxKVu1HIQB1LUsZGBj8GRgYZMgsRx9Ba/CN0HIbARgYGAAAAAD//8IXiOkMDAxtZPY2QF2shdDaG1TW0X1QAAvgZWBgSGRgYGiFlqukAlDgTWBgYChG0cjAwAAAAAD//8IWiOwMDAwzGBgYEsiwCFQRgFJdOTTLDkYAqpBKGBgYcsh0XDcDA0MzAwPDZzCPgYEBAAAA///CFogd0BqY1GR/h4GBIQ7a3hoKADQgkgethEgt60EVIqh4uMfAwMAAAAAA//9C1iwGrTHLSQxAUNuqBdrMGCoBCALrGBgYHKD+JRXoQMtHXgYGBgYAAAAA//+CpURmBgaGHdAxPlIAaCAUFCOgrtNQBqDxzWoGBgZXEj1xh4GBwRcAAAD//4KlxB4SAxDUSO6HjkoP9QAEgYMMDAxu0LqAFKDCwMDQAAAAAP//AqVEUCFZQ6LmOOhw0nADoK5lBLRekCLKcwwMvwAAAAD//wIF4ivoaDMx4D4DA0MuAwPD1mEYgMgAFICgoTIlgioZGBgAAAAA//9iIiEAb0KHu4Z7AIIAaCQcNE6wj6BKBgYGAAAAAP//IrZqvwc1lKLByyEGQH160JxQJ97OAgPDIQAAAAD//wIF4h4CngNV5ebQmmgkglpozwsb+MnAwNACAAAA//8CBWISAwPDNRyKQMNUAQwMDG9GaACCAKi/D6pIY6DTsKCxTtCY5zZw4mJg2A0AAAD//4K1E0HDSAsYGBhsoGNyd0GSDAwMvSM4BWIDoAFhQejQHWgBwR8GBgYGAAAAAP//AwBpRMyjuSoEygAAAABJRU5ErkJggg=="/>
+      <image id="Shape_1_copy_4" data-name="Shape 1 copy 4" x="162" y="115" width="81" height="26" xlink:href="data:img/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFEAAAAaCAYAAADPELCZAAAE8klEQVRogezBQREAEBAAwCWFFtJJZuaUkeXGx1cDuyWjuhoGOhILE9v3hgMAAP//7NAxFUARAADAC2IQwKKBNDopoYhBDgXM3h/+IoP9pvsTIzrypTcKxmv0RSVUBCw0zAMAAP//ggXiEwYGBmkcmm8yMDC4MTAwPKKvmwcVYGZgYJjNwMAQxcDAwI7ksq8MDAyTAAAAAP//AoVgNZ4ABAF1BgaGkwwMDO4jKNDQwTQGBoZEtAAEAW4GBoZKAAAAAP//AgWiBxGGgMrLrQwMDGa0d++gArIMDAxrGBgYUnC6ioGBAQAAAP//AgXiYyKdDUrSGxgYGIKHVzjhBKAceAbqX3jtiwEYGBgAAAAA//8CSTaQYLAkNGYmMDAwsNHeHwMGQLlzCwMDgxhBFzAwMAAAAAD//wIF4i0GBoZUBgaGXyQ4OY+BgWEyAwMD/9AKG4KAA5pAQM07FaJ0MDAwAAAAAP//giXTOQwMDBUkWMYIrerPMTAw+FLXHwMGVBkYGOZBEwjxgIHhHQAAAP//Qs7r/QwMDItINEAJ2r7MZGBg4BuigQcKg0IGBobjDAwMkdAEQiw4ysDAYAwAAAD//0IvMBMYGBjyGRgYfpJgEAu0CXB2iKVKUGBpMjAwLGRgYOhjYGAQJlH/AwYGhnAGBoYHAAAAAP//Qg/E/6DGIwMDQy4ZjgKVIWuh+pXJ0E9PAPJ3JzTiY0i0+C8DA8NyaHPvKQMDAwMAAAD//8JVdc+Gto1ekWgBKzQCQMk8mdjajc4AlNtATRfQOAEnGXY3QXsur8E8BgYGAAAAAP//Qh6AwAZAjezDpNRUSACUqt9Ds8oUBgaGjwMYcKDyOgCa/bzINOMDAwNDOwMDQxeKKAMDAwAAAP//IhSIIKDIwMAwA9p/Jhc8Z2BgOAINUNBgBihL0AOARqQsoLlDmwILL0G7vS8wZBgYGAAAAAD//yImEBmgZUgUNJtzUOAYUIV1kYGBYR+0XLnPwMDwmQLz0AGokgONSIECLpCBgcGTzCwLA6AhwVUMDAzFDAwMz7CqYGBgAAAAAP//IjYQYcCVgYGhh4GBQY8Ch8EAKEBvMDAwXGZgYDgAjW3QSBGoCCCm4Q8qf7kYGBiEoIFmDHWXPZV6U6DcE8HAwHAIryoGBgYAAAAA//8iNRAZoA4EtavqoJ6gFoCVodcYGBjeQj3xjoGB4Ts0UEGpDGQfqJcEwvLQ0Sc5aIBSC4BS3xJo7Q1yC37AwMAAAAAA//8iJxBhwAk6jGYH9eBwAA8ZGBjiiEl9cMDAwAAAAAD//yI7BKHlGih7B0EbnkMZgAKvhoGBwYTUAGRgYGAAAAAA//+iJCUiAxEGBgZ/aAEM6gUMFQAqLkCjUrVktIkhgIGBAQAAAP//olYgwgCorMpgYGCIpbBJQWvwBdreA7U2sDZbiAYMDAwAAAAA//+idiDCAC+0x+MMzfKDZewR1E0DDXUtw9dkIQkwMDAAAAAA//+iVSDCAKiTbwSdnzBgYGCwInGUhBoAlGVBA6xLoX1lUM1PPcDAwAAAAAD//6J1ICIDUDPEHFqrW0OnZ0VpYM8n6OwlaHIN1KC/DuXTBjAwMAAAAAD//6JnICIDUGoEte9AXUpQ2WnJwMCgBh2wEIC2Bwm1/UDtR1DZBgo0UKMdFFigBjtocAHUWgDJ0x4wMDAAAAAA//8DAAgGsjmKsc16AAAAAElFTkSuQmCC"/>
+      <path id="o_copy" data-name="o copy" class="cls-1" d="M46.093,24.472C23.216,24.14.174,43.862,0.174,74.522v0.663c0,29.5,22.213,44.747,44.758,45.245C105.771,121.921,108.091,25.3,46.093,24.472ZM45.927,38.559c41.443,0,41.94,67.618-.166,67.452C3.323,105.68,4.815,38.559,45.927,38.559Z"/>
+      <path id="l" class="cls-2" d="M100.892,120.6h14.422V4.418H100.892V120.6Z"/>
+      <path id="l_copy" data-name="l copy" class="cls-3" d="M133.218,120.6H147.64V4.418H133.218V120.6Z"/>
+      <path id="o_copy_2" data-name="o copy 2" class="cls-4" d="M202.749,24.472c-22.876-.331-45.918,19.391-45.918,50.051v0.663c0,29.5,22.213,44.747,44.758,45.245C262.427,121.921,264.748,25.3,202.749,24.472Zm-0.165,14.087c41.443,0,41.94,67.618-.166,67.452C159.98,105.68,161.472,38.559,202.584,38.559Z"/>
+    </g>
+  </g>
+</svg>

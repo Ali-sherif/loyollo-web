@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import dashboardHero from "@/assets/Dashboard-2.png.asset.json";
-import bgAsset from "@/assets/frame-7-bg.png.asset.json";
+import dashboardHero from "@/assets/Dashboard-2.png";
+import bgAsset from "@/assets/frame-7-bg.png";
 
 export function DashboardShowcase() {
   return (
@@ -10,12 +10,12 @@ export function DashboardShowcase() {
       <div
         aria-hidden
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${bgAsset.url})` }}
+        style={{ backgroundImage: `url(${bgAsset})` }}
       />
       <div className="relative mx-auto max-w-6xl px-6 text-center">
         <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-glass-border bg-glass p-2 shadow-2xl backdrop-blur-2xl">
           <img
-            src={dashboardHero.url}
+            src={dashboardHero}
             alt="Loyalty analytics dashboard"
             className="block w-full rounded-xl"
             loading="lazy"

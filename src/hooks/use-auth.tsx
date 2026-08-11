@@ -1,6 +1,9 @@
 import * as React from "react";
 import type { Session, User, AuthError } from "@supabase/supabase-js";
-import { getAuthSupabase } from "@/integrations/supabase/auth-client";
+import { tryGetAuthSupabase } from "@/integrations/supabase/auth-client";
+
+const SUPABASE_NOT_CONFIGURED =
+  "Supabase is not configured for local development. See docs/deployment/env.md.";
 import { resolveHref } from "@/lib/navigation/paths";
 
 type AuthContextValue = {
@@ -57,9 +60,14 @@ function friendlyError(error: AuthError | Error | null): string | null {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = React.useState<Session | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const supabase = React.useMemo(() => getAuthSupabase(), []);
+  const supabase = React.useMemo(() => tryGetAuthSupabase(), []);
 
   React.useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     // Set up listener FIRST
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
@@ -82,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       isVerified: !!session?.user?.email_confirmed_at,
       async signUp({ email, password, fullName, businessName, phone }) {
+        if (!supabase) return { error: SUPABASE_NOT_CONFIGURED };
         const redirectTo =
           typeof window !== "undefined"
             ? `${window.location.origin}${resolveHref("/verify")}`
@@ -101,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: friendlyError(error) };
       },
       async signIn(email, password) {
+        if (!supabase) return { error: SUPABASE_NOT_CONFIGURED };
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           const msg = (error.message || "").toLowerCase();
@@ -115,9 +125,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: null };
       },
       async signOut() {
+        if (!supabase) return;
         await supabase.auth.signOut();
       },
       async resendVerification(email) {
+        if (!supabase) return { error: SUPABASE_NOT_CONFIGURED };
         const redirectTo =
           typeof window !== "undefined"
             ? `${window.location.origin}${resolveHref("/verify")}`
@@ -151,6 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
 
       async verifyEmailOtp(email, token) {
+        if (!supabase) return { error: SUPABASE_NOT_CONFIGURED };
         const { error } = await supabase.auth.verifyOtp({
           email,
           token,
@@ -159,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: friendlyError(error) };
       },
       async resetPasswordForEmail(email) {
+        if (!supabase) return { error: SUPABASE_NOT_CONFIGURED };
         const redirectTo =
           typeof window !== "undefined"
             ? `${window.location.origin}${resolveHref("/reset-password")}`
@@ -169,6 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error: friendlyError(error) };
       },
       async updatePassword(newPassword) {
+        if (!supabase) return { error: SUPABASE_NOT_CONFIGURED };
         const { error } = await supabase.auth.updateUser({ password: newPassword });
         return { error: friendlyError(error) };
       },

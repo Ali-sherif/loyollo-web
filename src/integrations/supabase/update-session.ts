@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getOptionalPublicSupabaseEnv } from "@/config/env";
 import type { Database } from "@/integrations/supabase/types";
 import { createSupabaseFetch } from "@/integrations/supabase/fetch";
 
@@ -15,13 +16,6 @@ function isProtectedPath(pathname: string): boolean {
   );
 }
 
-function readPublicSupabaseEnv(): { url: string; anonKey: string } | null {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) return null;
-  return { url, anonKey };
-}
-
 /**
  * Refresh cookie session and apply coarse `/app/*` redirects (Next 16 proxy).
  * Defense-in-depth: protected layouts must still call `getUser()` (ADR-005).
@@ -30,7 +24,7 @@ function readPublicSupabaseEnv(): { url: string; anonKey: string } | null {
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
   let supabaseResponse = NextResponse.next({ request });
 
-  const env = readPublicSupabaseEnv();
+  const env = getOptionalPublicSupabaseEnv();
   if (!env) {
     // Allow local builds without env; do not invent a session.
     if (isProtectedPath(request.nextUrl.pathname)) {

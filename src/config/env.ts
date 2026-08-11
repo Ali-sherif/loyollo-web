@@ -34,21 +34,51 @@ export function getServerEnv(): ServerEnv {
   });
 }
 
+/** Resolve public Supabase URL (Next public names, then Vite/TanStack fallbacks). */
+export function resolvePublicSupabaseUrl(): string | undefined {
+  return (
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL ||
+    process.env.SUPABASE_URL
+  );
+}
+
+/** Resolve public Supabase anon/publishable key (Next public names, then fallbacks). */
+export function resolvePublicSupabaseAnonKey(): string | undefined {
+  return (
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY
+  );
+}
+
+/** Non-throwing public Supabase config (proxy, optional local dev). */
+export function getOptionalPublicSupabaseEnv(): {
+  url: string;
+  anonKey: string;
+} | null {
+  const url = resolvePublicSupabaseUrl();
+  const anonKey = resolvePublicSupabaseAnonKey();
+  if (!url || !anonKey) return null;
+  return { url, anonKey };
+}
+
+export function isPublicSupabaseConfigured(): boolean {
+  return getOptionalPublicSupabaseEnv() !== null;
+}
+
 /** Call from server entry points when Supabase public config is required. */
 export function requirePublicSupabaseEnv(): {
   url: string;
   anonKey: string;
 } {
-  const env = getPublicEnv();
-  if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  const env = getOptionalPublicSupabaseEnv();
+  if (!env) {
     throw new Error(
       "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. See docs/deployment/env.md.",
     );
   }
-  return {
-    url: env.NEXT_PUBLIC_SUPABASE_URL,
-    anonKey: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  };
+  return env;
 }
 
 /** Alias for anon/publishable key used by Next cookie factories. */

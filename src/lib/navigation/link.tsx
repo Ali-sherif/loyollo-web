@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname as useNextPathname } from "next/navigation";
 import * as React from "react";
 
 import { buildHref, resolveHref } from "@/lib/navigation/paths";
@@ -88,7 +89,7 @@ export function useNavigate() {
   }, []);
 }
 
-export function usePathname(): string {
+function useWindowPathname(): string {
   const [pathname, setPathname] = React.useState(() =>
     typeof window !== "undefined" ? window.location.pathname : "",
   );
@@ -102,6 +103,10 @@ export function usePathname(): string {
 
   return pathname;
 }
+
+/** Next: SSR-safe pathname from App Router. TanStack: window + popstate. */
+export const usePathname =
+  process.env.NEXT_PUBLIC_IS_NEXT === "1" ? useNextPathname : useWindowPathname;
 
 /** Compatibility shim for `useRouterState({ select: s => s.location.pathname })`. */
 export function useRouterState<T>(options: {

@@ -10,6 +10,17 @@ const nextConfig: NextConfig = {
   env: {
     // Lets shared navigation / auth pick Next approved URLs (docs/frontend/02-route-migration.md).
     NEXT_PUBLIC_IS_NEXT: "1",
+    // Map TanStack/Vite env names for Next client bundles (docs/deployment/env.md).
+    NEXT_PUBLIC_SUPABASE_URL:
+      process.env.NEXT_PUBLIC_SUPABASE_URL ??
+      process.env.VITE_SUPABASE_URL ??
+      process.env.SUPABASE_URL ??
+      "",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY:
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+      process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
+      process.env.SUPABASE_PUBLISHABLE_KEY ??
+      "",
   },
   images: {
     // Match Vite asset URL string imports for visual-parity migration (ADR-010).

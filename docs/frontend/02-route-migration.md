@@ -1,8 +1,21 @@
 # Route Migration
 
-**Observed count:** 31 page URLs, three API URLs, and two structural route modules. `src/routeTree.gen.ts` is authoritative.
+**Observed count:** 31 page URLs, three API URLs, and two structural route modules. `src/routeTree.gen.ts` is authoritative for the current app.
 
-| Next.js URL                     | Current file                                  | Access           | Domain     | Rendering                    | Notes                      |
+## Route map policy ([ADR-002](../architecture/decisions/ADR-002-app-router.md))
+
+- Use Next.js App Router.
+- Review this inventory; do not preserve every current URL by default.
+- Preserve paths that represent an intentional product contract.
+- Pre-launch URL restructuring is allowed when it improves consistency, SEO, or maintainability.
+- Once the new route map is approved, those URLs become the production contract.
+- Use native App Router route typing; do not add a custom route-type generator unless a concrete need emerges.
+- Use `error.tsx`, `not-found.tsx`, and `loading.tsx` for consistent failure and loading behavior.
+- Use the Metadata API (static metadata or `generateMetadata`); public pages are the primary SEO target.
+
+The table below is the **current inventory candidate map**, not the final approved production contract.
+
+| Candidate Next.js URL           | Current file                                  | Access           | Domain     | Rendering                    | Notes                      |
 | ------------------------------- | --------------------------------------------- | ---------------- | ---------- | ---------------------------- | -------------------------- |
 | `/`                             | `src/routes/index.tsx`                        | Public           | Marketing  | Static                       | Root metadata override     |
 | `/about`                        | `src/routes/about.tsx`                        | Public           | Marketing  | Static                       | Preserve metadata          |
@@ -10,8 +23,8 @@
 | `/pricing`                      | `src/routes/pricing.tsx`                      | Public           | Marketing  | Static + client island       | Auth-aware navigation      |
 | `/guide`                        | `src/routes/guide.tsx`                        | Public           | Guide      | Static                       | Illustrations              |
 | `/contact`                      | `src/routes/contact.tsx`                      | Public           | Marketing  | Static + client island       | Map; form is placeholder   |
-| `/terms`                        | `src/routes/terms.tsx`                        | Public           | Legal      | Static                       | Preserve URL               |
-| `/privacy`                      | `src/routes/privacy.tsx`                      | Public           | Legal      | Static                       | Preserve URL               |
+| `/terms`                        | `src/routes/terms.tsx`                        | Public           | Legal      | Static                       | Strong preserve candidate  |
+| `/privacy`                      | `src/routes/privacy.tsx`                      | Public           | Legal      | Static                       | Strong preserve candidate  |
 | `/signin`                       | `src/routes/signin.tsx`                       | Public           | Auth       | Dynamic client form          | Redirect signed-in users   |
 | `/signup`                       | `src/routes/signup.tsx`                       | Public           | Auth       | Dynamic client form          | Supabase signup            |
 | `/verify`                       | `src/routes/verify.tsx`                       | Public           | Auth       | Dynamic client form          | OTP timers                 |
@@ -38,7 +51,7 @@
 
 ## Server API routes
 
-Lovable withdrawal is decided. Do **not** preserve `/lovable/*` paths in the Next.js app. Keep behavior and templates; move to first-party APIs.
+Lovable withdrawal is decided. Do **not** preserve `/lovable/*` paths. Keep behavior and templates under `src/lib/server/messaging/`; move to first-party APIs only where a BFF/frontend-specific server requirement exists ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)).
 
 | Current URL                    | Target URL                 | Authentication after withdrawal                       |
 | ------------------------------ | -------------------------- | ----------------------------------------------------- |
@@ -46,7 +59,7 @@ Lovable withdrawal is decided. Do **not** preserve `/lovable/*` paths in the Nex
 | `/lovable/email/auth/preview`  | `/api/email/auth/preview`  | App-owned bearer/admin secret                         |
 | `/lovable/email/queue/process` | `/api/email/queue/process` | Service-role or app scheduler secret                  |
 
-`src/routes/__root.tsx` maps to root layout, global error/not-found files, and providers. `src/routes/onboarding.tsx` maps to the onboarding layout.
+`src/routes/__root.tsx` maps to root layout, global error/not-found/loading files, and providers. `src/routes/onboarding.tsx` maps to the onboarding layout.
 
 ```mermaid
 flowchart TD
@@ -55,7 +68,7 @@ flowchart TD
   Root --> Onboarding[Onboarding layout]
   Root --> App[Protected application]
   Root --> Join[Public join programId]
-  Root --> Api[First-party email Route Handlers]
+  Root --> Api[First-party email BFF handlers]
   App --> Customers[Customers customerId]
   App --> Branches[Branches branchId]
   App --> Campaigns[Campaigns campaignId]

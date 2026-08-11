@@ -27,8 +27,8 @@ Routes currently own substantial UI and direct data logic. Shared components are
 
 ## Constraints
 
-- Supabase schema, migrations, RLS, and contracts are frozen.
+- Supabase schema, migrations, RLS, and contracts are frozen; the existing backend remains the primary business/API backend after migration.
 - Service-role and Lovable keys must never enter client bundles.
-- Lovable build, email, and error reporting integrations create platform coupling.
-- Both npm and Bun lockfiles exist; the canonical manager is unknown.
-- Node and production runtime versions are not pinned.
+- Lovable build, email, and error reporting integrations create platform coupling (withdrawal decided; see [ADR-009](../architecture/decisions/ADR-009-lovable-withdrawal.md)).
+- Both npm and Bun lockfiles exist; the canonical manager is still unknown.
+- Migration targets are decided: Next.js 16.3.x, React 19.2.x, TypeScript 6.0.x, Node 24 LTS on Vercel ([ADR-001](../architecture/decisions/ADR-001-nextjs-version.md), [ADR-008](../architecture/decisions/ADR-008-deployment.md)).

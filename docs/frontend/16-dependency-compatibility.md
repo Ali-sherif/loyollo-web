@@ -2,15 +2,20 @@
 
 Versions are the declarations in `package.json`; resolved versions must be rechecked from the canonical lockfile after npm versus Bun is decided.
 
+**Target lines (DECIDED):** Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x, Node.js 24 LTS on Vercel. Cloudflare/`workerd` via OpenNext is secondary and validated separately.
+
 | Package/group                          | Current declaration  | Next.js / RSC assessment                                                    | Boundary                      | Risk     | Proposed action                                            |
 | -------------------------------------- | -------------------- | --------------------------------------------------------------------------- | ----------------------------- | -------- | ---------------------------------------------------------- |
-| `react`, `react-dom`                   | `^19.2.0`            | Compatible with Next.js 16 baseline                                         | Server and client             | Low      | Preserve 19.2; let Next.js control framework integration   |
+| `next`                                 | not installed        | Target 16.3.x Active LTS                                                    | Framework                     | Critical | Add at foundation spike                                    |
+| `typescript`                           | `^5.8.3`             | Target 6.0.x                                                                | Build                         | High     | Upgrade and validate with Next 16.3.x tooling              |
+| `react`, `react-dom`                   | `^19.2.0`            | Compatible with Next.js 16 baseline; stay on 19.2.x                         | Server and client             | Low      | Preserve 19.2.x; let Next.js control framework integration |
+| `@types/node`                          | `^22.16.5`           | Align with Node 24 LTS target                                               | Build                         | Medium   | Update types to Node 24 line when pinning runtime          |
 | `@tanstack/react-start`, router/plugin | 1.x                  | Framework-specific and not retained                                         | N/A                           | Critical | Replace with App Router conventions route-by-route         |
 | Vite and `@vitejs/plugin-react`        | 8.x / 5.x            | Not the Next.js application build pipeline                                  | Build only                    | High     | Remove only after the Next foundation is approved          |
 | `@lovable.dev/vite-tanstack-config`    | `2.7.7`              | TanStack/Vite/Lovable-specific                                              | Build only                    | Critical | Remove entirely; replace with Next.js tooling              |
-| Nitro                                  | beta                 | Not used by standard Next.js; Cloudflare uses OpenNext                      | Server/build                  | High     | Replace with selected deployment adapter                   |
+| Nitro                                  | beta                 | Not used by standard Next.js on Vercel; Cloudflare uses OpenNext            | Server/build                  | High     | Replace with Vercel/Next deploy path                       |
 | `@supabase/supabase-js`                | `^2.110.0`           | Compatible in browser/server code; session model needs proof                | Both, with separate factories | Critical | Preserve contracts; validate SSR/cookie adapter            |
-| `@tanstack/react-query`                | `^5.101.1`           | Compatible in Client Components                                             | Client only                   | Medium   | Keep only for live/refetch/optimistic server state         |
+| `@tanstack/react-query`                | `^5.101.1`           | Compatible in Client Components                                             | Client only                   | Medium   | Keep for interactive server state only (not every request) |
 | Tailwind CSS / Vite plugin             | `^4.2.1`             | Tailwind 4 compatible; Vite plugin is not used by Next                      | Build/CSS                     | Medium   | Preserve CSS/tokens; replace integration                   |
 | Radix UI / shadcn primitives           | mixed current        | Generally compatible; interactive primitives are client boundaries          | Client components             | Medium   | Preserve and audit `"use client"` placement                |
 | `react-hook-form`, resolvers, Zod      | 7.x / 5.x / 3.x      | Compatible; forms and hooks are client-side, Zod is universal               | Client/server schemas         | Low      | Preserve; do not force form rewrites                       |
@@ -18,8 +23,8 @@ Versions are the declarations in `package.json`; resolved versions must be reche
 | `jspdf`, `jspdf-autotable`             | 4.x / 5.x            | Browser-heavy; avoid server bundle                                          | Client + dynamic import       | Medium   | Preserve export behavior and lazy load                     |
 | `qrcode`                               | `^1.5.4`             | Works in browser workflows; server use not required                         | Client                        | Medium   | Keep in QR islands and test canvas/downloads               |
 | `recharts`                             | `^2.15.4`            | Interactive chart library                                                   | Client                        | Medium   | Keep chart wrapper client-only; verify actual usage        |
-| React Email packages                   | 1.x / 2.x            | Suitable for server rendering; runtime compatibility must be tested         | Server only                   | High     | Preserve templates; keep independent of transport provider |
-| Lovable email/webhook packages         | early 0.x            | Lovable transport/webhook SDK to be withdrawn                               | Route Handlers only           | Critical | Remove; keep templates; send via future provider adapter   |
+| React Email packages                   | 1.x / 2.x            | Suitable for server rendering; runtime compatibility must be tested         | Server only (`messaging/`)    | High     | Preserve templates under `lib/server/messaging`            |
+| Lovable email/webhook packages         | early 0.x            | Lovable transport/webhook SDK to be withdrawn                               | Messaging adapter only        | Critical | Remove; keep templates; send via future provider adapter   |
 | `sonner`                               | `^2.0.7`             | Compatible as a client provider                                             | Client                        | Low      | Keep one small provider in root composition                |
 | `date-fns`                             | `^4.1.0`             | Universal JavaScript                                                        | Both                          | Low      | Preserve                                                   |
 | `lucide-react`                         | `^0.575.0`           | Compatible; individual icons can render server-side unless parent is client | Both                          | Low      | Preserve                                                   |
@@ -28,4 +33,4 @@ Versions are the declarations in `package.json`; resolved versions must be reche
 
 ## Verification gate
 
-For each retained dependency, run a production build and target-runtime preview. Cloudflare candidates require workerd/OpenNext testing, not only `next dev`, because Node compatibility, bundle size, memory, image handling, and middleware behavior differ.
+For each retained dependency, run a production build and Vercel/Node 24 preview. If Cloudflare is later evaluated, require separate workerd/OpenNext testing—Node 24 LTS compatibility does not prove Workers compatibility.

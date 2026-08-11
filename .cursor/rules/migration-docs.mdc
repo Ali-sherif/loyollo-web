@@ -1,0 +1,27 @@
+---
+description: Docs-led TanStack Start → Next.js migration gates and locked constraints
+alwaysApply: true
+---
+
+# Docs-led migration
+
+Source of truth: `docs/architecture/` and `docs/frontend/`. Do not invent a parallel plan.
+
+## Before any migration coding
+
+1. Read `docs/architecture/pre-implementation-checklist.md` and `docs/frontend/12-migration-plan.md`.
+2. Block Next.js app creation and slice implementation until Critical checklist items are `DECIDED` or explicitly `ACCEPTED RISK`.
+3. Prefer Plan Mode for gate-clearing, ADR work, and architecture slices.
+4. When leading migration, follow `.cursor/skills/nextjs-migration/SKILL.md`.
+
+## Locked (never override without explicit user approval)
+
+- Visual style parity — no redesign (ADR-010).
+- Preserve email/SMS templates under `src/lib/server/messaging/`; provider-agnostic contracts only.
+- Withdraw Lovable packages, `/lovable/*` routes, secrets, and host coupling (ADR-009).
+- Existing backend remains primary API; Next.js is not a backend replacement (ADR-006).
+- Target: Next.js 16.3.x, React 19.2.x, TypeScript 6.0.x, Vercel + Node 24 LTS.
+
+## Execution order
+
+Follow dependency-aware slices in `docs/frontend/12-migration-plan.md`. Do not skip foundation/auth/messaging gates. Do not delete TanStack/Lovable code until production smoke + rollback window + explicit user approval.

@@ -19,7 +19,7 @@ import avatar2 from "@/assets/avatar-2.jpg";
 import avatar3 from "@/assets/avatar-3.jpg";
 import avatar4 from "@/assets/avatar-4.jpg";
 import { useAuth } from "@/hooks/use-auth";
-import loyolloLogoSignup from "@/assets/loyollo-logo-signup.svg.asset.json";
+import loyolloLogoSignup from "@/assets/loyollo-logo-signup.svg";
 
 const avatars = [avatar1, avatar2, avatar3, avatar4];
 
@@ -161,7 +161,7 @@ function SignUpPage() {
         <div className="flex flex-1 flex-col items-center justify-center gap-10 rounded-[32px] bg-transparent px-6 py-10 sm:px-12 lg:px-20 lg:py-0">
           {/* Logo */}
           <img
-            src={loyolloLogoSignup.url}
+            src={loyolloLogoSignup}
             alt="Loyollo"
             className="h-8 w-auto md:h-10"
           />

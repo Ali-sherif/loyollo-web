@@ -12,9 +12,8 @@ const figtree = Figtree({
 const siteDescription =
   "Create and manage digital loyalty programs in minutes. Reward repeat customers, collect insights, and grow with a QR-based platform built for small businesses.";
 
-/** Lovable CDN preview image — re-host in slice 2 (ADR-009 asset vendoring). */
-const ogImage =
-  "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d23c0332-e946-41c7-9ad8-d715ab147903/id-preview-20c25e52--2c648ce2-4a61-45d6-a815-4d462b8f85c7.lovable.app-1782933086464.png";
+/** First-party OG image (vendored from Lovable CDN in slice 2 — ADR-009). */
+const ogImage = "/og-image.png";
 
 export const metadata: Metadata = {
   title: {

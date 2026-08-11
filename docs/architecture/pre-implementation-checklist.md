@@ -10,11 +10,12 @@
 - [x] Lovable withdrawal decided (packages, routes, secrets, host hooks)
 - [x] Visual style parity decided (no redesign)
 - [x] Email/SMS template preservation decided and inventoried
-- [ ] Hosting target approved (outside Lovable)
+- [x] Hosting target approved: Vercel (outside Lovable); Cloudflare/OpenNext secondary
 - [ ] Email delivery provider approved (adapter remains mandatory either way)
 - [ ] SMS provider approved or explicitly deferred with channel preserved
-- [ ] Node version and canonical package manager approved
-- [ ] Next.js exact patch approved at implementation start
+- [x] Node version approved: 24 LTS for Node deploys; workerd via OpenNext if Cloudflare
+- [ ] Canonical package manager approved
+- [x] Next.js / React / TypeScript lines approved (16.3.x / 19.2.x / 6.0.x); exact patches at implementation start
 - [ ] Supabase server-session approach proven in a spike
 - [ ] RLS and storage policies independently verified
 - [ ] Public enrollment rate-limit/abuse controls approved

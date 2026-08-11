@@ -13,7 +13,7 @@ The current app is coupled to Lovable for Vite/TanStack build config, email send
 Remove Lovable from the project during the Next.js migration. Specifically:
 
 1. Drop `@lovable.dev/vite-tanstack-config`, `@lovable.dev/email-js`, `@lovable.dev/webhooks-js`, and transitive Lovable Vite plugins.
-2. Replace Lovable build/runtime with the selected Next.js hosting stack (hosting itself remains `NEEDS APPROVAL`).
+2. Replace Lovable build/runtime with the Next.js hosting stack on Vercel (initial target; see [ADR-008](ADR-008-deployment.md)).
 3. Replace Lovable email transport with a provider-agnostic messaging adapter.
 4. Move auth/email/preview/queue endpoints off `/lovable/*` paths to first-party API routes.
 5. Remove Lovable-specific error reporting and replace with a portable observability approach later.

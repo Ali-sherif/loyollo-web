@@ -2,10 +2,10 @@
 
 | ID   | Decision          | Current state                      | Proposed decision                                                 | Impact   | Reversibility | Status              | Dependencies     |
 | ---- | ----------------- | ---------------------------------- | ----------------------------------------------------------------- | -------- | ------------- | ------------------- | ---------------- |
-| D-01 | Next.js line      | TanStack Start 1.x                 | Next.js 16.3.x stable patch                                       | Critical | Hard          | PROPOSED            | Hosting, Node    |
-| D-02 | Node line         | Unpinned; Node 22 types installed  | Node 22 or 24; pin after hosting choice                           | Critical | Moderate      | NEEDS INVESTIGATION | Hosting          |
+| D-01 | Next.js line      | TanStack Start 1.x                 | Next.js 16.3.x; React/React DOM 19.2.x; TypeScript 6.0.x          | Critical | Hard          | DECIDED             | ADR-001          |
+| D-02 | Node line         | Unpinned; Node 22 types installed  | Node 24 LTS for Node deploys; workerd via OpenNext if Cloudflare  | Critical | Moderate      | DECIDED             | ADR-001, ADR-008 |
 | D-03 | Router            | TanStack file router               | App Router                                                        | Critical | Very Hard     | PROPOSED            | D-01             |
-| D-04 | Hosting           | Lovable/Nitro Cloudflare default   | Leave Lovable; compare Vercel and Cloudflare/OpenNext             | Critical | Hard          | NEEDS APPROVAL      | D-01, D-02, D-19 |
+| D-04 | Hosting           | Lovable/Nitro Cloudflare default   | Initial target Vercel (Node 24); Cloudflare/OpenNext secondary    | Critical | Hard          | DECIDED             | ADR-008, D-19    |
 | D-05 | Auth storage      | Supabase session in localStorage   | Preserve first, evaluate cookie SSR separately                    | Critical | Hard          | PROPOSED            | RLS, hosting     |
 | D-06 | Protected routes  | Client redirects                   | Server authorization plus client UX checks                        | High     | Moderate      | PROPOSED            | D-05             |
 | D-07 | Public enrollment | Public server fn with admin key    | Rate-limited Route Handler + server service                       | Critical | Moderate      | PROPOSED            | Hosting          |

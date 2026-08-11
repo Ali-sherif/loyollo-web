@@ -8,11 +8,12 @@
 - **OBSERVED:** Loyollo is a TanStack Start SSR application, not a client-only React SPA. It uses React 19.2, TanStack Router, Vite 8, Nitro, Supabase, six TanStack Server Functions, and three server route handlers.
 - **OBSERVED:** The generated route tree contains 31 page URLs, three API URLs, and two structural modules (`__root` and the onboarding layout).
 - **DECIDED:** Withdraw Lovable packages, routes, secrets, asset coupling, and host hooks from the project. See [ADR-009](decisions/ADR-009-lovable-withdrawal.md).
-- **DECIDED:** Keep current visual styles and current email/SMS message templates. Hosting and email/SMS delivery providers remain open. See [ADR-010](decisions/ADR-010-style-and-template-parity.md).
-- **RECOMMENDED:** Target Next.js 16.3.x, React 19.2, App Router, and Node 22 or 24 for Node deployments. The exact patch and hosting target remain approval gates.
+- **DECIDED:** Keep current visual styles and current email/SMS message templates. Email/SMS delivery providers remain open. See [ADR-010](decisions/ADR-010-style-and-template-parity.md).
+- **DECIDED:** Initial hosting target is Vercel. See [ADR-008](decisions/ADR-008-deployment.md).
+- **DECIDED:** Target Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x, and Node.js 24 LTS for Node-based deployments. Cloudflare Workers (if used) target `workerd` via OpenNext with separate Node compatibility validation. See [ADR-001](decisions/ADR-001-nextjs-version.md).
 - **RECOMMENDED:** Preserve Supabase schema and contracts. Move privileged access behind server-only modules and classify each existing server function individually.
 - **PROPOSED:** Use Server Components for initial reads, small Client Component islands for interaction, Route Handlers for public/external/long-running HTTP workflows, and Server Actions only for first-party authenticated UI mutations.
-- **NEEDS INVESTIGATION / APPROVAL:** Vercel versus Cloudflare/OpenNext, concrete email/SMS provider, canonical package manager, production runtime configuration, RLS/storage policy behavior, and queue scheduling.
+- **NEEDS INVESTIGATION / APPROVAL:** Concrete email/SMS provider, canonical package manager, production runtime configuration, RLS/storage policy behavior, and queue scheduling.
 
 ## Critical decisions
 
@@ -29,7 +30,7 @@
 
 ## Recommended decision order
 
-`Hosting → email/SMS provider → Node/package manager → auth session model → messaging adapter → server boundaries → rendering/cache → data/state → project structure → migration slices`
+`Email/SMS provider → package manager → auth session model → messaging adapter → server boundaries → rendering/cache → data/state → project structure → migration slices`
 
 ## Indices
 

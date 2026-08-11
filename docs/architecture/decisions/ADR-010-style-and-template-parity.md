@@ -6,7 +6,7 @@ DECIDED
 
 ## Context
 
-Product owners require the Next.js migration to keep the current visual design and to retain existing email/SMS messaging content. Hosting and email/SMS providers are not decided yet, so transport must be separable from presentation.
+Product owners require the Next.js migration to keep the current visual design and to retain existing email/SMS messaging content. Initial hosting is Vercel ([ADR-008](ADR-008-deployment.md)); email/SMS delivery providers are not decided yet, so transport must be separable from presentation.
 
 ## Decision
 

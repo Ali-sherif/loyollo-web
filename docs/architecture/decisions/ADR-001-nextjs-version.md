@@ -2,11 +2,11 @@
 
 ## Status
 
-PROPOSED
+DECIDED
 
 ## Context
 
-The repository resolves React/React DOM 19.2.8, TypeScript 5.9.3, and has no pinned Node version. As of 2026-08-10, Next.js 16 is Active LTS and 16.3.0 is the current documented stable release.
+The repository resolves React/React DOM 19.2.x and TypeScript 5.x today, with no pinned Node version. As of 2026-08-11, Next.js 16 is Active LTS and 16.3.x is the current documented stable line. Initial hosting is Vercel ([ADR-008](ADR-008-deployment.md)), which supports selectable Node 20/22/24.
 
 ## Options
 
@@ -16,15 +16,29 @@ The repository resolves React/React DOM 19.2.8, TypeScript 5.9.3, and has no pin
 
 ## Decision
 
-Target the latest stable 16.3.x patch available when implementation begins. Pin Node 22 or 24 after hosting selection; Next.js 16 requires Node >=20.9.
+Pin the following lines for the Next.js migration:
+
+| Package / runtime | Target line |
+| ----------------- | ----------- |
+| Next.js           | 16.3.x      |
+| React             | 19.2.x      |
+| React DOM         | 19.2.x      |
+| TypeScript        | 6.0.x       |
+| Node.js           | 24 LTS      |
+
+Use the latest stable patch within each line when implementation begins. Next.js 16 requires Node >=20.9; Node 24 LTS is the target for Node-based deployments (including Vercel).
+
+For Cloudflare Workers deployments (if pursued later), the application targets the Cloudflare `workerd` runtime through OpenNext. Node.js compatibility on that path is validated separately and is not assumed from the Node 24 LTS pin.
 
 ## Consequences and risks
 
-Cloudflare uses workerd via OpenNext rather than a selectable Node runtime. Dependencies must be validated there. React framework integration is managed by Next.js and should not be independently forced.
+- React framework integration is managed by Next.js and should not be independently forced outside the 19.2.x line Next expects.
+- TypeScript 6.0.x is ahead of the current repo pin and must be validated with Next.js 16.3.x tooling during the spike.
+- Cloudflare/`workerd` remains a secondary path; OpenNext + `nodejs_compat` validation is required before any Workers cutover.
 
 ## Verification
 
-Run clean install, typecheck, production build, route tests, and target-runtime preview.
+Run clean install, typecheck, production build, route tests, and target-runtime preview (Vercel Node 24; separately OpenNext/`workerd` if Cloudflare is exercised).
 
 ## Sources
 

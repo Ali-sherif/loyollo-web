@@ -62,9 +62,14 @@ flowchart LR
 - Public enrollment rate limits **DECIDED** ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)).
 - Campaign/messaging background runtime **DECIDED** — outside Next.js ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)).
 
-**Still required before coding**
+**ACCEPTED RISK (remain open in docs)**
 
-- Cookie/SSR session spike (**BLOCKED** — [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md); POC code removed — recreate isolated spike, then validate with service-role or confirmed test user) and remaining checklist Critical items.
+- Cookie/SSR session spike (**BLOCKED** until PASSED after migration start — [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)); prove during foundation / server-infra / auth with service-role or confirmed test user.
+- Minimal parity baselines ([parity-baselines.md](../architecture/parity-baselines.md)); asset vendoring in slice 2; env confirm at Vercel deploy; rollback owner not a GO gate.
+
+**DECIDED (go-live / cutover)**
+
+- Pre-launch D-23: first production is Next on Vercel; no dual production frontends; first-party email BFF cutover — [cutover.md](../architecture/cutover.md).
 
 ## Documents
 
@@ -86,6 +91,6 @@ flowchart LR
 16. [Dependency compatibility](16-dependency-compatibility.md)
 17. [Messaging templates](17-messaging-templates.md)
 
-**Next step:** clear remaining Critical checklist items (auth cookie/SSR spike is **BLOCKED** pending credentials — see [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md); also parity baselines, cutover/rollback). Do not create the Next.js application yet.
+**Next step:** slice 1 — Foundation (Next 16.3.x, TypeScript 6.0.x, Node 24 / Vercel, Tailwind/assets parity, root layout, `error`/`not-found`/`loading`, Metadata API, environment validation). Prove D-28 cookie/SSR session after migration start; keep [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md) open until PASSED.
 
-**Migration Go / No-Go:** **NO-GO**.
+**Migration Go / No-Go:** **GO**.

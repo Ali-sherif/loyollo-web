@@ -82,7 +82,7 @@ Lovable withdrawal is decided. Do **not** preserve `/lovable/*` paths. Keep beha
 
 ## Legacy → approved redirect cheat sheet
 
-Use during coexistence/cutover only; pre-launch may skip permanent redirects if the old host is retired entirely.
+Optional for pre-launch: permanent redirects are only needed if a legacy host stayed public; otherwise retire the old host and ship the approved map only ([cutover.md](../architecture/cutover.md)).
 
 | Legacy                         | Approved                         |
 | ------------------------------ | -------------------------------- |

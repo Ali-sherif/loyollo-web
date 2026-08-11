@@ -18,4 +18,4 @@ Lead from documentation — do not invent a parallel plan:
 - Always-apply rule: `.cursor/rules/migration-docs.mdc`
 - Workflow skill: `.cursor/skills/nextjs-migration/SKILL.md`
 
-Do not create the Next.js application or implement migration slices until Critical checklist items are `DECIDED` or explicitly `ACCEPTED RISK`.
+Do not remove TanStack/Lovable until production smoke + rollback window + explicit user approval. Critical checklist items are cleared (DECIDED or ACCEPTED RISK); D-28 cookie/SSR remains documented BLOCKED until proven after migration start.

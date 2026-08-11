@@ -146,4 +146,6 @@ These appear in architecture docs as future needs. **Do not invent Vercel values
 
 ### Gate status
 
-Checklist item *“Environment inventory verified in deployment without exposing values”* in [pre-implementation-checklist.md](../architecture/pre-implementation-checklist.md) is satisfied for **documentation**. Mark it complete only after values are confirmed present in the Vercel project UI (without pasting values into git).
+Checklist item *Environment inventory* in [pre-implementation-checklist.md](../architecture/pre-implementation-checklist.md) is **ACCEPTED RISK** for migration GO: this inventory is the documentation source of truth.
+
+**Remember (still open):** confirm values in the Vercel project UI before a Next deploy (Development / Preview / Production) **without** pasting secret values into git, tickets, or chat. Mark this follow-up done in [deferred-decisions.md](../architecture/deferred-decisions.md) when confirmed.

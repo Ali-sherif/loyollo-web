@@ -16,12 +16,13 @@
 2. Production route map **APPROVED** (restructured App Router URLs in [02-route-migration.md](02-route-migration.md)).
 3. Email/SMS: **ACCEPTED RISK** with adapter stubs in `src/lib/server/messaging/` (no real provider until later).
 4. Canonical package manager selected: npm (`package-lock.json`; remove `bun.lock` at implementation start).
-5. Prove cookie/SSR session spike for auth — **in progress / BLOCKED** ([auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)).
-6. Establish build, typecheck, lint, route smoke tests, visual parity checks, and email HTML diffs.
+5. Cookie/SSR session spike for auth — **ACCEPTED RISK** / remains **BLOCKED** until proven **after** migration start ([auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)).
+6. Characterization / visual / email baselines — **ACCEPTED RISK** minimal ([parity-baselines.md](../architecture/parity-baselines.md)).
+7. Go-live/cutover (D-23) — **DECIDED** ([cutover.md](../architecture/cutover.md)); pre-launch, no dual production frontends; rollback owner **ACCEPTED RISK** (not a GO gate).
 
 ## Dependency-aware slices
 
-1. Foundation spike: Next 16.3.x, TypeScript 6.0.x, Node 24 / Vercel, Tailwind/assets parity, root layout, `error`/`not-found`/`loading`, Metadata API, environment validation.
+1. Foundation spike: Next 16.3.x, TypeScript 6.0.x, Node 24 / Vercel, Tailwind/assets parity, root layout, `error`/`not-found`/`loading`, Metadata API, environment validation. — **started:** `src/app` scaffold, `next.config.ts`, `tsconfig.next.json`, `src/config/env.ts`; scripts `dev:next` / `build:next` (TanStack `dev`/`build` retained in-repo until retirement — not production coexistence).
 2. Vendor/re-host assets currently tied to Lovable/CDN manifests.
 3. Server infrastructure: backend/Supabase factories, secret isolation, auth proof (route protection + session-aware rendering), portable logging.
 4. Messaging skeleton under `src/lib/server/messaging/` that renders existing templates without Lovable SDKs or direct provider coupling.
@@ -37,9 +38,9 @@
 14. Remove remaining Lovable packages/env references.
 15. SEO, performance, accessibility, visual, and messaging parity regression.
 
-## Coexistence and cutover
+## Go-live and cutover
 
-Prefer deployment-level coexistence with route ownership recorded against the **approved** route map. Replace `/lovable/email/*` callers with new first-party API paths as part of cutover. Avoid dual writes. Each slice requires acceptance tests and a route-level rollback. Final cutover requires environment parity, webhook/scheduler switch plan, DNS/redirect validation, monitoring, and rollback owner.
+**DECIDED** — see [cutover.md](../architecture/cutover.md): pre-launch product; **first production** is Next.js on Vercel with the **approved** route map; **no** dual production frontends (TanStack/Lovable may remain as in-repo source until retirement). Replace `/lovable/email/*` with first-party API paths at auth/messaging slices; no dual writes. Named rollback owner is **ACCEPTED RISK** (not a pre-implementation gate); prefer per-slice Next deploy rollback operationally.
 
 ## Retirement
 

@@ -1,7 +1,7 @@
 # Architecture Audit
 
-**Audit date:** 2026-08-10  
-**Scope:** documentation only; no migration implementation is authorized.
+**Audit date:** 2026-08-10 (gates updated 2026-08-11)  
+**Scope:** architecture + frontend blueprint; Critical gates cleared — migration slices authorized (GO).
 
 ## Executive summary
 
@@ -17,8 +17,9 @@
 - **DECIDED:** Canonical package manager is npm (`package-lock.json`); remove `bun.lock` at implementation start.
 - **DECIDED:** Production route map approved and restructured — [02-route-migration.md](../frontend/02-route-migration.md).
 - **DECIDED:** RLS/storage for this migration — retain existing Lovable policies in Phase 1; Phase 2 custom Backend APIs own all data/storage access. See [ADR-011](decisions/ADR-011-rls-storage-strategy.md).
-- **NEEDS INVESTIGATION / APPROVAL:** Cookie/SSR session spike (**BLOCKED** — [spikes/auth-ssr-spike.md](spikes/auth-ssr-spike.md)), and remaining production runtime / cutover items.
-- **Go / No-Go:** **NO-GO** for migration implementation and root Next.js app creation until Critical checklist items are DECIDED/APPROVED or ACCEPTED RISK (D-28 not cleared).
+- **DECIDED:** Go-live/cutover (D-23) — pre-launch; first prod is Next on Vercel; no dual production frontends; first-party email BFF; no dual writes. See [cutover.md](cutover.md).
+- **ACCEPTED RISK:** Cookie/SSR session spike (**BLOCKED** until proven after migration start — [spikes/auth-ssr-spike.md](spikes/auth-ssr-spike.md)); minimal parity baselines ([parity-baselines.md](parity-baselines.md)); **asset vendoring** (open until slice 2) and **Vercel env confirm** (open until UI check) — see [deferred-decisions.md](deferred-decisions.md); rollback owner not a GO gate.
+- **Go / No-Go:** **GO** for migration implementation and root Next.js app creation. D-28 remains documented open/BLOCKED until PASSED.
 
 ## Critical decisions
 
@@ -38,7 +39,7 @@
 
 ## Recommended decision order
 
-`Auth session/cookie spike → messaging adapter stubs (at implementation) → migration slices`
+`Messaging adapter stubs (at implementation) → migration slices; prove cookie/SSR session (D-28) during foundation / server-infra / auth (remains open until PASSED)`
 
 (Server-function → Backend API / Server Action / BFF mapping is **DECIDED** — [15-server-function-mapping.md](../frontend/15-server-function-mapping.md).)
 
@@ -48,5 +49,7 @@
 - [Decision dependencies](decision-dependencies.md)
 - [Deferred decisions](deferred-decisions.md)
 - [Pre-implementation checklist](pre-implementation-checklist.md)
+- [Parity baselines](parity-baselines.md)
+- [Go-live / cutover](cutover.md)
 - [Spikes — Auth Cookie/SSR](spikes/auth-ssr-spike.md)
 - [Frontend blueprint](../frontend/README.md)

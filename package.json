@@ -3,11 +3,18 @@
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "engines": {
+    "node": ">=20.9"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
+    "dev:next": "next dev",
+    "build:next": "next build",
+    "start:next": "next start",
+    "typecheck:next": "tsc -p tsconfig.next.json --noEmit",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
@@ -59,6 +66,7 @@
     "jspdf-autotable": "^5.0.8",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.575.0",
+    "next": "16.3.0",
     "qrcode": "^1.5.4",
     "react": "^19.2.0",
     "react-day-picker": "^9.14.0",
@@ -78,8 +86,9 @@
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "2.7.7",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/leaflet": "^1.9.21",
-    "@types/node": "^22.16.5",
+    "@types/node": "^24.13.3",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
@@ -92,7 +101,7 @@
     "globals": "^15.15.0",
     "nitro": "3.0.260603-beta",
     "prettier": "^3.7.3",
-    "typescript": "^5.8.3",
+    "typescript": "~6.0.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.0.16"
   },

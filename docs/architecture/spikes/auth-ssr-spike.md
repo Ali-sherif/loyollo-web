@@ -1,8 +1,8 @@
 # Spike: Auth Cookie / SSR Session
 
 **Date:** 2026-08-11  
-**Status:** **BLOCKED** (not APPROVED)  
-**Code:** Removed from the repo (`spikes/auth-ssr/` deleted). Findings below stand; recreate an isolated Next 16.3 App Router POC when unblocking D-28.  
+**Status:** **ACCEPTED RISK** — remain **BLOCKED** until PASSED; prove **after** migration start (foundation / server-infra / auth slices). Not APPROVED.  
+**Code:** Removed from the repo (`spikes/auth-ssr/` deleted). Findings below stand; recreate an isolated Next 16.3 App Router POC (or prove in-app during auth slices) when clearing this remaining item.  
 **Related:** [ADR-005](../decisions/ADR-005-authentication.md), checklist item “Supabase server-session / HTTP-only cookie approach”, D-28
 
 ## Goal
@@ -85,7 +85,7 @@ Neither was available in the repo env (only URL + publishable/anon key).
 4. **RSC cookie mutation** — `cookies().set` in Server Components can throw; refresh belongs in proxy / Route Handlers (spike server factory already swallows read-only set errors).
 5. **`getUser()` vs `getSession()`** — Server paths must call `getUser()` so Auth validates the JWT; `getSession()` alone is insufficient for gates.
 6. **HttpOnly / Secure / SameSite** — Production must set Secure on HTTPS; local HTTP may omit Secure. CSRF protection is required before cookie-authenticated mutations in the real app.
-7. **Dual session models** — Today’s TanStack app uses `localStorage`; Next cookie sessions must not be assumed interchangeable. Plan a single cutover model per deploy surface.
+7. **Dual session models** — Today’s TanStack app uses `localStorage`; Next cookie sessions must not be assumed interchangeable. Plan a single auth model for the Next go-live surface (no dual production frontends — [cutover.md](../cutover.md)).
 8. **Matcher scope** — Proxy matcher must include HTML navigations and auth routes; static assets should stay excluded.
 9. **Monorepo lockfiles** — Nested `package-lock.json` under `spikes/` confused Turbopack root inference; spike `next.config.ts` sets `turbopack.root` to the spike directory.
 10. **Auth email delivery** — Confirmation mail did not arrive at a disposable inbox; custom Lovable email hooks mean automated confirm-link harvesting is unreliable without service-role bootstrap.
@@ -104,13 +104,13 @@ Neither was available in the repo env (only URL + publishable/anon key).
 
 | Item | Outcome |
 | ---- | ------- |
-| Cookie/SSR session spike | **BLOCKED** — not APPROVED |
-| Overall migration Go/No-Go | **NO-GO** (this gate plus other open Critical checklist items) |
-| Create root Next.js application | **Still forbidden** |
+| Cookie/SSR session spike | **ACCEPTED RISK** — remains **BLOCKED** / not APPROVED until proven after migration start |
+| Overall migration Go/No-Go | May be **GO** while this item remains open (must stay documented until PASSED) |
+| Create root Next.js application | Allowed once other Critical checklist items are DECIDED or ACCEPTED RISK |
 
-### Unblock checklist
+### Unblock checklist (remains open)
 
-1. Recreate the isolated Next 16.3 auth cookie/SSR POC (do not put it under production `src/`).
-2. Add `SUPABASE_SERVICE_ROLE_KEY` **or** confirmed `SPIKE_TEST_*` credentials to that app’s `.env.local` (do not commit).
-3. `npm run build && npx next start -p 3000 && npm run validate`.
-4. On `ok: true`, update this doc Status → **PASSED**, mark checklist item done, set D-28 → **DECIDED/APPROVED**.
+1. Recreate the isolated Next 16.3 auth cookie/SSR POC **or** prove the same contract inside the Next foundation/auth slices (do not treat mocks as proof).
+2. Add `SUPABASE_SERVICE_ROLE_KEY` **or** confirmed `SPIKE_TEST_*` credentials to local env (do not commit).
+3. `npm run build && npx next start -p 3000 && npm run validate` (or equivalent in-app auth smoke).
+4. On `ok: true`, update this doc Status → **PASSED**, set D-28 → **DECIDED/APPROVED**, and clear the “remains BLOCKED” notes in the checklist / decision matrix / architecture README.

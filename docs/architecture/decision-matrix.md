@@ -21,29 +21,28 @@
 | D-17 | Metadata/SEO      | TanStack head definitions          | Metadata API; static + `generateMetadata`; public pages primary   | Medium   | Easy          | DECIDED             | ADR-002          |
 | D-18 | Styling           | Tailwind 4 + shadcn `rsc:false`    | Exact visual parity; no redesign                                  | Critical | Easy          | DECIDED             | ADR-010          |
 | D-19 | Package manager   | npm and Bun lockfiles              | npm is canonical; use `package-lock.json`; remove `bun.lock` at implementation start | High | Moderate | DECIDED | Hosting/CI |
-| D-20 | Testing gate      | No project tests                   | Add characterization/E2E gates before migration                   | Critical | Easy          | PROPOSED            | Route inventory  |
-| D-21 | Email handlers    | Lovable `/lovable/email/*` routes  | First-party BFF handlers + provider-agnostic messaging adapter    | Critical | Moderate      | PROPOSED            | D-07, D-24, D-25 |
+| D-20 | Testing gate      | No project tests                   | Minimal smoke + visual parity note + email template inventory at implementation start; no formal suite before coding | Critical | Easy | ACCEPTED RISK | Route inventory, [parity-baselines.md](parity-baselines.md) |
+| D-21 | Email handlers    | Lovable `/lovable/email/*` routes  | First-party BFF handlers + provider-agnostic messaging adapter; replace `/lovable/email/*` at auth/messaging slices | Critical | Moderate | DECIDED | D-07, D-24, D-25, [cutover.md](cutover.md) |
 | D-22 | Observability     | Lovable host hook + console        | Remove Lovable hook; select portable error tracking later         | Medium   | Moderate      | PROPOSED            | D-24, Hosting    |
-| D-23 | Cutover           | Single TanStack/Lovable deploy     | Route/domain slices with rollback after Lovable withdrawal        | Critical | Hard          | NEEDS APPROVAL      | Hosting/DNS      |
+| D-23 | Go-live / cutover | Pre-launch; TanStack/Lovable source only | First prod = Next on Vercel + approved map; no dual production frontends; repo may keep TanStack until retirement; rollback owner not a GO gate | Critical | Hard | DECIDED | Hosting/DNS, [cutover.md](cutover.md) |
 | D-24 | Lovable platform  | Build, email, assets, error hooks  | Fully withdraw Lovable packages/routes/secrets/coupling           | Critical | Hard          | DECIDED             | ADR-009          |
 | D-25 | Messaging content | Auth React Email + inline builders | Preserve templates; live under `src/lib/server/messaging/`; provider-agnostic contracts only | Critical | Easy          | DECIDED             | ADR-010          |
 | D-26 | Email provider    | Lovable email transport            | Concrete provider deferred; **ACCEPTED RISK** with messaging adapter stubs under `src/lib/server/messaging/` | Critical | Moderate | ACCEPTED RISK | D-21, D-24, D-25 |
 | D-27 | SMS provider      | Unconfigured (`SMS provider...`)   | Channel/templates preserved; **ACCEPTED RISK** with stub that fails explicitly until provider chosen | High | Moderate | ACCEPTED RISK | D-25 |
-| D-28 | Cookie/SSR session spike | localStorage browser session only | Prove `@supabase/ssr` HTTP-only cookies in Next proxy + RSC `getUser()` via isolated spike (POC removed; recreate to finish) | Critical | Moderate | BLOCKED | ADR-005, D-05, D-06 |
+| D-28 | Cookie/SSR session spike | localStorage browser session only | Prove `@supabase/ssr` HTTP-only cookies in Next proxy + RSC `getUser()` after migration start; remains BLOCKED until PASSED | Critical | Moderate | ACCEPTED RISK | ADR-005, D-05, D-06, [auth-ssr-spike.md](spikes/auth-ssr-spike.md) |
 | D-29 | RLS / storage policies | Existing Lovable Supabase RLS + Storage | Phase 1: retain/enforce as-is for client access; Phase 2: custom Backend APIs only (no direct client DB) | Critical | Hard | DECIDED | ADR-011, D-07 |
 | D-30 | Server-function mapping | Six TanStack Server Functions + Lovable email routes | Decision tree: Backend API / Server Action / BFF; per-function map in `15-server-function-mapping.md` | Critical | Moderate | DECIDED | ADR-006, D-07, D-08, D-09 |
 | D-31 | Public enrollment rate limits | No approved edge/server limit contract | Edge/server rate limit (Vercel/Cloudflare/Upstash); HTTP 429; frontend notification + disable submit | Critical | Moderate | DECIDED | ADR-012, D-07, D-08 |
 | D-32 | Campaign / messaging runtime | Lovable queue transport + TanStack send paths | Background processing outside Next (backend/messaging); queue tech deferred by workload; no Lovable transport | Critical | Hard | DECIDED | ADR-013, ADR-009, D-07, D-26 |
 
-High-impact hard-to-reverse decisions that remain open: testing baselines (D-20), email handler cutover paths (D-21), cutover/rollback (D-23), **cookie/SSR session spike (D-28 — blocked on confirmed test session / service-role bootstrap; see [auth-ssr-spike.md](spikes/auth-ssr-spike.md))**. Architecture ADRs 001–013 are decided where applicable; production route map is approved; email/SMS providers are ACCEPTED RISK with stubs; RLS/storage (D-29), server-function mapping (D-30), enrollment rate limits (D-31), and campaign/messaging runtime (D-32) are DECIDED.
+Critical checklist items for GO are DECIDED or ACCEPTED RISK. **Remaining open proof (not a GO blocker):** D-28 cookie/SSR session remains **BLOCKED** until authenticated `getUser()` SSR is proven after migration start ([auth-ssr-spike.md](spikes/auth-ssr-spike.md)). Architecture ADRs 001–013 are decided where applicable; production route map is approved; email/SMS providers are ACCEPTED RISK with stubs; D-20 baselines, asset vendoring, env Vercel confirm, and rollback-owner are ACCEPTED RISK; D-21 email handlers and D-23 pre-launch go-live are DECIDED.
 
 ## Migration Go / No-Go
 
-**NO-GO** for feature migration and root Next.js application creation.
+**GO** for migration implementation and root Next.js application creation (slice 1+).
 
-- Cookie/SSR spike (D-28): **BLOCKED** (unauthenticated proxy/RSC path proven; authenticated `getUser()` SSR not yet proven — `mailer_autoconfirm=false` without service-role or confirmed test user).
-- RLS/storage (D-29): **DECIDED** — Phase 1 keep existing policies; Phase 2 Backend-only access ([ADR-011](decisions/ADR-011-rls-storage-strategy.md)).
-- Server-function mapping (D-30): **DECIDED** — Backend API / Server Action / BFF tree ([15-server-function-mapping.md](../frontend/15-server-function-mapping.md)).
-- Public enrollment rate limits (D-31): **DECIDED** — edge/server 429 + frontend UX ([ADR-012](decisions/ADR-012-public-enrollment-rate-limiting.md)).
-- Campaign/messaging runtime (D-32): **DECIDED** — outside Next.js; queue product later ([ADR-013](decisions/ADR-013-campaign-messaging-runtime.md)).
-- Other Critical checklist items remain open (characterization/visual/email baselines, cutover/rollback, asset vendoring, env inventory).
+- Cookie/SSR spike (D-28): **ACCEPTED RISK** — remains **BLOCKED** until proven after migration start (service-role or confirmed test user).
+- Characterization / visual / email baselines (D-20): **ACCEPTED RISK** — [parity-baselines.md](parity-baselines.md).
+- Email handlers (D-21) / go-live (D-23): **DECIDED** — pre-launch framing in [cutover.md](cutover.md) (no dual production frontends); rollback owner **ACCEPTED RISK** (not a gate).
+- Asset vendoring / env inventory: **ACCEPTED RISK** (vendor in slice 2; confirm Vercel values at deploy without secrets in git).
+- RLS/storage (D-29), server-function mapping (D-30), enrollment rate limits (D-31), campaign runtime (D-32): **DECIDED**.

@@ -40,28 +40,27 @@ flowchart LR
   Messaging --> Templates[Preserved email and SMS templates]
 ```
 
-## Locked / proposed decisions
+## Locked decisions
 
 **DECIDED**
 
 - Visual style parity: no redesign ([ADR-010](../architecture/decisions/ADR-010-style-and-template-parity.md)).
 - Preserve email/SMS templates under `src/lib/server/messaging/`; features use provider-agnostic contracts only.
+- Email/SMS delivery providers: **ACCEPTED RISK** with adapter stubs.
 - Withdraw Lovable packages, `/lovable/*` routes, secrets, and host hooks ([ADR-009](../architecture/decisions/ADR-009-lovable-withdrawal.md)).
 - Initial hosting: Vercel; Node 24 LTS ([ADR-001](../architecture/decisions/ADR-001-nextjs-version.md), [ADR-008](../architecture/decisions/ADR-008-deployment.md)).
-- Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x.
+- Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x; package manager npm.
+- App Router; native route typing; Metadata API; `error`/`not-found`/`loading` ([ADR-002](../architecture/decisions/ADR-002-app-router.md)).
+- Existing backend remains primary API; Route Handlers/Server Actions only when justified ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)).
+- Backend owns authz; Next.js route protection + session-aware rendering; cookies where applicable ([ADR-005](../architecture/decisions/ADR-005-authentication.md)).
+- RSC by default; small Client islands; static/SSR/ISR per route ([ADR-003](../architecture/decisions/ADR-003-rendering-strategy.md)).
+- Hybrid data fetching: RSC initial reads; TanStack Query for interactive server state ([ADR-004](../architecture/decisions/ADR-004-data-and-state.md)).
+- Thin `app/`; domain logic in `features/` ([ADR-007](../architecture/decisions/ADR-007-project-structure.md)).
 
-**PROPOSED** (ADR-002 through ADR-007)
+**Still required before coding**
 
-- App Router; review route inventory; approve route map as production URL contract.
-- Native App Router route typing; no custom route-type generator unless required.
-- Existing backend remains primary API; Next.js is not a backend replacement.
-- Route Handlers only for BFF/proxy or frontend-specific server needs.
-- Server Actions only where they provide clear benefit; orchestrate backend, do not replace it.
-- Backend owns authz; Next.js handles route protection, session-aware rendering, redirects; HTTP-only cookies where applicable.
-- RSC by default; small Client islands; choose static/SSR/ISR per route.
-- Hybrid data fetching: RSC for initial reads; TanStack Query for interactive server state.
-- Thin `app/`; domain logic in `features/`.
-
+- Approve production route map (candidate in [02-route-migration.md](02-route-migration.md)).
+- Cookie/SSR session spike and remaining checklist Critical items.
 ## Documents
 
 1. [Current frontend](01-current-frontend.md)
@@ -82,4 +81,4 @@ flowchart LR
 16. [Dependency compatibility](16-dependency-compatibility.md)
 17. [Messaging templates](17-messaging-templates.md)
 
-**Next step:** approve proposed ADRs (002–007), production route map, and email/SMS provider (or adapter stub). Do not create the Next.js application yet.
+**Next step:** approve the production route map, then clear remaining Critical checklist items (auth spike, baselines, cutover). Do not create the Next.js application yet.

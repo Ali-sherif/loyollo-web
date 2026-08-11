@@ -1,6 +1,6 @@
 # Dependency Compatibility
 
-Versions are the declarations in `package.json`; resolved versions must be rechecked from the canonical lockfile after npm versus Bun is decided.
+Versions are the declarations in `package.json`; resolved versions must be rechecked from the canonical npm lockfile (`package-lock.json`).
 
 **Target lines (DECIDED):** Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x, Node.js 24 LTS on Vercel. Cloudflare/`workerd` via OpenNext is secondary and validated separately.
 

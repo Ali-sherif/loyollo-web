@@ -6,16 +6,16 @@
 - Preserve current email/SMS templates and personalization under `src/lib/server/messaging/`.
 - Features invoke messaging through provider-agnostic contracts only.
 - Withdraw Lovable packages, routes, secrets, and host coupling.
-- Initial hosting is Vercel on Node 24 LTS; email/SMS providers remain undecided behind the messaging adapter.
+- Initial hosting is Vercel on Node 24 LTS; email/SMS providers are **ACCEPTED RISK** behind messaging adapter stubs.
 - Target lines: Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x.
 - Existing backend remains the primary API; Next.js is not a backend replacement.
 
 ## Before coding
 
-1. Approve proposed ADRs 002–007 (or record ACCEPTED RISK).
+1. Approve proposed ADRs 002–007 (or record ACCEPTED RISK) — **done: DECIDED as written**.
 2. Approve the production route map (pre-launch restructuring allowed until then).
-3. Approve email/SMS provider or temporary ACCEPTED RISK with adapter stub in `src/lib/server/messaging/`.
-4. Select canonical package manager.
+3. Email/SMS: **ACCEPTED RISK** with adapter stubs in `src/lib/server/messaging/` (no real provider until later).
+4. Canonical package manager selected: npm (`package-lock.json`; remove `bun.lock` at implementation start).
 5. Prove cookie/SSR session spike for auth.
 6. Establish build, typecheck, lint, route smoke tests, visual parity checks, and email HTML diffs.
 

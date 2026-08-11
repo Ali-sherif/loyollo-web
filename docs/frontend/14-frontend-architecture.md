@@ -27,7 +27,7 @@ flowchart TD
   Service --> Messaging[lib/server/messaging contracts]
   Handler --> Messaging
   Messaging --> Templates[Preserved email and SMS templates]
-  Messaging --> Provider[Email or SMS provider TBD]
+  Messaging --> Provider[Email or SMS transport stub then real provider]
 ```
 
 ## Policies
@@ -42,7 +42,7 @@ flowchart TD
 - Thin `app/`; domain logic in `features/` ([ADR-007](../architecture/decisions/ADR-007-project-structure.md)).
 - Review/approve route map before freezing URLs ([ADR-002](../architecture/decisions/ADR-002-app-router.md)).
 - No visual redesign; messaging under `src/lib/server/messaging/`; no direct provider deps from features ([ADR-010](../architecture/decisions/ADR-010-style-and-template-parity.md)).
-- Initial hosting is Vercel; concrete email/SMS providers remain open.
+- Initial hosting is Vercel; email/SMS providers are **ACCEPTED RISK** with adapter stubs.
 
 ## References
 

@@ -13,12 +13,12 @@
 | High     | Campaign work exceeds runtime limits                                    | Prefer backend/queue; BFF Route Handler only if justified                |
 | High     | Auth/campaign callers still hit `/lovable/email/*` after cutover        | First-party `/api/email/*` paths + caller/scheduler cutover checklist    |
 | High     | CDN/Lovable assets break after withdrawal                               | Vendor/re-host assets before removing manifests                          |
-| High     | Email/SMS provider undecided                                            | Keep templates under messaging contracts; fail SMS explicitly            |
+| High     | Email/SMS provider undecided                                            | Mitigated: **ACCEPTED RISK** + adapter stubs; SMS fails explicitly until configured |
 | High     | Frontend duplicates backend authorization                               | Backend remains source of truth; Next only route-gates                   |
 | High     | Unapproved URL redesigns after route map freeze                         | Approve route map; treat as production contract thereafter               |
 | High     | Cloudflare workerd dependency incompatibility                           | OpenNext production preview only if Cloudflare is later chosen           |
 | High     | Client-only current route protection                                    | Next.js route protection + backend authorization                         |
-| High     | npm/Bun lockfile ambiguity                                              | Select canonical manager before install                                  |
+| High     | npm/Bun lockfile ambiguity                                              | Mitigated: npm is canonical; remove `bun.lock` at implementation start   |
 | High     | TypeScript 6.0.x tooling friction with Next 16.3.x                      | Validate in foundation spike                                             |
 | Medium   | Leaflet/PDF/QR hydration or bundle regressions                          | Client islands and dynamic imports                                       |
 | Medium   | Tailwind/shadcn RSC assumptions                                         | Visual regression and directive audit                                    |

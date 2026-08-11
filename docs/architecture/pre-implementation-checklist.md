@@ -11,12 +11,12 @@
 - [x] Visual style parity decided (no redesign)
 - [x] Email/SMS template preservation decided and inventoried
 - [x] Hosting target approved: Vercel (outside Lovable); Cloudflare/OpenNext secondary
-- [ ] Email delivery provider approved (adapter remains mandatory either way)
-- [ ] SMS provider approved or explicitly deferred with channel preserved
+- [x] Email delivery provider: **ACCEPTED RISK** — concrete provider deferred; use `src/lib/server/messaging/` adapter stubs until a provider is chosen
+- [x] SMS provider: **ACCEPTED RISK** — channel and templates preserved; stub transport fails explicitly until a provider is chosen
 - [x] Node version approved: 24 LTS for Node deploys; workerd via OpenNext if Cloudflare
-- [ ] Canonical package manager approved
+- [x] Canonical package manager approved: npm (`package-lock.json`; retire `bun.lock` at implementation start)
 - [x] Next.js / React / TypeScript lines approved (16.3.x / 19.2.x / 6.0.x); exact patches at implementation start
-- [ ] App Router architecture decisions approved (ADR-002 through ADR-007)
+- [x] App Router architecture decisions approved (ADR-002 through ADR-007)
 - [ ] Approved production route map (pre-launch URL restructuring allowed until then)
 - [ ] Supabase server-session / HTTP-only cookie approach proven in a spike
 - [ ] RLS and storage policies independently verified

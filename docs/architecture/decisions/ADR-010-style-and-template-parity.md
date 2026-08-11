@@ -6,7 +6,7 @@ DECIDED
 
 ## Context
 
-Product owners require the Next.js migration to keep the current visual design and to retain existing email/SMS messaging content. Initial hosting is Vercel ([ADR-008](ADR-008-deployment.md)); email/SMS delivery providers are not decided yet, so transport must be separable from presentation.
+Product owners require the Next.js migration to keep the current visual design and to retain existing email/SMS messaging content. Initial hosting is Vercel ([ADR-008](ADR-008-deployment.md)); concrete email/SMS delivery providers are **ACCEPTED RISK** deferred behind adapter stubs, so transport must stay separable from presentation.
 
 ## Decision
 
@@ -27,7 +27,7 @@ Preserve current email and SMS message content as a hard requirement, independen
 - Keep campaign subject/body personalization (`{{name}}`, `{{first_name}}`, `{{business_name}}`) and channel UX for email and SMS.
 - Messaging templates and server-side messaging infrastructure live under `src/lib/server/messaging/`.
 - Business features may invoke messaging through provider-agnostic contracts and must not depend directly on delivery providers.
-- Concrete providers (Resend, Postmark, SES, Twilio, or other) remain deferred behind the adapter interface.
+- Concrete providers (Resend, Postmark, SES, Twilio, or other) remain deferred behind the adapter interface (**ACCEPTED RISK**; ship stubs until a provider is chosen).
 
 ## Non-goals
 
@@ -38,7 +38,7 @@ Preserve current email and SMS message content as a hard requirement, independen
 ## Consequences
 
 - Style and template parity become acceptance criteria for every migrated route and messaging workflow.
-- Provider selection remains deferred, but the `src/lib/server/messaging/` adapter boundary is mandatory before Lovable email packages are removed.
+- Provider selection is **ACCEPTED RISK** deferred; the `src/lib/server/messaging/` adapter boundary (with stubs) is mandatory before Lovable email packages are removed.
 - Features import messaging contracts only; delivery SDKs and secrets stay inside `lib/server/messaging`.
 - Visual regression checks and rendered email HTML diffs are required before cutover.
 

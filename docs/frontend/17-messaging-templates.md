@@ -1,6 +1,6 @@
 # Messaging Template Inventory
 
-**Status:** DECIDED to preserve content. Email/SMS delivery providers remain undecided.
+**Status:** DECIDED to preserve content. Email/SMS delivery providers are **ACCEPTED RISK** — use adapter stubs until a real provider is chosen.
 
 ## Principle
 
@@ -47,12 +47,12 @@ src/lib/server/messaging/
 │   └── campaign/          # campaign HTML wrapper + personalize helpers
 ├── contracts.ts           # provider-agnostic send/render interfaces for features
 ├── render.ts              # render templates to html/text
-└── transport.ts           # provider adapter interface (provider TBD)
+└── transport.ts           # provider adapter interface + stubs (real provider later)
 ```
 
 Business features invoke messaging only through the provider-agnostic contracts in `src/lib/server/messaging/`. They must not import delivery provider SDKs or concrete transport implementations.
 
-## Adapter boundary (provider undecided)
+## Adapter boundary (**ACCEPTED RISK**: stubs until provider chosen)
 
 ```text
 Feature / BFF handler
@@ -61,16 +61,17 @@ Provider-agnostic messaging contracts (DECIDED: src/lib/server/messaging/)
         ↓
 Template render (DECIDED: preserve content)
         ↓
-Concrete provider (DEFERRED: Resend / Postmark / SES / Twilio / other)
+Transport stub (ACCEPTED RISK) → later: Resend / Postmark / SES / Twilio / other
 ```
 
-Until a provider is approved:
+Until a real provider replaces the stubs:
 
 1. Keep Supabase enqueue/log RPCs if they remain useful.
 2. Do not bind template modules to Lovable SDK types.
-3. Keep SMS channel UX and message storage; fail explicitly when SMS transport is unconfigured.
+3. Keep SMS channel UX and message storage; stub transport fails explicitly when SMS send is attempted.
 4. Do not delete templates or change copy during framework migration.
 5. Do not let features depend directly on delivery providers.
+6. Email stub must not silently pretend success in production paths without an explicit no-op/log policy recorded at stub implementation.
 
 ## Acceptance checks
 

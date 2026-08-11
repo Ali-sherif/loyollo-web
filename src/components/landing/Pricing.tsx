@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Link } from "@tanstack/react-router";
+import { Link } from "@/lib/navigation";
 
 type BillingPeriod = "monthly" | "yearly";
 

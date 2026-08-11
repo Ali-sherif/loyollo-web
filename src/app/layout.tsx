@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Figtree } from "next/font/google";
 
+import { AppProviders } from "@/components/providers/app-providers";
 import "@/styles.css";
 
 const figtree = Figtree({
@@ -16,6 +17,9 @@ const siteDescription =
 const ogImage = "/og-image.png";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  ),
   title: {
     default: "Loyalty — Grow customer loyalty & repeat business",
     template: "%s · Loyalty",
@@ -49,7 +53,7 @@ export default function RootLayout({
       <body
         className={`${figtree.className} min-h-screen bg-background font-sans text-foreground antialiased`}
       >
-        {children}
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );

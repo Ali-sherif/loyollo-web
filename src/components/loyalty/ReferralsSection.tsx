@@ -11,7 +11,7 @@ import {
   Gift,
   CircleHelp,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import {
   Dialog,
   DialogContent,
@@ -70,7 +70,7 @@ export function ReferralsSection({ programId, ensureProgramSaved }: Props) {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await getAuthSupabase()
       .from("referral_settings")
       .select("*")
       .eq("loyalty_program_id", programId)
@@ -101,7 +101,7 @@ export function ReferralsSection({ programId, ensureProgramSaved }: Props) {
     if (!pid) return;
     setSaving(kind);
     if (settings) {
-      const { data, error } = await supabase
+      const { data, error } = await getAuthSupabase()
         .from("referral_settings")
         .update(patch)
         .eq("id", settings.id)
@@ -123,7 +123,7 @@ export function ReferralsSection({ programId, ensureProgramSaved }: Props) {
           patch.new_customer_discount_pct ??
           (Number(discountPct) || DEFAULTS.new_customer_discount_pct),
       };
-      const { data, error } = await supabase
+      const { data, error } = await getAuthSupabase()
         .from("referral_settings")
         .insert(insertPayload)
         .select("*")

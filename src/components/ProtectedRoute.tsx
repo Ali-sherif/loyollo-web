@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@/lib/navigation";
 import { useAuth } from "@/hooks/use-auth";
 
 type Props = {

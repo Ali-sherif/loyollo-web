@@ -7,8 +7,11 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "dev:tanstack": "vite dev",
+    "build:tanstack": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "dev:next": "next dev",

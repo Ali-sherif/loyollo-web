@@ -1,16 +1,10 @@
-import type { Metadata } from "next";
-
 import { requireUser } from "@/lib/server/auth/guards";
-
-export const metadata: Metadata = {
-  title: "App",
-};
 
 export const dynamic = "force-dynamic";
 
 /**
- * Authenticated app shell placeholder (slice 3).
- * Full dashboard chrome lands in later slices; this proves SSR `getUser()` gating.
+ * Authenticated product shell (ADR-005).
+ * Full chrome remains inside each page via DashboardShell for visual parity.
  */
 export default async function AppShellLayout({
   children,

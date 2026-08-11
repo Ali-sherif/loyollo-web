@@ -16,8 +16,11 @@
 - [x] Node version approved: 24 LTS for Node deploys; workerd via OpenNext if Cloudflare
 - [ ] Canonical package manager approved
 - [x] Next.js / React / TypeScript lines approved (16.3.x / 19.2.x / 6.0.x); exact patches at implementation start
-- [ ] Supabase server-session approach proven in a spike
+- [ ] App Router architecture decisions approved (ADR-002 through ADR-007)
+- [ ] Approved production route map (pre-launch URL restructuring allowed until then)
+- [ ] Supabase server-session / HTTP-only cookie approach proven in a spike
 - [ ] RLS and storage policies independently verified
+- [ ] Server-function → backend/BFF mapping revised to backend-primary boundary model
 - [ ] Public enrollment rate-limit/abuse controls approved
 - [ ] Campaign execution runtime/queue strategy approved without Lovable transport
 - [ ] Asset vendoring plan approved for Lovable/CDN-hosted images

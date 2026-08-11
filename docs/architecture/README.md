@@ -11,9 +11,9 @@
 - **DECIDED:** Keep current visual styles and current email/SMS message templates. Email/SMS delivery providers remain open. See [ADR-010](decisions/ADR-010-style-and-template-parity.md).
 - **DECIDED:** Initial hosting target is Vercel. See [ADR-008](decisions/ADR-008-deployment.md).
 - **DECIDED:** Target Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x, and Node.js 24 LTS for Node-based deployments. Cloudflare Workers (if used) target `workerd` via OpenNext with separate Node compatibility validation. See [ADR-001](decisions/ADR-001-nextjs-version.md).
-- **RECOMMENDED:** Preserve Supabase schema and contracts. Move privileged access behind server-only modules and classify each existing server function individually.
-- **PROPOSED:** Use Server Components for initial reads, small Client Component islands for interaction, Route Handlers for public/external/long-running HTTP workflows, and Server Actions only for first-party authenticated UI mutations.
-- **NEEDS INVESTIGATION / APPROVAL:** Concrete email/SMS provider, canonical package manager, production runtime configuration, RLS/storage policy behavior, and queue scheduling.
+- **RECOMMENDED:** Preserve Supabase schema and contracts. Keep the existing backend as the primary API; Next.js orchestrates and protects routes but does not replace backend ownership.
+- **PROPOSED:** App Router with reviewed/approved route map; RSC by default with small client islands; hybrid data fetching (RSC + TanStack Query); backend-owned authz with Next.js route protection; Route Handlers/Server Actions only for clear BFF/frontend-specific needs; thin `app/` + domain `features/`. See ADR-002 through ADR-007.
+- **NEEDS INVESTIGATION / APPROVAL:** Concrete email/SMS provider, canonical package manager, cookie/SSR session spike, production runtime configuration, RLS/storage policy behavior, and queue scheduling.
 
 ## Critical decisions
 
@@ -30,7 +30,7 @@
 
 ## Recommended decision order
 
-`Email/SMS provider → package manager → auth session model → messaging adapter → server boundaries → rendering/cache → data/state → project structure → migration slices`
+`Email/SMS provider → package manager → auth session/cookie spike → messaging adapter → approve route map → server boundaries mapping → rendering/cache → data/state → project structure → migration slices`
 
 ## Indices
 

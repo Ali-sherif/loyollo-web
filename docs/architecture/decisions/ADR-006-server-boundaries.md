@@ -6,15 +6,38 @@ PROPOSED
 
 ## Decision
 
-Do not mechanically convert TanStack Server Functions to Server Actions. Use:
+### API boundary
 
-- server-only library functions for privileged reusable logic,
-- Server Components for render-time reads,
-- Server Actions for first-party authenticated UI mutations,
-- Route Handlers for public, external, scheduled, long-running, or explicit HTTP contracts,
-- direct client Supabase calls only when intentionally relying on RLS and browser session.
-  The authoritative mapping is [server-function-mapping](../../frontend/15-server-function-mapping.md).
+- Keep the existing backend as the primary business/API backend.
+- Next.js should not become a replacement for the existing backend.
+- Server Components may communicate with the backend directly when appropriate.
+- Client Components may communicate with the backend through the established API layer.
+- Use Next.js Route Handlers only when there is a specific BFF/proxy or frontend-specific server requirement.
+
+### Server Functions / Server Actions
+
+- Use Server Functions/Server Actions only where they provide a clear architectural benefit.
+- Do not use Server Actions as a replacement for the existing backend API.
+- Business logic and persistence should remain owned by the backend unless explicitly decided otherwise.
+- Server-side functions should primarily handle frontend-specific server concerns or orchestrate backend calls.
+
+### Mapping guidance
+
+Do not mechanically convert TanStack Server Functions to Server Actions. Prefer:
+
+- backend APIs / Supabase contracts for business logic and persistence,
+- server-only library functions when the frontend must orchestrate privileged calls without exposing secrets,
+- Server Components for render-time reads against the backend when a trustworthy session exists,
+- Server Actions only for narrow frontend-specific mutations or backend orchestration with a clear benefit over calling the API layer,
+- Route Handlers only for BFF/proxy, public/external webhooks, scheduled workers, or other frontend-specific HTTP contracts,
+- direct client API/Supabase calls through the established client layer when intentionally relying on browser session and backend authorization (for example RLS).
+
+The authoritative per-function mapping remains [server-function-mapping](../../frontend/15-server-function-mapping.md) and must be revised to this boundary model before implementation.
 
 ## Security
 
-Service-role access must remain server-only. Public enrollment needs rate limiting, idempotency/concurrency review, and abuse monitoring before parity sign-off.
+Service-role and other privileged credentials must remain server-only. Public enrollment and similar privileged workflows need rate limiting, idempotency/concurrency review, and abuse monitoring before parity sign-off. Backend authorization remains authoritative ([ADR-005](ADR-005-authentication.md)).
+
+## Verification
+
+No business persistence logic is newly owned by Next.js without an explicit decision. Route Handlers and Server Actions exist only where BFF/frontend-specific justification is recorded. Service-role keys never reach the client.

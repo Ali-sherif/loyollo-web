@@ -16,11 +16,16 @@ flowchart TD
   Node --> Dependencies[Dependency compatibility]
   AppRouter --> Rendering[Rendering and caching]
   AppRouter --> Routes[Route mapping]
-  Auth[Supabase auth model] --> Protected[Protected routing]
+  Auth[Backend auth model] --> Protected[Protected routing]
   Auth --> ServerData[Server-side data access]
   Auth --> Mutations[Actions and handlers]
-  ServerBoundaries[Server boundary mapping] --> Secrets[Secret isolation]
+  Backend[Existing backend API] --> ApiBoundary[Next.js API boundary]
+  ApiBoundary --> ServerBoundaries[BFF and server orchestration]
+  ServerBoundaries --> Secrets[Secret isolation]
   ServerBoundaries --> RuntimeLimits[Runtime limits]
+  AppRouter --> Errors[Error not-found loading]
+  AppRouter --> Metadata[Metadata and SEO]
+  AppRouter --> RouteTypes[Native route typing]
   Rendering --> ClientBoundaries[Client boundaries]
   Rendering --> DataStrategy[Data strategy]
   Routes --> MigrationOrder[Migration order]
@@ -29,6 +34,7 @@ flowchart TD
   Hosting --> Cutover[Cutover and rollback]
   MessagingAdapter --> Cutover
   Testing --> Cutover
+  Routes --> Cutover
 ```
 
-Hosting (Vercel) and runtime pins (Next.js 16.3.x, React 19.2.x, TypeScript 6.0.x, Node 24 LTS) are decided. Resolve the messaging adapter before freezing email route cutover. Style/template parity is already decided and must gate every migrated surface.
+Hosting (Vercel) and runtime pins (Next.js 16.3.x, React 19.2.x, TypeScript 6.0.x, Node 24 LTS) are decided. Approve the route map and messaging adapter before freezing cutover URLs. Style/template parity is already decided and must gate every migrated surface. Backend remains the primary API; Next.js adds BFF only where justified.

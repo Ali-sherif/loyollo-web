@@ -23,10 +23,11 @@ Preserve current visual parity as a hard requirement:
 
 Preserve current email and SMS message content as a hard requirement, independent of transport provider:
 
-- Keep React Email auth templates under `src/lib/email-templates/`.
-- Keep transactional and campaign HTML/text builders currently embedded in server functions.
+- Keep current React Email auth templates and transactional/campaign HTML/text builders during migration (today under `src/lib/email-templates/` and related server functions).
 - Keep campaign subject/body personalization (`{{name}}`, `{{first_name}}`, `{{business_name}}`) and channel UX for email and SMS.
-- Extract templates into provider-agnostic modules under the target `features/` or `lib/server/messaging/` structure so a future Resend/Postmark/SES/Twilio (or other) adapter can render the same content.
+- Messaging templates and server-side messaging infrastructure live under `src/lib/server/messaging/`.
+- Business features may invoke messaging through provider-agnostic contracts and must not depend directly on delivery providers.
+- Concrete providers (Resend, Postmark, SES, Twilio, or other) remain deferred behind the adapter interface.
 
 ## Non-goals
 
@@ -37,7 +38,8 @@ Preserve current email and SMS message content as a hard requirement, independen
 ## Consequences
 
 - Style and template parity become acceptance criteria for every migrated route and messaging workflow.
-- Provider selection remains deferred, but the adapter boundary is mandatory before Lovable email packages are removed.
+- Provider selection remains deferred, but the `src/lib/server/messaging/` adapter boundary is mandatory before Lovable email packages are removed.
+- Features import messaging contracts only; delivery SDKs and secrets stay inside `lib/server/messaging`.
 - Visual regression checks and rendered email HTML diffs are required before cutover.
 
 ## Verification

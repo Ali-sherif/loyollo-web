@@ -40,24 +40,26 @@ These are currently rendered by Lovable auth webhook/preview routes. After withd
 ## Target structure
 
 ```text
-src/
-├── features/messaging/
-│   ├── templates/
-│   │   ├── auth/          # existing React Email components
-│   │   ├── transactional/ # extracted HTML/text builders
-│   │   └── campaign/      # campaign HTML wrapper + personalize helpers
-│   └── types.ts
-└── lib/server/messaging/
-    ├── render.ts          # render templates to html/text
-    └── transport.ts       # provider adapter interface (provider TBD)
+src/lib/server/messaging/
+├── templates/
+│   ├── auth/              # existing React Email components (migrated from src/lib/email-templates/)
+│   ├── transactional/     # extracted HTML/text builders
+│   └── campaign/          # campaign HTML wrapper + personalize helpers
+├── contracts.ts           # provider-agnostic send/render interfaces for features
+├── render.ts              # render templates to html/text
+└── transport.ts           # provider adapter interface (provider TBD)
 ```
+
+Business features invoke messaging only through the provider-agnostic contracts in `src/lib/server/messaging/`. They must not import delivery provider SDKs or concrete transport implementations.
 
 ## Adapter boundary (provider undecided)
 
 ```text
-Template render (DECIDED)
+Feature / BFF handler
         ↓
-Messaging adapter interface (DECIDED)
+Provider-agnostic messaging contracts (DECIDED: src/lib/server/messaging/)
+        ↓
+Template render (DECIDED: preserve content)
         ↓
 Concrete provider (DEFERRED: Resend / Postmark / SES / Twilio / other)
 ```
@@ -68,6 +70,7 @@ Until a provider is approved:
 2. Do not bind template modules to Lovable SDK types.
 3. Keep SMS channel UX and message storage; fail explicitly when SMS transport is unconfigured.
 4. Do not delete templates or change copy during framework migration.
+5. Do not let features depend directly on delivery providers.
 
 ## Acceptance checks
 

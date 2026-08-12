@@ -49,3 +49,7 @@ Multiple AI models may execute this plan. Rules and parallelization map: [multi-
 ## Retirement
 
 Remove TanStack and Lovable code only after all route/API contracts pass production smoke tests, rollback window expires, and the user explicitly approves deletion.
+
+## Out of scope for this plan
+
+Product UI/API/DB gaps (**G-01…G-32**: orders, visit events, tiers, branch attribution, referrals, redeem, billing, etc.) are **not** migration slices. They are owned by the backend program under [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md) and [docs/backend/](../backend/README.md). Closing them does **not** gate TanStack/Lovable retirement. Presentational honesty fixes (Phase 0) may land in the frontend without schema changes.

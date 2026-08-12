@@ -744,27 +744,29 @@ Used on `/app/loyalty` for config UI. Not used to classify members on Analytics 
 
 ## Gaps (UI / API / DB) and recommended solutions
 
-Analytics is a **client-side dashboard** over two tables (`customers`, `rewards`) for one program. Most widgets are either **proxies**, **hardcoded rules**, or **empty shells**. Existing backend remains the primary API ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)); do not turn Next.js into an orders/POS backend.
+Analytics is a **client-side dashboard** over two tables (`customers`, `rewards`) for one program. Most widgets are either **proxies**, **hardcoded rules**, or **empty shells**. Existing backend remains the primary API ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)); do not turn Next.js into an orders/POS backend ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
+
+Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [data-contract.md](../backend/data-contract.md) · [api-contract.md](../backend/api-contract.md) · [remediation-roadmap.md](../backend/remediation-roadmap.md).
 
 ### Gap map (widget → layer)
 
-| Widget | UI gap | API gap | DB gap | Recommended fix |
-|--------|--------|---------|--------|-----------------|
-| **This month / Export** | Buttons do nothing | No period query, no export endpoint | No snapshots; all-time counters only | Make period a real query param; export CSV from an analytics BFF. Until then, disable or hide the buttons |
-| **Stat deltas (↑/↓)** | Always `"—"` | No previous-period totals | No daily/monthly snapshots | Store period aggregates (or compute from event logs) |
-| **Active members / repeat rate** | Works | Client loads **all** customers | OK | Move aggregation to backend; filter `status` consistently |
-| **Redemption rate / points chart** | Redeemed weekly series is always 0; issued uses `created_at` as a proxy | No points ledger API | No per-transaction points log | `points_ledger` (issued/redeemed, amount, `created_at`, customer_id) written on check-in and redeem |
-| **Members by tier / Most engaged Tier** | Groups `customers.tier`; usually Untiered | Check-in/enroll never set `tier` | `tier` is free text, not FK; ladder unused | On check-in: set `customers.tier` from highest `loyalty_program_tiers` where `points >= points_threshold`. Prefer FK `tier_id` |
-| **Customer segments vs Engagement levels** | Two different cutoffs; overlap; not configurable | Logic only in this React file | Nothing stored | One shared rules module (frontend + backend). Exclusive buckets. Same “at risk” everywhere **or** rename labels |
-| **“At risk” / Champion labels** | Four different meanings across pages | Campaigns use `status`; Analytics uses recency | `status` vs computed recency | Pick one source of truth: either keep `customers.status` updated by a job from recency, or stop using status for “at risk” |
-| **Avg. visits per member** | All-time; ignores “this month” | No | `visits` is a counter | Keep as all-time **or** derive from visit events in the selected period |
-| **QR scans / days between visits / visit frequency / peak hour** | Empty | Check-in does not append events | No scan/visit event table | `visit_events` (`customer_id`, `program_id`, `occurred_at`, `branch_id?`, `source`) on every check-in |
-| **Insights CTAs** | Send / Nudge / Explore / Create do nothing | No “create campaign from insight” | N/A | Wire Send/Nudge to campaign create with prefilled audience; hide Explore/Create until data exists |
-| **1 visit from a reward** | Uses `visits % 5 === 4` | Ignores program `visits_required` / reward `point_cost` | Program rules exist | Compare to real next reward: visit programs → `visits_required`; points → cheapest `point_cost` |
-| **Revenue tab (all)** | Layout only | Analytics never queries money | **No orders table.** Reward has no cash cost. Order has no channel | See [Revenue data model](#recommended-revenue--visit-data-model) |
-| **Revenue by channel** | Chart empty; not sale-source | Not joined to orders | `campaigns.channel` is send medium only; no `orders.attributed_channel` | See [how to track channel](#revenue-by-channel--what-channel-means): `attributed_channel` + `campaign_id` on orders; tracking links/promo codes |
-| **ROI from Rewards** | `"—"` | No cost + ticket join | `point_cost` ≠ money; `customer_rewards` has no `order_id` / cents | See [how to track ROI](#roi-from-rewards): `rewards.cost_cents` + `customer_rewards.order_id` |
-| **Loyalty page Tier stats = 0** | Hardcoded | Same missing assignment | Same as tier write | Same check-in tier assignment; then count by `customers.tier` |
+| G-ID | Widget | UI gap | API gap | DB gap | Recommended fix |
+|------|--------|--------|---------|--------|-----------------|
+| — | **This month / Export** | Buttons do nothing | No period query / export | All-time counters | Period query + export BFF; hide until then (Phase 0) |
+| — | **Stat deltas (↑/↓)** | Always `"—"` | No previous-period totals | No snapshots | Period aggregates (Phase 7) |
+| [G-11](gaps-and-solutions.md#g-11--customer-list-will-not-scale) | **Active members / repeat rate** | Works | Client loads **all** customers | OK | Move aggregation to backend |
+| [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **Redemption rate / points chart** | Redeemed series always 0 | No points ledger API | No per-transaction log | `points_ledger` |
+| [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **Members by tier / Most engaged Tier** | Usually Untiered | Check-in never sets `tier` | Free text, ladder unused | Write `tier` / `tier_id` |
+| [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **Customer segments vs Engagement levels** | Two cutoffs; overlap | Logic only in React | Nothing stored | Shared rules module + glossary |
+| [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **“At risk” / Champion labels** | Four meanings across pages | Campaigns use `status` | `status` vs recency | One source of truth |
+| [G-02](gaps-and-solutions.md#g-02--visit--stamp-progress-is-always-empty) | **Avg. visits per member** | All-time; ignores period | No | `visits` counter | All-time or derive from events |
+| [G-01](gaps-and-solutions.md#g-01--qr-scan-tracking-is-always-0) | **QR scans / days between / frequency / peak** | Empty | Check-in does not append events | No event table | `visit_events` |
+| — | **Insights CTAs** | Send / Nudge / Explore / Create do nothing | No create-from-insight | N/A | Prefill campaign or hide |
+| [G-02](gaps-and-solutions.md#g-02--visit--stamp-progress-is-always-empty) | **1 visit from a reward** | Uses `visits % 5 === 4` | Ignores program rules | Rules exist | Compare to `visits_required` / `point_cost` |
+| [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Revenue tab (all)** | Layout only | Never queries money | **No orders table** | [data-contract](../backend/data-contract.md) |
+| [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Revenue by channel** | Chart empty | Not joined to orders | No `attributed_channel` | See [channel](#revenue-by-channel--what-channel-means) |
+| [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) / [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **ROI from Rewards** | `"—"` | No cost + ticket join | No `cost_cents` / `order_id` | See [ROI](#roi-from-rewards) |
+| [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **Loyalty page Tier stats = 0** | Hardcoded | Same missing assignment | Same as tier write | Same check-in assignment |
 
 ### What already exists (do not rebuild)
 
@@ -779,38 +781,13 @@ Analytics is a **client-side dashboard** over two tables (`customers`, `rewards`
 
 ### Recommended revenue + visit data model
 
-Minimum new facts (backend/Supabase, not Next-only):
+**Canonical copy:** [data-contract.md](../backend/data-contract.md). This page keeps domain notes on [ROI](#roi-from-rewards) and [channel](#revenue-by-channel--what-channel-means); do not invent a parallel schema here.
 
-1. **`visit_events`** — one row per scan/check-in (`customer_id`, `loyalty_program_id`, `occurred_at`, optional `branch_id`, `source`). Keep `customers.visits` and `last_activity_at` as denormalized totals updated in the same transaction.
-2. **`points_ledger`** (or reuse visit_events with `points_delta`) — issued vs redeemed over time.
-3. **`orders`** (or ingest from POS) — `amount_cents`, `occurred_at`, `loyalty_program_id`, `customer_id` nullable (non-member), **`attributed_channel`** (`email` \| `sms` \| `in_store`), optional **`campaign_id`**. Written from tracking links / promo codes or in-store QR.
-4. **`rewards.cost_cents`** — owner-entered **cash** cost of honouring one reward. Do not treat `point_cost` as currency.
-5. **`customer_rewards.order_id`** (or a `redemptions` table) — the ticket the gift was redeemed on. Required for ROI.
-6. **Write `customers.tier` (or `tier_id`)** on enroll (base tier) and check-in (recompute from points vs ladder).
+Minimum new facts (backend-owned, not Next-only): `visit_events`, `points_ledger`, `orders` (+ `attributed_channel`, `campaign_id`), `rewards.cost_cents`, `customer_rewards.order_id`, write `customers.tier` / `tier_id`.
 
-### Recommended API shape
+### Recommended API shape / delivery order
 
-Do **not** keep loading every customer into the browser for analytics.
-
-- `GET /api/analytics/overview?from=&to=` (or backend equivalent) returning pre-aggregated cards, series, segments, top rewards.
-- `GET /api/analytics/engagement?from=&to=`
-- `GET /api/analytics/revenue?from=&to=`
-- Optional `GET /api/analytics/export?from=&to=` (CSV)
-
-Authz: owner session; scope to their single `loyalty_program_id`. Aggregations in SQL/backend. Next Route Handler only if justified as BFF ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)).
-
-### Suggested delivery order
-
-| Phase | Scope | Unlocks |
-|-------|--------|---------|
-| **0 — Honesty in UI** | Disable/hide dead controls (date, export, insight CTAs, empty revenue). One glossary for Champion / at risk. Exclusive engagement buckets **or** document overlap in the UI | Stops fake affordances |
-| **1 — Apply the tier ladder** | Check-in + enroll write `customers.tier` from `points_threshold` | Donut, Most engaged Tier, Loyalty tier stats, later revenue-by-tier |
-| **2 — Visit event log** | Insert `visit_events` on check-in | QR scans, days between visits, visit-frequency chart, peak hour, period filters |
-| **3 — Shared segment rules** | One module; optionally sync `customers.status` from recency | Dashboard / Customers / Analytics / campaigns agree |
-| **4 — Orders + reward cost + attribution** | POS/manual `orders`; `attributed_channel` + `campaign_id`; tracking links/promo codes; `rewards.cost_cents`; `customer_rewards.order_id` | Full Revenue tab, AOV, ROI, channel chart, top spender |
-| **5 — Analytics API + period** | Aggregated endpoints; wire This month / Export | Scale + real deltas |
-
-Phase 0 can ship without schema changes. Phases 1–2 are the highest leverage for the current UI. Phase 4 is required before Revenue Impact is more than a mock.
+See [api-contract.md](../backend/api-contract.md) (`GET /api/analytics/overview`) and [remediation-roadmap.md](../backend/remediation-roadmap.md). Do **not** keep loading every customer into the browser for analytics.
 
 ---
 

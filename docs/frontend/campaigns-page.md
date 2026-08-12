@@ -760,34 +760,36 @@ Owners **SELECT** only via campaign ownership. Inserts/updates go through **serv
 
 ## Gaps (UI / API / DB) and recommended solutions
 
-Campaigns is a **client-side list** over `campaigns` plus a **synchronous fan-out BFF** for send. Automations are **config-only**. Existing backend remains the primary API ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)); do not grow Next into a campaign worker ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)).
+Campaigns is a **client-side list** over `campaigns` plus a **synchronous fan-out BFF** for send. Automations are **config-only**. Existing backend remains the primary API ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)); do not grow Next into a campaign worker ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)). Product data ownership: [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md).
+
+Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [data-contract.md](../backend/data-contract.md) · [api-contract.md](../backend/api-contract.md) · [remediation-roadmap.md](../backend/remediation-roadmap.md).
 
 ### Gap map (widget → layer)
 
-| Widget / flow | UI gap | API gap | DB gap | Recommended fix |
-|---------------|--------|---------|--------|-----------------|
-| **Create without program** | Toast only | n/a | One program per owner | Keep; optionally empty-state CTA like Analytics |
-| **Scheduled tab / `scheduled_at`** | Tab always 0 | No schedule job | Column unused | Hide tab **or** add schedule picker + worker that flips `scheduled` → send at `scheduled_at` |
-| **Completed tab** | Always 0 | Send writes `active`, not `completed` | No lifecycle | Either map successful send → `completed`, or drop the tab. `active` today means “sent” |
-| **Enable / Disable vs Launch** | Enable sets `active` without sending | Send blocks `active` | One status string, two meanings | Split: `draft` / `scheduled` / `sending` / `sent` / `failed` / `paused`. Enable/Disable only for automations or pause-future-sends |
-| **Performance % Open** | Shows `0%` after send | No open webhook | `opened_count` unused | Pixel / ESP events → increment `opened_count` (and recipient-level open). Until then show `"—"` not `0%` |
-| **SMS “% Redeemed”** | Misleading label | No redemption join | No `campaign_id` on `customer_rewards` | Don’t use `opened_count`. Join redemptions in a window after send, or hide until tracked |
-| **Campaign Revenue / Revenue Influenced** | `$0.00` looks real | Never written | No orders; `revenue_cents` unused | Same as Analytics revenue: orders + `campaign_id` / tracking links. UI: `"—"` until data exists |
-| **At Risk audience** | Label matches Customers | Query uses `"at-risk"` | Customers store `"at_risk"` | One status value. Prefer recency job **or** stop using `status` (see Analytics shared rules) |
-| **VIP / Gold / Silver audience** | Options exist | `ilike` on empty `tier` | `customers.tier` unset | Write tier on enroll/check-in from `loyalty_program_tiers` ([analytics-page.md](analytics-page.md#how-customer-tiers-actually-work)) |
-| **Birthday audience** | Month-only, server TZ | Filter in JS after fetch | `birth_date` optional | SQL: month+day in owner TZ; document “birthday this month” vs “today” |
-| **SMS send** | Channel selectable | Throws per recipient | n/a | Keep UX; stub transport ([17-messaging-templates.md](17-messaging-templates.md)). Don’t mark campaign `failed` for all if product wants “saved but unsendable” |
-| **Fan-out in Next** | Launch waits on HTTP | Unbounded loop in Route Handler | n/a | Enqueue **one** job; worker sends. Next returns `202` + `sending`. Align with ADR-013 |
-| **Retry / idempotency** | Re-launch failed resends everyone | `ignoreDuplicates` then send anyway | Unique pair exists | Skip `status = sent`; use `message_id` idempotency already in payload |
-| **Messaging contracts** | n/a | Service copies `buildHtml` | n/a | Call `src/lib/server/messaging/` only; delete duplicate helpers |
-| **Lovable `enqueue_email`** | n/a | Still RPC + Lovable-shaped queue | Queue product TBD | Withdraw per ADR-009/013; keep log/idempotency fields |
-| **Personalization UX** | Tokens undocumented; preview is raw | Tokens work on send | n/a | Hint in dialog; preview with sample `{{first_name}}` |
-| **Edit after send** | Allowed, silent | No versioning | Message overwritten | Freeze copy after send **or** snapshot body onto recipients |
-| **Automations** | Look like live journeys | No runner | `config` unused | Worker per type (birthday cron, welcome on enroll, …) **or** hide section until built. Store real config (offset days, template, channel) |
-| **Detail Top Engaged / Rewards Redeemed** | Empty / `0` | No events | No opens/clicks/redemptions | Recipient engagement events; don’t show `0` |
-| **Detail donut** | Other = untiered | Uses stored `tier` | Same as Analytics | Same tier-write as loyalty; use program colors |
-| **List loads all campaigns** | Client filter/sort | No list API | OK at small N | BFF/backend list with query params when volume grows |
-| **Insight CTAs on Analytics** | Send/Nudge unwired | No “create from insight” | n/a | Prefill `CreateCampaignDialog` audience from the insight |
+| G-ID | Widget / flow | UI gap | API gap | DB gap | Recommended fix |
+|------|---------------|--------|---------|--------|-----------------|
+| — | **Create without program** | Toast only | n/a | One program per owner | Keep; optionally empty-state CTA |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Scheduled tab / `scheduled_at`** | Tab always 0 | No schedule job | Column unused | Hide tab or schedule worker |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Completed tab** | Always 0 | Send writes `active` | No lifecycle | Map send → `completed`, or drop tab |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Enable / Disable vs Launch** | Enable sets `active` without sending | Send blocks `active` | One status, two meanings | Split status enum |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Performance % Open** | Shows `0%` after send | No open webhook | `opened_count` unused | ESP/pixel; until then `"—"` |
+| [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **SMS “% Redeemed”** | Misleading label | No redemption join | No `campaign_id` on rewards | Hide until tracked |
+| [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Campaign Revenue** | `$0.00` looks real | Never written | No orders | Orders + `campaign_id`; UI `"—"` |
+| [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **At Risk audience** | Label matches Customers | Query `"at-risk"` | DB `"at_risk"` | One status value |
+| [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **VIP / Gold / Silver audience** | Options exist | `ilike` on empty `tier` | `tier` unset | Write tier on enroll/check-in |
+| [G-21](gaps-and-solutions.md#g-21--birthday-stored-automation-unused) | **Birthday audience** | Month-only, server TZ | Filter in JS | `birth_date` optional | SQL + owner TZ |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **SMS send** | Channel selectable | Throws per recipient | n/a | Stub transport; messaging contracts |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Fan-out in Next** | Launch waits on HTTP | Unbounded loop | n/a | Enqueue job; `202` ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)) |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Retry / idempotency** | Re-launch resends all | `ignoreDuplicates` then send | Unique pair exists | Skip already-`sent` |
+| — | **Messaging contracts** | n/a | Duplicate `buildHtml` | n/a | Call messaging contracts only |
+| — | **Lovable `enqueue_email`** | n/a | Still RPC | Queue TBD | Withdraw per ADR-009/013 |
+| — | **Personalization UX** | Tokens undocumented | Tokens work on send | n/a | Hint + sample preview |
+| — | **Edit after send** | Allowed, silent | No versioning | Message overwritten | Freeze or snapshot |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Automations** | Look live | No runner | `config` unused | Worker or hide |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Detail Top Engaged / Rewards** | Empty / `0` | No events | No opens/clicks | Engagement events |
+| [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **Detail donut** | Other = untiered | Uses stored `tier` | Same as Analytics | Tier-write |
+| — | **List loads all campaigns** | Client filter/sort | No list API | OK at small N | Paginated list when volume grows |
+| — | **Insight CTAs on Analytics** | Send/Nudge unwired | No “create from insight” | n/a | Prefill create dialog |
 
 ### What already exists (do not rebuild)
 
@@ -803,38 +805,18 @@ Campaigns is a **client-side list** over `campaigns` plus a **synchronous fan-ou
 
 ### Recommended send + attribution model
 
-1. **Job, not request:** `POST /api/campaigns/send` (or Backend API) inserts a `campaign_jobs` row and returns. Worker loads audience, writes recipients, calls messaging **contracts**, updates counts. Visibility timeout + idempotent `message_id`.
-2. **Status enum:** `draft` \| `scheduled` \| `sending` \| `sent` \| `failed` \| `cancelled`. Pause ≠ sent.
-3. **Audience as structured filter** (json), not a display string: `{ type: "tier", value: "gold" }` / `{ type: "status", value: "at_risk" }` / `{ type: "recency", days: 60 }`. One shared module with Customers + Analytics.
-4. **Opens/clicks:** ESP webhook or pixel → `campaign_recipients.opened_at` / `clicked_at` and roll up to `opened_count` / `clicked_count`.
-5. **Revenue:** `orders.campaign_id` + `attributed_channel` ([analytics-page.md](analytics-page.md#revenue-by-channel--what-channel-means)). Then `revenue_cents` is a rollup, not a manual column.
-6. **Automations:** worker reads `enabled` + `config`; reuse the same send path with a system-owned campaign or a dedicated `automation_runs` table.
+Canonical schema and API: [data-contract.md](../backend/data-contract.md) (`campaign_jobs`, `orders.campaign_id`) · [api-contract.md](../backend/api-contract.md) (`POST .../send` → 202). Summary:
 
-### Recommended API shape
+1. **Job, not request:** enqueue `campaign_jobs`; worker sends via messaging contracts.
+2. **Status enum:** `draft` \| `scheduled` \| `sending` \| `sent` \| `failed` \| `cancelled`.
+3. **Audience as structured filter** shared with Customers + Analytics; glossary in data-contract.
+4. **Opens/clicks:** ESP webhook / pixel.
+5. **Revenue:** `orders.campaign_id` + `attributed_channel`; `revenue_cents` is a rollup.
+6. **Automations:** worker reads `enabled` + `config`.
 
-Do **not** keep fan-out in the browser or in a Vercel request.
+### Recommended API shape / delivery order
 
-- `POST /api/campaigns` (or Backend) create draft
-- `POST /api/campaigns/:id/send` → enqueue job (`202`)
-- `GET /api/campaigns/:id` including recipient summary
-- `GET /api/campaigns/:id/preview` personalized HTML
-- Worker-only: process job, provider webhooks for open/bounce
-
-Authz: owner session; scope to their `loyalty_program_id`. Service-role only in the worker.
-
-### Suggested delivery order
-
-| Phase | Scope | Unlocks |
-|-------|--------|---------|
-| **0 — Honesty in UI** | `"—"` for revenue and open rate until tracked; hide Scheduled/Completed **or** label them unused; document tokens; don’t Enable-to-`active` | Stops fake metrics and the draft trap |
-| **1 — Audience truth** | Fix `at-risk` vs `at_risk`; apply tier ladder on check-in; shared segment module | VIP/Gold/At Risk campaigns actually match people |
-| **2 — Send out of Next** | One enqueue + worker; skip already-`sent` recipients; messaging contracts | ADR-013, timeouts, duplicates |
-| **3 — SMS stub policy** | Explicit failure vs “channel saved, send disabled” | No surprise `failed` campaigns |
-| **4 — Opens + schedule** | Pixel/ESP; `scheduled_at` worker | Real performance %; Scheduled tab |
-| **5 — Automations runner** | Cron/event per type using `config` | Section becomes real |
-| **6 — Attribution** | Orders + `campaign_id` | Revenue cards, Analytics channel chart |
-
-Phase 0–1 need little or no new infrastructure. Phase 2 is the hard stop for production send volume.
+See [api-contract.md](../backend/api-contract.md) and [remediation-roadmap.md](../backend/remediation-roadmap.md) (Phases 0–6 for campaigns). Do not keep fan-out in the browser or in a Vercel request.
 
 ---
 

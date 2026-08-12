@@ -22,11 +22,12 @@ Switch models freely **between** roles or slices. Do not switch mid-slice withou
 
 1. **One source of truth:** `docs/architecture/` + `docs/frontend/` (especially `12-migration-plan.md`). Skill: `.cursor/skills/nextjs-migration/SKILL.md`.
 2. **One owner per overlapping path:** two agents must not edit the same files in the same turn.
-3. **No parallel rewrite of locked decisions** (ADR-006/009/010 messaging/Lovable/visual; target versions) without explicit user approval.
+3. **No parallel rewrite of locked decisions** (ADR-006/009/010/011/014 messaging/Lovable/visual/data-ownership; target versions) without explicit user approval.
 4. **Do not skip dependency-aware order** for foundation → assets → server-infra/auth proof → messaging → routes. Limited parallelization only where paths do not collide (see below).
 5. **Do not delete TanStack/Lovable** until production smoke + rollback window + explicit user approval.
 6. **D-28 cookie/SSR** stays documented **BLOCKED** until spike **PASSED**; agents may work the spike during server-infra/auth but must not claim auth complete early.
 7. Prefer **separate branches / commits per agent** with a clear slice id in the message.
+8. **`docs/backend/` product-data contracts** have a **single owner** when edited. Agents **must not** add `supabase/migrations/` (or Next BFF persistence) for gaps **G-01…G-32** (orders, visit_events, tiers, referrals, etc.) — those belong to the backend program ([ADR-014](decisions/ADR-014-product-data-ownership.md)). Presentational Phase 0 honesty fixes in frontend UI are allowed.
 
 ## Parallelization map (current)
 
@@ -38,7 +39,7 @@ Switch models freely **between** roles or slices. Do not switch mid-slice withou
 | 4     | Messaging skeleton (`src/lib/server/messaging/`) | **Done** (stubs; no real provider)                                                                                             |
 | 5+    | Routes / domains                                 | **Done (ported)** — Next is default `npm run dev` / `npm run build`; TanStack kept as `dev:tanstack` until retirement approval |
 
-**Forbidden parallel pairs:** two agents on the same route tree; redesign + migration; Lovable deletion + active feature ports.
+**Forbidden parallel pairs:** two agents on the same route tree; redesign + migration; Lovable deletion + active feature ports; two agents editing `docs/backend/` contracts without a single owner; frontend schema migrations for G-01…G-32.
 
 ## Where parallel agents start now
 

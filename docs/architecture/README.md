@@ -36,6 +36,7 @@
 11. RLS / storage transitional strategy: [ADR-011](decisions/ADR-011-rls-storage-strategy.md)
 12. Public enrollment rate limiting: [ADR-012](decisions/ADR-012-public-enrollment-rate-limiting.md)
 13. Campaign / messaging background runtime: [ADR-013](decisions/ADR-013-campaign-messaging-runtime.md)
+14. Product data ownership + UI honesty: [ADR-014](decisions/ADR-014-product-data-ownership.md) (backend contracts under [`docs/backend/`](../backend/README.md); not a migration slice)
 
 ## Recommended decision order
 
@@ -54,3 +55,4 @@
 - [Multi-model / multi-agent workflow](multi-agent-workflow.md)
 - [Spikes ΓÇö Auth Cookie/SSR](spikes/auth-ssr-spike.md)
 - [Frontend blueprint](../frontend/README.md)
+- [Backend product-data contracts](../backend/README.md) (ADR-014; not migration work)

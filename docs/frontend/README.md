@@ -91,6 +91,10 @@ flowchart LR
 16. [Dependency compatibility](16-dependency-compatibility.md)
 17. [Messaging templates](17-messaging-templates.md)
 
+### Page reference
+
+- [Analytics page (`/app/analytics`)](analytics-page.md) — components, conditions, and edge cases
+
 **Next step:** slice 3 ΓÇö Server infrastructure (backend/Supabase factories, secret isolation, auth proof / D-28 cookie SSR, portable logging). Slice 2 assets **done** (`npm run scan:assets`). Keep [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md) open until PASSED. Multi-agent roles: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md).
 
 **Migration Go / No-Go:** **GO**.

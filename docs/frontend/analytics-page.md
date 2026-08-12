@@ -1,6 +1,8 @@
 # Analytics Page (`/app/analytics`)
 
-Reference for all components, conditions, and edge cases on the Analytics route.
+Reference for all components, conditions, and edge cases on the Analytics route. Includes domain notes for frontend + backend work (one program per owner, how tiers are stored vs assigned, segment cutoffs, revenue placeholders), plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
+
+**Jump to:** [one program](#one-owner--one-loyalty-program) · [how tiers work](#how-customer-tiers-actually-work) · [point ranges](#loyalty-page-point-ranges-saved-vs-ui) · [segments](#customer-segments--card) · [members by tier](#members-by-tier--card--donut) · [engagement stats](#stat-cards-4) · [visit frequency](#visit-frequency-over-time--card--emptychart-disabled) · [insights](#engagement-insights--card-suggestion-cards-not-a-report) · [most engaged / tier column](#most-engaged-members--card--table) · [engagement levels](#engagement-levels--card--horizontal-bars) · [colliding labels](#three-different-systems-do-not-mix-them) · [revenue tab](#tab-3-revenuetab) · [ROI](#roi-from-rewards) · [channel](#revenue-by-channel--what-channel-means) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
 **Source files:**
 
@@ -8,6 +10,11 @@ Reference for all components, conditions, and edge cases on the Analytics route.
 - Feature implementation: `src/features/analytics/analytics-page.tsx`
 - Shell layout guard: `src/app/app/(shell)/layout.tsx`
 - Dashboard chrome: `src/components/dashboard/DashboardShell.tsx`
+- Loyalty program (tier config): `src/features/loyalty/loyalty-page.tsx`
+- Tier UI: `src/components/loyalty/TierBasedFlow.tsx`, `src/components/loyalty/TierSection.tsx`
+- Unique owner constraint: `supabase/migrations/20260713174353_034cd3b0-2acb-430d-b1d9-14efe9174840.sql`
+- Dashboard “at risk” (30-day recency): `src/components/dashboard/SetupCompleteDashboard.tsx`
+- Customers status filter: `src/features/customers/customers-page.tsx`
 
 ---
 
@@ -170,16 +177,28 @@ Chart behavior:
 
 ### Members by tier — `Card` + `Donut`
 
-**Tier grouping rules:**
+Groups **all customers** by the stored `customers.tier` **string**. It does **not** compute tier from points, visits, or `loyalty_program_tiers` thresholds.
 
-- `tier` null or empty → `"Untiered"`
-- Sorted by count descending
-- Colors from a fixed palette
+**Grouping rules:**
+
+| `customers.tier` | Shown as |
+|------------------|----------|
+| `null` or blank | **Untiered** |
+| Any other text | That exact name (Gold, VIP, …) |
+
+Then:
+
+- Count how many customers share each name
+- `%` = count ÷ **all customers** (rounded)
+- Slices sorted by count, largest first
+- Colors from a **fixed palette** in the page (`#a3a3a3`, `#feb602`, `#0a152f`, `#344f89`, `#c48a5b`) — **not** `loyalty_program_tiers.color`
 
 | Condition | Result |
 |-----------|--------|
 | `tierBreakdown.total === 0` | `EmptyChart("No members yet.")` |
 | Otherwise | SVG donut + legend (count and % per tier) |
+
+**Owner does not assign a customer to a tier in the UI.** They only define the program’s tier ladder (see [How customer tiers actually work](#how-customer-tiers-actually-work)). Enrollment and check-in do not write `customers.tier`, so most members currently land in **Untiered**.
 
 ### Top redeemed rewards — `Card` + `RewardIcon`
 
@@ -196,23 +215,37 @@ Chart behavior:
 
 ### Customer segments — `Card`
 
-Four fixed segments. Percentage is of total customers; shows `"—"` if no customers.
+Grouped by **recency** (`created_at` / `last_activity_at`) and **visit frequency** (`visits`). Counts are **real** (from Supabase customer rows). The cutoffs are **hardcoded in the frontend** — not configurable, not stored in program settings, same for every business.
 
-| Segment | Rule |
-|---------|------|
-| **Champions** | `visits >= 10` |
-| **Loyal regulars** | `3 <= visits < 10` |
-| **New members** | `created_at` within last 30 days |
-| **At risk** | `last_activity_at` exists AND more than 60 days ago |
+Percentage is of total customers; shows `"—"` if no customers.
 
-> **Note:** A customer can fall into multiple segments (e.g. new + champion).
+| Segment | Rule | Fields used |
+|---------|------|-------------|
+| **Champions** | `visits >= 10` | `visits` |
+| **Loyal regulars** | `3 <= visits < 10` | `visits` |
+| **New members** | Joined in the last **30 days** | `created_at` |
+| **At risk** | `last_activity_at` exists AND more than **60 days** ago | `last_activity_at` |
+
+> **Note:** Segments can **overlap** (e.g. new + champion). **At risk** excludes never-active customers (`last_activity_at` null).
+
+These numbers are not demo placeholders: a customer with 12 visits really counts as a Champion. The `10` / `3` / `30` / `60` values are product defaults in code.
 
 ### Revenue impact (within Overview) — `Card`
 
-Placeholder only — no order data:
+**No equations run.** Every value is `"—"`. This is a layout for money metrics that need **order/transaction data**, which does not exist yet. Points and visits are **not** used as a stand-in for revenue.
 
-- Green info banner
-- Loyalty members / Non-members AOV: both `"—"`
+**Intended meaning:** average order value (AOV) for loyalty members vs non-members.
+
+| Box | Shown now | Intended formula (not coded) |
+|-----|-----------|------------------------------|
+| Loyalty members | `—` | member order totals ÷ member order count |
+| Non-members | `—` | non-member order totals ÷ non-member order count |
+
+**Required inputs (missing):** `order.amount`, `order.date`, and whether the buyer is a loyalty customer.
+
+Green banner copy: tracking will appear once orders are linked to loyalty members. Dashes are used instead of `0` so it does not look like “zero revenue.”
+
+Full intended metrics for the Revenue tab: [Revenue impact — intended equations](#revenue-impact--intended-equations-not-coded).
 
 ---
 
@@ -226,45 +259,62 @@ Same pattern as Overview:
 
 ### Stat cards (4)
 
-| Card | Value | Condition |
-|------|-------|-----------|
-| **Avg. visits per member** | `avgVisits` or `"—"` | `"—"` if no members |
-| **QR scans this period** | Always `"—"` | Not wired |
-| **Avg. days between visits** | Always `"—"` | Needs visit event log |
-| **30-day retention rate** | `%` or `"—"` | Only if members ≥ 30 days old exist |
+Only **two** cards calculate. The other two are always `"—"`. The “This month” header does not filter any of them.
+
+| Card | Calculated? | Factors | Formula |
+|------|-------------|---------|---------|
+| **Avg. visits per member** | Yes | `customers.visits`, member count | `sum(visits) / customers.length` as `1.5x`. `"—"` if no customers. All-time; not only `status === "active"` |
+| **QR scans this period** | No | none | Always `"—"`. Needs a scan/event log |
+| **Avg. days between visits** | No | none | Always `"—"`. Needs visit events with timestamps |
+| **30-day retention rate** | Yes, if eligible | `created_at`, `last_activity_at` | See below |
 
 **Retention logic:**
 
-- **Eligible:** joined ≥ 30 days ago
-- **Retained:** `last_activity_at` within last 30 days
-- **Rate:** `retained / eligible * 100`
+- **Eligible:** `now - created_at >= 30 days`
+- **Retained:** among those, `last_activity_at` exists and is within the last 30 days
+- **Rate:** `retained / eligible * 100` (rounded)
+- No eligible members → `"—"` (“Needs members ≥ 30 days old”)
+- Does **not** use points, tier, or QR scans
 
-### Visit frequency chart — `Card` + `EmptyChart`
+### Visit frequency over time — `Card` + `EmptyChart` (disabled)
 
-Always empty:
+**Today:** no inputs, no numbers. Always empty:
 
 > “Visit-level tracking coming soon — data will appear once scans are logged.”
 
-Legend (Returning / First-time) is shown but has no data.
+The Returning / First-time legend is **decoration only**.
 
-### Engagement insights — `Card` (4 insight rows)
+**Intended (not coded):** weekly bars on the X-axis, two series:
 
-| Insight | Dynamic part | CTA | Wired? |
-|---------|--------------|-----|--------|
-| At risk of churning | `atRisk.length` (20–60 days since last activity) | Send | No |
-| 1 visit from reward | `visits > 0 && visits % 5 === 4` | Nudge | No |
-| Peak hour | Static “coming soon” | Explore | No |
-| Tier upgrade nudges | Static “coming soon” | Create | No |
+| Series | Intended meaning |
+|--------|------------------|
+| **First-time** | That customer’s first check-in/scan **that week** |
+| **Returning** | Extra visits by the same customer later in the week |
+
+**Why it is disabled:** needs a scan/visit **event log** (`who` + exact timestamp). The app only stores a running total on `customers.visits`, not each visit’s date. `visits`, `created_at`, and `last_activity_at` cannot tell first-time vs returning **per week**.
+
+### Engagement insights — `Card` (suggestion cards, not a report)
+
+Four always-visible tips. Buttons do **not** open campaigns or member lists.
+
+| Insight | What the number is | CTA | Wired? |
+|---------|--------------------|-----|--------|
+| At risk of churning | Same **Engagement levels** At risk: `last_activity_at` **20–60 days** ago (not Overview > 60 days, not `customers.status`) | Send | No |
+| 1 visit from a reward | `visits > 0 && visits % 5 === 4` (4, 9, 14…). The `5` is hardcoded, **not** program `visits_required` | Nudge | No |
+| Peak hour | Static “coming soon” — needs visit timestamps | Explore | No |
+| Tier upgrade nudges | Static “coming soon” — would use `loyalty_program_tiers` once wired | Create | No |
 
 Pluralization: `"1 member"` vs `"N members"`.
 
 ### Most engaged members — `Card` + table
 
-- Top 5 by `visits`, then `points`
+- Ranked top 5 by `visits`, then `points` (not by tier)
 - **Empty:** `EmptyChart("No members yet.")`
-- Columns: Customer (initials, name, optional email), `TierPill`, visits, points
+- Columns: Customer (initials, name, optional email), **Tier**, visits, points
 - Name fallback: `"Unnamed"`
 - Initials fallback: `"?"` if no name
+
+**Tier column** = `customers.tier` via `TierPill` (same as Overview donut). Not computed from visits/points or `loyalty_program_tiers`. Usually `"—"` because enroll/check-in never write `tier`.
 
 **`TierPill` cases:**
 
@@ -276,15 +326,17 @@ Pluralization: `"1 member"` vs `"N members"`.
 
 ### Engagement levels — `Card` + horizontal bars
 
-Five buckets (by visits + recency):
+**Only on this Analytics card.** Not stored in the DB. Not the same as **tiers**. Computed here from `visits` + `last_activity_at`. If `last_activity_at` is null → treated as never → **Dormant**.
 
-| Level | Rule |
-|-------|------|
-| **Champions** | `visits >= 10` AND active ≤ 30 days |
-| **Loyal** | `5 <= visits < 10` AND active ≤ 30 days |
-| **Occasional** | `2 <= visits < 5` AND active ≤ 60 days |
-| **At risk** | last activity 20–60 days ago |
-| **Dormant** | last activity > 60 days ago (or never) |
+| Level | Visits | Last activity |
+|-------|--------|----------------|
+| **Champions** | ≥ 10 | within **30** days |
+| **Loyal** | 5–9 | within **30** days |
+| **Occasional** | 2–4 | within **60** days |
+| **At risk** | any | **20–60** days ago |
+| **Dormant** | any | **> 60** days or never |
+
+Cutoffs are hardcoded. Buckets can **overlap** (e.g. 12 visits and last seen 25 days ago = Champions **and** At risk).
 
 | Condition | Result |
 |-----------|--------|
@@ -297,20 +349,359 @@ Five buckets (by visits + recency):
 |--------|------------|
 | Champion avg visits | `"—"` if no champions |
 | Occasional avg visits | `"—"` if none |
-| Dormant last seen | `"—"` / `"Never active"` / `"N+ days ago"` (most recent dormant member) |
+| Dormant last seen | `"—"` / `"Never active"` / `"N+ days ago"` (most recent dormant `last_activity_at`) |
+
+**Not the same as other pages** (similar words, different rules):
+
+| Place | Meaning |
+|-------|---------|
+| Overview **Customer segments** | Champions = `visits >= 10` only; At risk = last activity **> 60 days** |
+| Dashboard “at risk” | last activity **> 30 days** |
+| Customers page / campaign audience | `customers.status` `at_risk` / `at-risk` |
+| **Tiers** | Loyalty rank (points ladder / `customers.tier`) |
 
 ---
 
 ## Tab 3: `RevenueTab`
 
-Entirely placeholder — no `hasProgram` check, no Supabase queries.
+Entirely placeholder — no `hasProgram` check, no Supabase queries, **no conditions**, **no calculations**. Points, visits, and `customers.tier` are **not** used as money.
 
-| Section | Content |
-|---------|---------|
-| 6 stat cards | All values `"—"` |
-| Revenue over time chart | `EmptyChart` |
-| Revenue by channel chart | `EmptyChart` |
-| Revenue by tier table | Header + “No revenue data yet.” |
+Each stat card shows **value `"—"`**, **delta `"—"`** (would be month-over-month later), and a hint that order data is missing. Dashes are used instead of `0` so it does not look like “zero revenue.”
+
+### Six cards
+
+| Card | Intended meaning | Intended factors | Why empty |
+|------|------------------|------------------|-----------|
+| **Total Revenue Generated** | All sales in the period | `sum(order.amount)` | No orders table |
+| **Loyalty-Driven Revenue** | Sales tied to loyalty (member checkout, or after a reward/campaign) | order amount + “from member / campaign” flag | Cannot tag an order as loyalty-driven |
+| **ROI from Rewards** | Did rewards pay back? See [ROI from Rewards](#roi-from-rewards) | linked sales − reward **money** cost, then ÷ cost | No money cost on rewards; no linked orders |
+| **Avg. revenue per member** | Spend per member | member revenue ÷ member count | No spend per customer |
+| **Rewards redeemed revenue** | Sales around a redemption | order totals linked to a `customer_rewards` row | `redeemed_count` is a count, not money |
+| **Top-spending member** | Who spent the most | `max(sum of orders per customer)` | No orders |
+
+### Two charts
+
+| Chart | Subtitle | Today | Intended |
+|-------|----------|-------|----------|
+| **Revenue over time** | Monthly revenue trend | EmptyChart | `sum(order.amount)` by month |
+| **Revenue by channel** | Where loyalty-driven revenue comes from | EmptyChart | See [channel](#revenue-by-channel--what-channel-means) |
+
+### Table: Revenue by reward tier
+
+**Subtitle:** “Which tiers drive the most spend.”
+
+| Column | Intended | Today |
+|--------|----------|-------|
+| **Tier** | Silver / Gold / VIP (or `loyalty_program_tiers.name`) | No rows |
+| **Members** | Count in that tier | No rows |
+| **Revenue** | Sum of those members’ orders | No rows |
+
+Body copy: **“No revenue data yet.”** Needs (1) assigned tier and (2) orders. Without (2), even a filled `customers.tier` cannot show revenue.
+
+Overview’s **Revenue impact** card is a smaller version: Loyalty members AOV vs Non-members AOV, both `"—"`.
+
+### ROI from Rewards
+
+**Meaning:** did giving gifts/rewards produce **net profit**, or a loss?
+
+The card always shows `"—"`. The system stores reward cost in **points** (`point_cost`, e.g. 200 points). ROI needs a **cash cost** in currency.
+
+**Formula:**
+
+```text
+ROI % = (revenue from the redemption ticket − cash cost of the reward)
+        ÷ cash cost of the reward
+        × 100
+```
+
+**Example:** 10 members redeem “free coffee”. Coffee costs the shop 20 each → investment 200. Those tickets also include 800 of extra products.
+
+```text
+ROI = (800 − 200) / 200 = 3 → 300%
+```
+
+| Factor | Meaning | In the app today |
+|--------|---------|------------------|
+| **Return** | `orders.amount_cents` on the ticket linked to the redemption | No orders table. `campaigns.revenue_cents` is campaign money, not redemptions |
+| **Investment** | What honouring the gift **costs the owner in money** | **Not stored.** `rewards.point_cost` is points the **customer** burns, not cash |
+
+`point_cost` is **not** currency. `redeemed_count` is a count. `customer_rewards` has `earned_at` / `redeemed_at` but no cents and no `order_id`.
+
+Hint on the card: “Requires reward cost + revenue link.”
+
+**How to track (backend):**
+
+1. Cash cost on the reward:
+
+```sql
+ALTER TABLE rewards
+ADD COLUMN cost_cents INT NOT NULL DEFAULT 0;
+```
+
+Owner enters this on `/app/loyalty` (cost of one free coffee, not points).
+
+2. Link each redemption to the ticket. Prefer **extending** existing `customer_rewards` rather than a second table:
+
+```sql
+ALTER TABLE customer_rewards
+ADD COLUMN order_id UUID REFERENCES orders(id);
+```
+
+If a dedicated table is preferred:
+
+```sql
+CREATE TABLE redemptions (
+  id UUID PRIMARY KEY,
+  reward_id UUID REFERENCES rewards(id),
+  customer_id UUID REFERENCES customers(id),
+  order_id UUID REFERENCES orders(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+At redeem-in-store: create/attach the `orders` row, set `order_id` on the redemption.
+
+3. Backend aggregation:
+
+```sql
+WITH reward_metrics AS (
+  SELECT
+    SUM(r.cost_cents) AS total_investment,
+    SUM(o.amount_cents) AS total_return
+  FROM customer_rewards red
+  JOIN rewards r ON red.reward_id = r.id
+  JOIN orders o ON red.order_id = o.id
+  WHERE r.loyalty_program_id = :program_id
+    AND red.order_id IS NOT NULL
+)
+SELECT
+  CASE
+    WHEN COALESCE(total_investment, 0) = 0 THEN NULL
+    ELSE ((total_return - total_investment) / total_investment::float) * 100
+  END AS roi_percentage
+FROM reward_metrics;
+```
+
+Return `NULL` → UI `"—"` when investment is 0 (avoid fake 0% ROI). Use `amount_cents` consistently (not mixed pounds/cents).
+
+### Revenue by channel — what “channel” means
+
+**Channel is not** customer tiers and **not** visit count. It is the **source of the sale** — the path that led to the purchase.
+
+**Today:** `campaigns.channel` is `"email"` \| `"sms"` (how you **message**). The Analytics chart is **not** bound to that column. There are no orders, so nothing to group.
+
+**Intended:** split **loyalty-driven sales** by what motivated the buy:
+
+| `attributed_channel` | Meaning |
+|----------------------|---------|
+| `email` | Sale attributed to an email campaign |
+| `sms` | Sale attributed to an SMS campaign |
+| `in_store` (or `qr`) | Sale at the counter / QR scan, no campaign |
+
+**How to track (attribution):**
+
+1. Orders must carry the source (and optional campaign):
+
+```sql
+ALTER TABLE orders
+ADD COLUMN attributed_channel VARCHAR(50), -- 'email', 'sms', 'in_store'
+ADD COLUMN campaign_id UUID REFERENCES campaigns(id);
+```
+
+Also store `loyalty_program_id`, `amount_cents`, `customer_id` (nullable for non-members), `occurred_at`.
+
+2. **Tracking links / promo codes:** campaign email/SMS includes a URL or discount code with `campaign_id`. Checkout or POS redeem of that code writes `attributed_channel` from `campaigns.channel` and sets `campaign_id`. In-store QR with no code → `in_store`.
+
+3. Backend chart query:
+
+```sql
+SELECT attributed_channel, SUM(amount_cents) AS total_revenue
+FROM orders
+WHERE loyalty_program_id = :program_id
+GROUP BY attributed_channel;
+```
+
+Do not `GROUP BY campaigns.channel` alone — that is send-channel, not sale-channel, and unsent/unattributed campaigns would skew the chart.
+
+---
+
+## Domain context (loyalty + tiers + revenue)
+
+Use this when wiring frontend and backend. Analytics assumes the current product model below.
+
+### One owner → one loyalty program
+
+A business owner **cannot** have more than one loyalty program.
+
+- DB: `CONSTRAINT loyalty_programs_owner_unique UNIQUE (owner_id)`  
+  (`supabase/migrations/20260713174353_034cd3b0-2acb-430d-b1d9-14efe9174840.sql`)
+- App fetches with `.eq("owner_id", user.id).maybeSingle()` (expects 0 or 1 row)
+- App saves with `.upsert(..., { onConflict: "owner_id" })` — create or **overwrite** that one program
+
+There is **no**:
+
+| Capability | Loyalty programs | Campaigns |
+|------------|------------------|-----------|
+| Draft | No | Yes (`status: "draft"`) |
+| Multiple per owner | No | Yes |
+| Switch / select active | No | Filter by status tabs |
+| Archive old + create new | No | N/A |
+
+`draft` exists only for **campaigns**. Opening Loyalty Program is create-or-edit of the same row.
+
+### How customer tiers actually work
+
+Two different things:
+
+| Layer | Table | What it is |
+|-------|-------|------------|
+| **Tier ladder (config)** | `loyalty_program_tiers` | Owner-defined names, colors, **minimum** `points_threshold`, benefits |
+| **Customer’s current tier** | `customers.tier` (text, nullable) | What Analytics groups on |
+
+**Owner configures the ladder, not each customer.** On `/app/loyalty`, if program type is `tier`, they add/edit/delete `loyalty_program_tiers` rows. There is no “assign this customer to Gold” control.
+
+**The ladder is not applied yet.** Join/enroll does not set `tier`. Check-in does not compare points to thresholds. No trigger writes `customers.tier`. Analytics therefore usually shows **Untiered**.
+
+Loyalty page “Tier stats” even hardcodes member counts as `"0"`.
+
+### Loyalty page point ranges: saved vs UI
+
+Ranges like **“0 – 999 pts”** / **“1,000 – 2,499 pts”** are **not** stored as from–to columns.
+
+**Template cards** (`TierBasedFlow`) hardcode those labels. Selecting a template **saves only the start**:
+
+| Template card (UI text) | Saved `points_threshold` |
+|-------------------------|--------------------------|
+| `0 – 999 pts` | `0` |
+| `1,000 – 2,499 pts` | `1000` |
+| `2,500+ pts` | `2500` |
+
+After save, the list **recomputes** a range from neighboring thresholds (sorted):
+
+- Silver `0`, Gold `1000` → shown as `0 – 999 points` / `1,000+` (or next − 1)
+- Last tier: `{threshold}+ points`
+
+The owner **can** add, edit, and delete tiers (name, color, threshold, benefits). Changing Gold from `1000` to `800` updates the stored threshold; the range label is recalculated in the UI only.
+
+**Intended rule (copy on the edit dialog, not implemented):** “Customers will enter this tier once they reach the specified point balance.”
+
+### Customer segments vs engagement levels
+
+Both use hardcoded frontend cutoffs on real customer fields. They are **not** the same buckets.
+
+| | Overview **Customer segments** | Engagement **Engagement levels** |
+|--|-------------------------------|----------------------------------|
+| Champions | `visits >= 10` (no recency) | `visits >= 10` AND active ≤ 30 days |
+| Loyal | `3 <= visits < 10` | `5 <= visits < 10` AND active ≤ 30 days |
+| Occasional | — | `2 <= visits < 5` AND active ≤ 60 days |
+| New | joined last 30 days | — |
+| At risk | last activity **> 60 days** (must have timestamp) | last activity **20–60 days** |
+| Dormant | — | last activity **> 60 days** or never |
+
+### Three different systems (do not mix them)
+
+Same English words appear in several screens. They are **not** one shared model.
+
+| System | Stored? | Based on | Where |
+|--------|---------|----------|-------|
+| **Tiers** (loyalty rank) | Config: `loyalty_program_tiers`. Member label: `customers.tier` (usually null) | Intended: points vs threshold. Today: unused string | `/app/loyalty`, Overview donut, Most engaged **Tier** column |
+| **Activity groups** (Engagement levels) | **No** — computed only on Analytics Engagement | `visits` + `last_activity_at` | That card only |
+| **Customer status** | `customers.status` (`active`, `at_risk`, …) | Whatever wrote that column (not this page’s visit math) | Customers list, campaign “at risk” audience |
+
+A VIP who has not visited in 70 days can still be **Dormant** on Engagement levels. A Champion there can still show **—** for tier.
+
+**“At risk” is four different rules:**
+
+| Place | Rule |
+|-------|------|
+| Analytics Overview **Customer segments** | `last_activity_at` **> 60 days** (timestamp required) |
+| Analytics Engagement **levels + insights** | `last_activity_at` **20–60 days** |
+| Dashboard | `last_activity_at` **> 30 days** |
+| Customers page / campaigns | `customers.status` is `at_risk` / `at-risk` |
+
+### Missing scan / visit event log
+
+Several Engagement widgets need a table of individual scans (`customer_id` + timestamp), which **does not exist**. Today only `customers.visits` (running total) and `last_activity_at` (last time) exist.
+
+Blocked until that log exists:
+
+- QR scans this period
+- Avg. days between visits
+- Visit frequency over time (first-time vs returning **per week**)
+- Peak hour insight
+
+`visits`, `created_at`, and `last_activity_at` are **not** enough for those four.
+
+---
+
+## Revenue impact — intended equations (not coded)
+
+Detail for each Revenue tab widget: [Tab 3](#tab-3-revenuetab). ROI: [ROI from Rewards](#roi-from-rewards). Channel: [what channel means](#revenue-by-channel--what-channel-means).
+
+**Today:** no factors, no formulas. UI shows `"—"`.
+
+**Needed data source:** orders/transactions with amount, timestamp, and link to a loyalty customer (or “not a member”). Optionally `reward_id` / campaign for ROI and “loyalty-driven” revenue.
+
+Points, visits, and `customers.tier` are **not** inputs to these metrics today.
+
+### Overview card
+
+| Metric | Intended equation |
+|--------|-------------------|
+| Loyalty members AOV | `sum(member order totals) / count(member orders)` |
+| Non-members AOV | `sum(non-member order totals) / count(non-member orders)` |
+
+### Revenue tab cards
+
+| Metric | Intended idea | Factors |
+|--------|----------------|---------|
+| **Total Revenue Generated** | All sales in the period | `sum(order.amount)` |
+| **Loyalty-Driven Revenue** | Sales tied to loyalty (member orders, or after reward/campaign) | order total + “from member / campaign” flag |
+| **ROI from Rewards** | Did rewards pay for themselves? | revenue from redeemers ÷ cost of those rewards |
+| **Avg. revenue per member** | Spend per member | member revenue ÷ member count |
+| **Rewards redeemed revenue** | Sales around redemptions | order totals linked to a redemption |
+| **Top-spending member** | Highest spend | `max(sum of orders per customer)` |
+
+### Revenue tab charts
+
+| Chart | Intended |
+|-------|----------|
+| Revenue over time | Monthly `sum(order.amount)` |
+| Revenue by channel | Group by sale channel |
+| Revenue by reward tier | Group spend by Silver/Gold/VIP (would need assigned `customers.tier` **or** live threshold matching) |
+
+---
+
+## Data model
+
+### Customer (from `customers` table)
+
+`id`, `full_name`, `email`, `tier`, `points`, `visits`, `status`, `last_activity_at`, `created_at`
+
+- `tier` is a free-text column, not an FK to `loyalty_program_tiers`
+- Analytics reads it as-is; empty → Untiered
+
+### Reward (from `rewards` table)
+
+`id`, `name`, `icon`, `point_cost`, `redeemed_count`
+
+### Loyalty program (from `loyalty_programs`)
+
+One row per `owner_id` (unique). Analytics loads that single program’s customers and rewards.
+
+### Program tiers (from `loyalty_program_tiers`) — **not queried by Analytics**
+
+`name`, `color`, `points_threshold` (minimum only), `benefits`, `bonus_percentage`, `points_multiplier`, `sort_order`
+
+Used on `/app/loyalty` for config UI. Not used to classify members on Analytics until backend writes `customers.tier` (or Analytics joins thresholds to `points`).
+
+### Orders / transactions
+
+**Do not exist** in the current schema used by this page. Blocker for all Revenue impact metrics.
+
+### Scan / visit events
+
+**Do not exist.** Blocker for QR scans, days between visits, visit-frequency chart, and peak-hour insight. Only `customers.visits` (counter) and `last_activity_at` (last ping) are available.
 
 ---
 
@@ -330,20 +721,6 @@ Entirely placeholder — no `hasProgram` check, no Supabase queries.
 
 ---
 
-## Data model
-
-### Customer (from `customers` table)
-
-`id`, `full_name`, `email`, `tier`, `points`, `visits`, `status`, `last_activity_at`, `created_at`
-
-### Reward (from `rewards` table)
-
-`id`, `name`, `icon`, `point_cost`, `redeemed_count`
-
-Both are scoped to the owner's single loyalty program (`loyalty_programs` where `owner_id = user.id`).
-
----
-
 ## Summary of all major cases
 
 | Scenario | What the user sees |
@@ -358,20 +735,104 @@ Both are scoped to the owner's single loyalty program (`loyalty_programs` where 
 | Program with customers | Live metrics from Supabase |
 | Date range / Export buttons | No effect (not implemented) |
 | Insight CTAs (Send, Nudge, etc.) | No handlers |
+| Visit frequency chart | Always empty (needs scan event log) |
+| QR scans / days between visits | Always `"—"` |
+| Most engaged **Tier** column | Usually `"—"` (`customers.tier` unset) |
 | Revenue tab | Always placeholder |
+
+---
+
+## Gaps (UI / API / DB) and recommended solutions
+
+Analytics is a **client-side dashboard** over two tables (`customers`, `rewards`) for one program. Most widgets are either **proxies**, **hardcoded rules**, or **empty shells**. Existing backend remains the primary API ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)); do not turn Next.js into an orders/POS backend.
+
+### Gap map (widget → layer)
+
+| Widget | UI gap | API gap | DB gap | Recommended fix |
+|--------|--------|---------|--------|-----------------|
+| **This month / Export** | Buttons do nothing | No period query, no export endpoint | No snapshots; all-time counters only | Make period a real query param; export CSV from an analytics BFF. Until then, disable or hide the buttons |
+| **Stat deltas (↑/↓)** | Always `"—"` | No previous-period totals | No daily/monthly snapshots | Store period aggregates (or compute from event logs) |
+| **Active members / repeat rate** | Works | Client loads **all** customers | OK | Move aggregation to backend; filter `status` consistently |
+| **Redemption rate / points chart** | Redeemed weekly series is always 0; issued uses `created_at` as a proxy | No points ledger API | No per-transaction points log | `points_ledger` (issued/redeemed, amount, `created_at`, customer_id) written on check-in and redeem |
+| **Members by tier / Most engaged Tier** | Groups `customers.tier`; usually Untiered | Check-in/enroll never set `tier` | `tier` is free text, not FK; ladder unused | On check-in: set `customers.tier` from highest `loyalty_program_tiers` where `points >= points_threshold`. Prefer FK `tier_id` |
+| **Customer segments vs Engagement levels** | Two different cutoffs; overlap; not configurable | Logic only in this React file | Nothing stored | One shared rules module (frontend + backend). Exclusive buckets. Same “at risk” everywhere **or** rename labels |
+| **“At risk” / Champion labels** | Four different meanings across pages | Campaigns use `status`; Analytics uses recency | `status` vs computed recency | Pick one source of truth: either keep `customers.status` updated by a job from recency, or stop using status for “at risk” |
+| **Avg. visits per member** | All-time; ignores “this month” | No | `visits` is a counter | Keep as all-time **or** derive from visit events in the selected period |
+| **QR scans / days between visits / visit frequency / peak hour** | Empty | Check-in does not append events | No scan/visit event table | `visit_events` (`customer_id`, `program_id`, `occurred_at`, `branch_id?`, `source`) on every check-in |
+| **Insights CTAs** | Send / Nudge / Explore / Create do nothing | No “create campaign from insight” | N/A | Wire Send/Nudge to campaign create with prefilled audience; hide Explore/Create until data exists |
+| **1 visit from a reward** | Uses `visits % 5 === 4` | Ignores program `visits_required` / reward `point_cost` | Program rules exist | Compare to real next reward: visit programs → `visits_required`; points → cheapest `point_cost` |
+| **Revenue tab (all)** | Layout only | Analytics never queries money | **No orders table.** Reward has no cash cost. Order has no channel | See [Revenue data model](#recommended-revenue--visit-data-model) |
+| **Revenue by channel** | Chart empty; not sale-source | Not joined to orders | `campaigns.channel` is send medium only; no `orders.attributed_channel` | See [how to track channel](#revenue-by-channel--what-channel-means): `attributed_channel` + `campaign_id` on orders; tracking links/promo codes |
+| **ROI from Rewards** | `"—"` | No cost + ticket join | `point_cost` ≠ money; `customer_rewards` has no `order_id` / cents | See [how to track ROI](#roi-from-rewards): `rewards.cost_cents` + `customer_rewards.order_id` |
+| **Loyalty page Tier stats = 0** | Hardcoded | Same missing assignment | Same as tier write | Same check-in tier assignment; then count by `customers.tier` |
+
+### What already exists (do not rebuild)
+
+| Exists | Use for |
+|--------|---------|
+| `customers` (points, visits, last_activity_at, created_at, status, tier) | Current Overview/Engagement proxies |
+| `rewards` + `redeemed_count` + `point_cost` | Top rewards (count only) |
+| `loyalty_program_tiers.points_threshold` | Assign member tier |
+| `customer_rewards` (earned_at, redeemed_at) | Redemption events **without money** |
+| `campaigns.channel` (`email` \| `sms`), `campaigns.revenue_cents` | Messaging channel; **not** a substitute for orders |
+| Check-in in join/enroll service | **Write path** for visit events + tier updates |
+
+### Recommended revenue + visit data model
+
+Minimum new facts (backend/Supabase, not Next-only):
+
+1. **`visit_events`** — one row per scan/check-in (`customer_id`, `loyalty_program_id`, `occurred_at`, optional `branch_id`, `source`). Keep `customers.visits` and `last_activity_at` as denormalized totals updated in the same transaction.
+2. **`points_ledger`** (or reuse visit_events with `points_delta`) — issued vs redeemed over time.
+3. **`orders`** (or ingest from POS) — `amount_cents`, `occurred_at`, `loyalty_program_id`, `customer_id` nullable (non-member), **`attributed_channel`** (`email` \| `sms` \| `in_store`), optional **`campaign_id`**. Written from tracking links / promo codes or in-store QR.
+4. **`rewards.cost_cents`** — owner-entered **cash** cost of honouring one reward. Do not treat `point_cost` as currency.
+5. **`customer_rewards.order_id`** (or a `redemptions` table) — the ticket the gift was redeemed on. Required for ROI.
+6. **Write `customers.tier` (or `tier_id`)** on enroll (base tier) and check-in (recompute from points vs ladder).
+
+### Recommended API shape
+
+Do **not** keep loading every customer into the browser for analytics.
+
+- `GET /api/analytics/overview?from=&to=` (or backend equivalent) returning pre-aggregated cards, series, segments, top rewards.
+- `GET /api/analytics/engagement?from=&to=`
+- `GET /api/analytics/revenue?from=&to=`
+- Optional `GET /api/analytics/export?from=&to=` (CSV)
+
+Authz: owner session; scope to their single `loyalty_program_id`. Aggregations in SQL/backend. Next Route Handler only if justified as BFF ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)).
+
+### Suggested delivery order
+
+| Phase | Scope | Unlocks |
+|-------|--------|---------|
+| **0 — Honesty in UI** | Disable/hide dead controls (date, export, insight CTAs, empty revenue). One glossary for Champion / at risk. Exclusive engagement buckets **or** document overlap in the UI | Stops fake affordances |
+| **1 — Apply the tier ladder** | Check-in + enroll write `customers.tier` from `points_threshold` | Donut, Most engaged Tier, Loyalty tier stats, later revenue-by-tier |
+| **2 — Visit event log** | Insert `visit_events` on check-in | QR scans, days between visits, visit-frequency chart, peak hour, period filters |
+| **3 — Shared segment rules** | One module; optionally sync `customers.status` from recency | Dashboard / Customers / Analytics / campaigns agree |
+| **4 — Orders + reward cost + attribution** | POS/manual `orders`; `attributed_channel` + `campaign_id`; tracking links/promo codes; `rewards.cost_cents`; `customer_rewards.order_id` | Full Revenue tab, AOV, ROI, channel chart, top spender |
+| **5 — Analytics API + period** | Aggregated endpoints; wire This month / Export | Scale + real deltas |
+
+Phase 0 can ship without schema changes. Phases 1–2 are the highest leverage for the current UI. Phase 4 is required before Revenue Impact is more than a mock.
 
 ---
 
 ## Known limitations
 
-Documented in source via `TODO(feature)` comments:
+Documented in source via `TODO(feature)` comments. Full UI / API / DB analysis and phased fixes: [Gaps](#gaps-ui--api--db-and-recommended-solutions).
+
+Short list:
 
 1. **Points chart** — issued is proxied from `created_at`; redeemed weekly series is not tracked
 2. **Visit frequency chart** — needs timestamped scan/visit events
 3. **QR scans / days between visits** — not wired
 4. **Peak hour / tier nudges** — coming soon
-5. **Revenue metrics** — need orders/transactions linked to members
+5. **Revenue metrics** — need orders/transactions linked to members (no equations today)
 6. **Month-over-month deltas** on stat cards — need historical snapshots
+7. **`customers.tier` never written** — enroll/check-in do not apply `loyalty_program_tiers.points_threshold`; Analytics donut will stay Untiered until backend assigns tiers (or Analytics computes from points)
+8. **One program per owner** — no drafts, no archive-and-create, no program switcher
+9. **Segment/level cutoffs** — hardcoded in the frontend; not owner-configurable
+10. **Loyalty “Tier stats”** — member counts hardcoded `"0"` on `/app/loyalty`
+11. **Insight CTAs** — Send / Nudge / Explore / Create have no handlers; “1 visit from a reward” uses hardcoded `visits % 5 === 4`, not program `visits_required`
+12. **Engagement level overlap** — At risk (20–60 days) can also match Champions/Loyal/Occasional; not a single exclusive assignment
+13. **Colliding “at risk” / “Champion” labels** — Overview, Engagement, Dashboard, and Customers/campaigns each use different rules (see [three systems](#three-different-systems-do-not-mix-them))
 
 ---
 

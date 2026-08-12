@@ -1,0 +1,908 @@
+# Campaigns Page (`/app/campaigns`)
+
+Reference for all components, conditions, and edge cases on the Campaigns list route, plus the linked detail page (`/app/campaigns/[campaignId]`), send pipeline, audience matching, and automations. Includes domain notes for frontend + backend work, plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
+
+**Jump to:** [route](#route-structure) · [page flow](#high-level-page-flow) · [stat cards](#stat-cards-4) · [status tabs](#status-tabs) · [filters](#search--filters--sort) · [table](#campaign-table) · [row menu](#row-menu) · [create / edit](#create--edit-dialog) · [send](#launch--send-pipeline) · [audience](#how-audience-actually-resolves) · [status machine](#campaign-status-machine) · [automations](#scheduled-automations) · [detail page](#detail-page-appcampaignscampaignid) · [performance](#performance--open--redeemed) · [personalization](#personalization-tokens) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
+
+**Source files:**
+
+- Route entry: `src/app/app/(shell)/campaigns/page.tsx`
+- Feature implementation: `src/features/campaigns/campaigns-page.tsx`
+- Detail route: `src/app/app/(shell)/campaigns/[campaignId]/page.tsx`
+- Detail feature: `src/features/campaigns/campaign-detail-page.tsx`
+- Automations UI: `src/components/campaigns/AutomationsSection.tsx`
+- Shell layout guard: `src/app/app/(shell)/layout.tsx`
+- Dashboard chrome: `src/components/dashboard/DashboardShell.tsx`
+- Client send helper: `src/lib/client/campaigns-api.ts`
+- Send BFF: `src/app/api/campaigns/send/route.ts`
+- Send service: `src/lib/server/campaigns-service.ts`
+- Messaging contracts (not yet used by send): `src/lib/server/messaging/templates/campaign/`
+- Owner notification: `src/lib/notify-client.ts` → `/api/notifications/owner`
+- Schema: `supabase/migrations/20260715131154_*.sql`, `20260715135406_*.sql`, `20260722203955_*.sql`
+- Runtime ownership: [ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)
+- Mapping: [15-server-function-mapping.md](15-server-function-mapping.md) (`sendCampaign`)
+- Related: [analytics-page.md](analytics-page.md) (tiers, “at risk”, `revenue_cents`)
+
+---
+
+## Route structure
+
+The URL `/app/campaigns` is served by a thin Next.js page that delegates to the feature module:
+
+```tsx
+// src/app/app/(shell)/campaigns/page.tsx
+"use client";
+
+import CampaignsPage from "@/features/campaigns/campaigns-page";
+
+export default function Page() {
+  return <CampaignsPage />;
+}
+```
+
+The page sits under `src/app/app/(shell)/`, which applies a **server-side auth guard** before anything renders:
+
+```tsx
+// src/app/app/(shell)/layout.tsx
+export default async function AppShellLayout({ children }) {
+  await requireUser();
+  return <>{children}</>;
+}
+```
+
+Auth is enforced twice:
+
+1. **Server** — `requireUser()` redirects unauthenticated users to `/auth/sign-in`
+2. **Client** — `CampaignsPage` runs additional checks (verification, onboarding)
+
+Legacy TanStack path `/campaigns` maps to `/app/campaigns` (`src/lib/navigation/paths.ts`). In-app `Link` / `navigate({ to: "/campaigns" })` resolve to the approved URL.
+
+Detail: `/app/campaigns/[campaignId]` → `CampaignDetailPage`. Same shell guard. See [detail page](#detail-page-appcampaignscampaignid).
+
+---
+
+## High-level page flow
+
+```mermaid
+flowchart TD
+  A[Server: requireUser] --> B[Client: CampaignsPage mounts]
+  B --> C{loading?}
+  C -->|yes| D[Full-screen spinner]
+  C -->|no| E{user exists?}
+  E -->|no| F[Redirect /signin]
+  E -->|yes| G{isVerified?}
+  G -->|no| H[Redirect /verify]
+  G -->|yes| I[Fetch profile]
+  I --> J{onboarding_completed?}
+  J -->|no| K[Redirect /onboarding]
+  J -->|yes| L[Fetch loyalty_programs for owner]
+  L --> M{program exists?}
+  M -->|no| N[programId=null, campaigns=empty, ready=true]
+  M -->|yes| O[Load campaigns for program, ready=true]
+  N --> P[DashboardShell + list + automations]
+  O --> P
+```
+
+Unlike Analytics, there is **no empty-state for “no loyalty program”** on the main canvas. The list is simply empty. Create/Launch then toasts “Create your loyalty program first.”
+
+---
+
+## `CampaignsPage` — root component
+
+### State
+
+| State | Purpose |
+|-------|---------|
+| `firstName` | Dashboard header greeting (first token of `full_name`, else email local-part) |
+| `programId` | Owner’s single loyalty program, or `null` |
+| `campaigns` | All campaigns for that program |
+| `ready` | Data fetch finished |
+| `tab` | `"all"` \| `"active"` \| `"scheduled"` \| `"draft"` \| `"completed"` |
+| `search` | Free-text filter |
+| `sort` | `"newest"` \| `"oldest"` \| `"name"` \| `"highest"` \| `"lowest"` |
+| `typeFilter` | `"all"` \| `"email"` \| `"sms"` |
+| `audienceFilter` | `"all"` or an [audience option](#audience-options) |
+| `createOpen` | Create dialog |
+| `editTarget` | Campaign being edited, or `null` |
+| `deleteTarget` | Campaign pending delete confirm, or `null` |
+| `deleting` | Delete in flight |
+| `launchingId` | Campaign id currently sending, or `null` |
+
+### Client-side redirects (`useEffect`)
+
+| Condition | Action |
+|-----------|--------|
+| `loading === true` | Wait (no redirect) |
+| `!user` | → `/signin` |
+| `!isVerified` | → `/verify?email=...` |
+| `!profile.onboarding_completed` | → `/onboarding` |
+| No loyalty program | Stay on page, `programId = null`, `campaigns = []` |
+| Program exists | Load `campaigns` for `loyalty_program_id` |
+
+### Data loading sequence
+
+1. Fetch `profiles` (`full_name`, `onboarding_completed`) for current user
+2. Fetch `loyalty_programs` where `owner_id = user.id` (expects 0 or 1 — unique on `owner_id`)
+3. If program exists, fetch `campaigns` ordered by `created_at` descending
+
+Columns loaded:
+
+`id, name, description, channel, status, audience, subject, message, sent_count, opened_count, revenue_cents, failed_count, created_at`
+
+**Not loaded on the list:** `scheduled_at`, `sent_at`, `clicked_count`, `updated_at`.
+
+### Loading UI
+
+While `loading || !ready`, a centered yellow spinner is shown (not `DashboardShell`).
+
+### Main UI (once ready)
+
+Wrapped in `DashboardShell` with sidebar, header, notifications, and mobile nav. Campaigns is highlighted under **Growth → Campaigns**.
+
+---
+
+## Page chrome (always visible when loaded)
+
+### Header
+
+- **Title:** Campaigns
+- **Subtitle:** “Create, manage, and track campaigns that drive customer engagement and repeat visits.”
+- **“Create Campaign” button** — only rendered when `campaigns.length > 0`. On a true empty list, the CTA lives inside the empty state instead.
+
+### Stat cards (4)
+
+All four always render. They use **all loaded campaigns**, not the current tab/search/filter.
+
+| Card | Calculation |
+|------|-------------|
+| **Total Campaigns** | `campaigns.length` |
+| **Emails Sent** | sum of `sent_count` where `channel === "email"` |
+| **SMS Sent** | sum of `sent_count` where `channel === "sms"` |
+| **Campaign Revenue** | `sum(revenue_cents) / 100` formatted as `$X.XX` |
+
+`sent_count` is written by the send service after a launch. `revenue_cents` is **never written** by send or the UI — it stays `0`, so the card shows **`$0.00`**, not `"—"`. That looks like “zero revenue” rather than “not tracked.” Analytics uses dashes for the same reason; this page does not.
+
+No date range. Totals are all-time for this program.
+
+---
+
+## Status tabs
+
+Five pills. Each shows a **count badge**. Active pill is navy (`#0a152f`).
+
+| Tab value | Label | Count rule |
+|-----------|-------|------------|
+| `all` | All Campaigns | `campaigns.length` |
+| `active` | Active | `status === "active"` |
+| `scheduled` | Scheduled | `status === "scheduled"` |
+| `draft` | Drafts | `status === "draft"` |
+| `completed` | Completed | `status === "completed"` |
+
+Filtering is **exact string match** on `campaigns.status`. Tabs that the send pipeline never writes stay at **0** unless something else wrote that status:
+
+| Status in DB / UI | Who writes it today |
+|-------------------|---------------------|
+| `draft` | Insert on create |
+| `sending` | Send service, briefly, during fan-out |
+| `active` | Send service if `sentCount > 0`; also **Enable** / detail toggle |
+| `failed` | Send service if `sentCount === 0` |
+| `disabled` | Row menu Disable / detail toggle |
+| `scheduled` | **Nobody** (`scheduled_at` unused) |
+| `completed` | **Nobody** |
+| `sending` | Transient; no dedicated tab (falls under All only) |
+
+`StatusPill` also styles `sending` and `failed` if they appear in the table (All tab).
+
+---
+
+## Search / filters / sort
+
+All three filters plus search apply **client-side** on the already-loaded array. Changing them does not re-query Supabase.
+
+### Search
+
+Case-insensitive substring on `name + description + audience`. Empty query = no extra filter.
+
+### Type filter
+
+| Value | Rule |
+|-------|------|
+| `all` | No channel filter |
+| `email` | `channel === "email"` |
+| `sms` | `channel === "sms"` |
+
+### Audience filter
+
+Exact match on stored `campaigns.audience` string (the label saved from the create dialog), or `all`.
+
+### Sort
+
+| Option | Rule |
+|--------|------|
+| Newest first | `created_at` descending (default) |
+| Oldest first | `created_at` ascending |
+| Name (A–Z) | `localeCompare` on `name` |
+| Highest performance | `performancePct` descending |
+| Lowest performance | `performancePct` ascending |
+
+`performancePct` = `round(opened_count / sent_count * 100)`, or **0** if `sent_count` is 0. Unsent campaigns therefore sort as 0% for highest/lowest.
+
+---
+
+## Empty states
+
+| Condition | Title | Body | CTA |
+|-----------|-------|------|-----|
+| `campaigns.length === 0` | “No Campaigns Yet!” | Create-your-first copy | Create Campaign (opens dialog) |
+| Campaigns exist but filters match none | “No matching campaigns” | “Try a different search or status filter.” | None |
+
+Telescope illustration (`telescope-empty-state.png`) in both cases.
+
+---
+
+## Campaign table
+
+Shown when `filtered.length > 0`. Columns:
+
+| Column | Source |
+|--------|--------|
+| Campaign | `name` |
+| Audience | `audience` or `"—"` |
+| Type | `"SMS"` if `channel === "sms"`, else `"Email"` |
+| Performance | [formatPerformance](#performance--open--redeemed) |
+| Status | `StatusPill` |
+| Actions | `RowMenu` |
+
+Row click does **not** navigate. View is only via the ⋮ menu.
+
+### `StatusPill` cases
+
+| `status` | Label | Colors |
+|----------|-------|--------|
+| `active` | Active | Green |
+| `sending` | Sending | Yellow |
+| `scheduled` | Scheduled | Yellow |
+| `draft` | Draft | Gray |
+| `completed` | Completed | Blue |
+| `failed` | Failed | Red |
+| `disabled` | Disabled | Red |
+| anything else | Draft styling | Gray |
+
+---
+
+## Performance (“% Open” / “% Redeemed”)
+
+```text
+performancePct = sent_count === 0 ? 0 : round(opened_count / sent_count * 100)
+```
+
+| Condition | Display |
+|-----------|---------|
+| `sent_count` is 0 | `"—"` |
+| Email + sent | `"{pct}% Open"` |
+| SMS + sent | `"{pct}% Redeemed"` |
+
+`opened_count` is **never incremented**. After a successful send it stays 0, so the cell shows **`0% Open`** (or `0% Redeemed` for SMS), not `"—"`.
+
+SMS “Redeemed” is a **label only**. It does not join `customer_rewards` or orders. There is no redemption event tied to a campaign.
+
+---
+
+## Row menu
+
+| Item | When shown | Action |
+|------|------------|--------|
+| View | Always | Navigate to `/campaigns/$campaignId` |
+| Edit | Always | Opens edit dialog (does **not** change status) |
+| Launch Campaign | Only if `status === "draft"` | [Send pipeline](#launch--send-pipeline) |
+| Disable | If not `disabled` | `status → "disabled"` |
+| Enable | If `disabled` | `status → "active"` (**does not send**) |
+| Delete | Always | Confirm, then hard delete |
+
+Launch is disabled while `launchingId === campaign.id` (“Launching…”).
+
+### Trap: Disable a draft, then Enable
+
+1. Draft → Disable → `disabled` (Launch item disappears)
+2. Enable → `active` without sending
+3. Send refuses `active` campaigns (“already sending or has been sent”)
+4. Campaign looks Active, `sent_count` stays 0
+
+There is no “mark completed” or “unsend.”
+
+---
+
+## Create / edit dialog
+
+Shared `CreateCampaignDialog` (also used on the detail page).
+
+### Fields
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| Campaign name | Yes | Trimmed |
+| Description | No | Internal note; empty → `null` |
+| Channel | Yes | `"email"` \| `"sms"` (default email) |
+| Audience | Yes | One of the [audience options](#audience-options); default `"All customers"` |
+| Subject | No | **Only rendered when channel is email** |
+| Message | Yes | Body; personalization tokens are **not** documented in the dialog |
+
+Submit is blocked until `name.trim()` and `message.trim()` are non-empty.
+
+### Create actions
+
+| Button | Result |
+|--------|--------|
+| Save as draft | Insert `status: "draft"`, toast “Campaign saved as draft” |
+| Launch campaign | Insert draft, then immediately `runSend(id)` |
+
+Insert always starts as **draft**, even when launching. `owner_id` and `loyalty_program_id` are set from the session / loaded program.
+
+If `programId` is null:
+
+> “Create your loyalty program first” — toast action navigates to `/loyalty-program`.
+
+On success, `notifyCampaignCreated` fires a best-effort POST to `/api/notifications/owner` (`prefKey: campaign_created`, link `/app/campaigns/{id}`).
+
+### Edit actions
+
+Single **Save changes**. Updates name, description, channel, audience, subject, message. **Does not** change status, counts, or `sent_at`. Editing a sent campaign does **not** re-send.
+
+If the stored `audience` is not in `AUDIENCE_OPTIONS`, the form falls back to `"All customers"` (saving would overwrite the old string).
+
+---
+
+## Audience options
+
+Hardcoded labels stored as **free text** on `campaigns.audience`. Not an enum, not an FK.
+
+| UI label | Send-time match (see [resolution](#how-audience-actually-resolves)) |
+|----------|---------------------------------------------------------------------|
+| All customers | No extra customer filter |
+| Birthday Customers | `birth_date` month = current month |
+| At Risk | `customers.status === "at-risk"` |
+| VIP Members | `tier` ILIKE `vip` |
+| Gold Members | `tier` ILIKE `gold` |
+| Silver Members | `tier` ILIKE `silver` |
+| New Customers | `created_at` within last **30 days** |
+
+Matching on send uses `audience.toLowerCase()` **substring** checks (`includes("vip")`, `includes("at risk")`, …), not the exact label. Order in code: vip → gold → silver → at risk → new; birthday is an extra filter after the query.
+
+---
+
+## How audience actually resolves
+
+Send loads customers for `campaign.loyalty_program_id`, then applies **one** of the SQL filters (if-else), then optional birthday filter, then channel contact filter.
+
+```mermaid
+flowchart TD
+  A[All customers in program] --> B{audience lowercase}
+  B -->|contains vip| C["tier ILIKE vip"]
+  B -->|else contains gold| D["tier ILIKE gold"]
+  B -->|else contains silver| E["tier ILIKE silver"]
+  B -->|else contains at risk| F["status = at-risk"]
+  B -->|else contains new| G["created_at >= now - 30d"]
+  B -->|else| H[No extra SQL filter]
+  C --> I{contains birthday?}
+  D --> I
+  E --> I
+  F --> I
+  G --> I
+  H --> I
+  I -->|yes| J[Keep birth_date month = now]
+  I -->|no| K[Keep all]
+  J --> L{channel}
+  K --> L
+  L -->|email| M[Must have email]
+  L -->|sms| N[Must have phone]
+  M --> O{any left?}
+  N --> O
+  O -->|no| P[Throw: no recipients]
+  O -->|yes| Q[Enqueue / send]
+```
+
+### Important mismatches
+
+**At Risk vs Customers page.** Send queries `status = "at-risk"`. Customers list / enroll use `"at_risk"` (underscore) and default new members to `"active"`. Nothing in join/check-in writes `"at-risk"`. An “At Risk” campaign will usually match **zero** rows even when the Customers tab shows At-Risk people.
+
+This is one of the four colliding “at risk” rules ([analytics-page.md](analytics-page.md#three-different-systems-do-not-mix-them)):
+
+| Place | Rule |
+|-------|------|
+| Analytics Overview segments | `last_activity_at` **> 60 days** |
+| Analytics Engagement levels | `last_activity_at` **20–60 days** |
+| Dashboard | `last_activity_at` **> 30 days** |
+| Customers UI | `customers.status === "at_risk"` |
+| **Campaign send** | `customers.status === "at-risk"` |
+
+**VIP / Gold / Silver.** Same as Analytics: `customers.tier` is usually **null** because enroll/check-in never apply `loyalty_program_tiers`. Those audiences are empty until tier assignment exists.
+
+**Birthday.** `isCurrentMonth(birth_date)` — **month only**, not day. Timezone is the **server’s** local `Date`. Customers without `birth_date` are dropped. Join can store birthday; it is optional.
+
+**New Customers.** Same 30-day `created_at` window as Analytics “New members.” Not `last_activity_at`.
+
+**All customers.** Includes every status (active, at_risk, churned, …). Only the channel contact field is required.
+
+**No recipients** → send throws before marking `sending`. Toast: “No recipients match this audience with an email address” (or phone). Campaign stays **draft**.
+
+---
+
+## Launch / send pipeline
+
+```mermaid
+sequenceDiagram
+  participant UI as CampaignsPage
+  participant BFF as POST /api/campaigns/send
+  participant Svc as campaigns-service
+  participant DB as Supabase admin
+  participant Q as enqueue_email RPC
+
+  UI->>BFF: { campaignId }
+  BFF->>BFF: session user
+  BFF->>Svc: sendCampaign(id, userId)
+  Svc->>DB: load campaign, owner check
+  Svc->>DB: resolve audience
+  alt no recipients
+    Svc-->>UI: 400 error, status unchanged
+  else has recipients
+    Svc->>DB: status = sending
+    Svc->>DB: upsert campaign_recipients pending
+    loop each recipient
+      alt SMS
+        Svc->>DB: recipient failed (SMS provider not configured)
+      else email
+        Svc->>Q: enqueue_email
+        Svc->>DB: recipient sent or failed
+      end
+    end
+    Svc->>DB: status = active if sentCount>0 else failed
+    Svc-->>UI: { sentCount, failedCount, total, status }
+  end
+  UI->>DB: refetch that campaign row
+```
+
+### Client (`runSend`)
+
+1. `setLaunchingId`
+2. `POST /api/campaigns/send` with `{ campaignId }`
+3. Refetch that campaign row and patch local state
+4. Toast:
+   - all ok → “Sent to N of T customers”
+   - partial → same plus “(F failed)”
+   - none sent (HTTP 200 with `sentCount === 0`) → “Send failed for all T recipients”
+   - thrown error → `err.message`
+
+Create+Launch uses the same path after insert.
+
+### BFF (`/api/campaigns/send`)
+
+- Node runtime
+- Requires session user (401 otherwise)
+- Delegates to `sendCampaign` in `lib/server/campaigns-service.ts`
+- Errors → 400 + `{ error }`
+
+### Service rules
+
+| Check | Result |
+|-------|--------|
+| Invalid UUID | Zod throw |
+| Campaign missing | “Campaign not found” |
+| `owner_id !== userId` | “Forbidden” |
+| `status` is `sending` or `active` | “Campaign is already sending or has been sent” |
+| SMS channel | Every recipient fails with “SMS provider not configured” |
+| Email | Personalize subject/body, wrap HTML, `mint_unsubscribe_token`, `enqueue_email` |
+
+From-name: `profiles.business_name` → else `full_name` → else `"Loyollo"`.  
+From address: `{businessName} <noreply@loyollo.com>`.  
+Default subject if blank: `A message from {businessName}`.
+
+Final campaign update:
+
+```text
+status     = sentCount > 0 ? "active" : "failed"
+sent_at    = now()
+sent_count = sentCount
+failed_count = failedCount
+```
+
+`opened_count`, `clicked_count`, `revenue_cents` are **not** updated.
+
+Recipient rows: unique `(campaign_id, customer_id)`. Upsert uses `ignoreDuplicates`. On **retry of a failed campaign**, existing recipient rows are reused and the loop **sends again** (including previously `sent` customers) — duplicate-email risk.
+
+### ADR-013 vs today
+
+[ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md) and the server-function map say: Next **must not** run unbounded recipient fan-out in the request lifecycle. The current BFF **does** loop every recipient inside `POST /api/campaigns/send`. That is a known cutover gap (timeout, partial send, duplicate worker). Intended: Next only **starts** a backend/messaging job.
+
+Send also **inlines** `personalize` / `buildHtml` instead of calling `src/lib/server/messaging/` contracts (duplicates live in `templates/campaign/`).
+
+---
+
+## Personalization tokens
+
+Preserved tokens ([17-messaging-templates.md](17-messaging-templates.md)):
+
+| Token | Value |
+|-------|--------|
+| `{{name}}` | Customer `full_name` |
+| `{{first_name}}` | First whitespace token of `full_name` |
+| `{{business_name}}` | Owner business / full name / Loyollo |
+
+Unknown tokens become `""`. The create dialog does **not** mention tokens. Preview on the detail page shows the **raw** template, not personalized HTML.
+
+HTML wrapper: navy heading = business name, escaped paragraphs, footer “Sent by {business} via Loyollo.”
+
+---
+
+## Campaign status machine
+
+```mermaid
+stateDiagram-v2
+  [*] --> draft: create
+  draft --> sending: launch (has recipients)
+  draft --> disabled: Disable
+  sending --> active: sentCount > 0
+  sending --> failed: sentCount = 0
+  failed --> sending: launch again (allowed)
+  disabled --> active: Enable (no send)
+  active --> disabled: Disable
+  disabled --> disabled: already disabled
+```
+
+Not in the diagram because nothing writes them: `scheduled`, `completed`.
+
+`active` after a real send **and** `active` after Enable-without-send are the same stored value. Send treats both as “already sent.”
+
+---
+
+## Delete
+
+Alert dialog. Hard `DELETE` from `campaigns`. Recipients cascade (`ON DELETE CASCADE`). Cannot be undone. Automations are a separate table and are unaffected.
+
+---
+
+## Scheduled automations
+
+`AutomationsSection` is always rendered when `user` exists (including when there is no loyalty program). It is **CRUD for config rows only**. No worker, no schedule, no send.
+
+Table: `campaign_automations`. Unique `(owner_id, type)` — **one row per type per owner**.
+
+### Types (enum in DB check)
+
+| `type` | UI label | Default name |
+|--------|----------|--------------|
+| `birthday_rewards` | Birthday Rewards | Birthday Rewards |
+| `welcome_new_customers` | Welcome New Customers | Welcome New Customers |
+| `vip_tier_upgrade` | VIP Tier Upgrade | VIP Tier Upgrade |
+| `re_engagement` | Re-engagement | Re-engagement |
+| `points_expiry` | Points Expiry | Points Expiry Reminder |
+| `promotional_offer` | Promotional Offer | Promotional Offer |
+| `feedback_request` | Feedback Request | Feedback Request |
+
+`config` jsonb exists and is **never read or written** by the UI (inserts omit it).
+
+### UI behavior
+
+| Action | Behavior |
+|--------|----------|
+| Load | All automations for `owner_id`, oldest first |
+| Search | Name or type label |
+| New automation | Disabled when all 7 types already exist |
+| Create | Insert `enabled: true`; type picker only shows unused types |
+| Edit | Rename only (type locked) |
+| Toggle | Optimistic `enabled`; toast enabled / paused |
+| Delete | Confirm, hard delete |
+
+Empty: “No automations yet” + New automation. Filter miss: “No matching automations.”
+
+**Enabled does not send mail.** There is no job that reads `enabled` and fans out to customers.
+
+---
+
+## Detail page (`/app/campaigns/[campaignId]`)
+
+Thin route unwraps `params.campaignId` and renders `CampaignDetailPage`.
+
+### Auth / load differences vs list
+
+| Check | List | Detail |
+|-------|------|--------|
+| Server `requireUser` | Yes | Yes |
+| Client `!user` / `!isVerified` | Yes | Yes |
+| `onboarding_completed` | Redirect `/onboarding` | **Not checked** |
+| Ownership | RLS on `owner_id` | RLS; no extra `owner_id` filter in the query |
+| Missing row | n/a | “Campaign not found” card + back link |
+
+Loads `campaigns` (includes `sent_at`) and `campaign_recipients` with nested `customers(full_name, email, tier)`.
+
+### Header card
+
+- Breadcrumb: Campaigns / `{name}`
+- Toggle: green if `status` is `active` **or** `sending`; otherwise gray. Click: `disabled` ↔ `active` (same Enable trap as the list)
+- Created date · Last Sent (`sent_at` or `"—"`)
+- Channel icon + audience
+- Edit → same `CreateCampaignDialog` in edit mode
+
+### Customers Reached — donut
+
+Counts **only** recipients with `status === "sent"` (not `campaign.sent_count`, not pending/failed).
+
+Groups nested `customers.tier` (lowercased):
+
+| Bucket | Match |
+|--------|-------|
+| Silver | `silver` |
+| Gold | `gold` |
+| VIP | `vip` |
+| Other | anything else, including null — legend only if count > 0 |
+
+Colors are **hardcoded** (`#20386b`, `#feb602`, `#a3a3a3`, `#d4d4d4`) — not `loyalty_program_tiers.color`. Untiered members inflate **Other** (usually most of them).
+
+Center: `{total}` / “Total customers.” Empty send → 0 and a gray ring.
+
+### Campaign Stats
+
+| Tile | Today |
+|------|--------|
+| Recipients | Count of `status === "sent"` |
+| Revenue Influenced | `$` + `revenue_cents / 100` (always `$0` until written) |
+| Rewards Redeemed | **Hardcoded `0`** |
+
+Green banner if `total > 0`: “Delivered to N recipient(s) (F failed).” `failed_count` comes from the campaign row.
+
+Source comment: open/click tracking, revenue attribution, and per-customer engagement scoring are **not implemented**.
+
+### Top Engaged Customers
+
+Always empty copy:
+
+> “Engagement tracking isn't available yet…”
+
+`topEngaged` is hardcoded `[]`.
+
+### Campaign Message
+
+Raw `subject` (email only) + `message` preview. Not the wrapped HTML, not token-substituted.
+
+---
+
+## Data model
+
+### `campaigns`
+
+| Column | Used by list UI | Written by send | Notes |
+|--------|-----------------|-----------------|-------|
+| `id` | Yes | — | PK |
+| `loyalty_program_id` | Load filter | — | FK; cascade with program |
+| `owner_id` | Insert | Ownership check | RLS |
+| `name`, `description` | Yes | — | |
+| `channel` | Yes | Audience contact filter | `"email"` \| `"sms"` — **send medium**, not sale channel |
+| `status` | Tabs / pills | `sending` → `active`/`failed` | Free text, no DB enum |
+| `audience` | Display + filter | Substring match | Free text |
+| `subject`, `message` | Dialog | Personalize | |
+| `scheduled_at` | **No** | **No** | Column unused |
+| `sent_at` | Detail only | Yes | |
+| `sent_count` | Stats / performance | Yes | Successful recipient updates |
+| `opened_count` | Performance | **No** | Stays 0 |
+| `clicked_count` | **No** | **No** | Not in SELECT |
+| `revenue_cents` | Revenue card | **No** | Stays 0; not orders |
+| `failed_count` | Detail banner | Yes | |
+| `created_at` / `updated_at` | Sort | Trigger on update | |
+
+RLS: owner CRUD. Authenticated role; service-role for send.
+
+### `campaign_recipients`
+
+`campaign_id`, `customer_id` (unique pair), `channel`, `status` (`pending` \| `sent` \| `failed`), `error_message`, `sent_at`.
+
+Owners **SELECT** only via campaign ownership. Inserts/updates go through **service-role** in send. No open/click columns.
+
+### `campaign_automations`
+
+`owner_id`, `type` (check constraint), `name`, `enabled`, `config` (unused), timestamps. Unique `(owner_id, type)`.
+
+### Related (not owned by this page)
+
+- `customers` — audience + detail donut (`tier`, `status`, `email`, `phone`, `birth_date`, `created_at`)
+- `loyalty_programs` — one per owner
+- `email_send_log` + `enqueue_email` / `mint_unsubscribe_token` RPCs — email path
+- `loyalty_program_tiers` — **not queried**; intended ladder for VIP/Gold/Silver audiences
+
+---
+
+## Shared building blocks
+
+| Component | Role |
+|-----------|------|
+| `DashboardShell` | Sidebar (Growth → Campaigns), header, mobile drawer |
+| `StatCard` | List metric tiles |
+| `StatusPill` | Status badge |
+| `RowMenu` | Per-campaign actions |
+| `CreateCampaignDialog` | Create + edit (list and detail) |
+| `AutomationsSection` | Automation CRUD |
+| `TierDonut` / `TierLegend` | Detail reached-by-tier |
+| `StatTile` | Detail stats |
+| `sendCampaign` (client) | `fetch` to BFF |
+| `notifyCampaignCreated` | Best-effort owner notification |
+
+---
+
+## Summary of all major cases
+
+| Scenario | What the user sees |
+|----------|-------------------|
+| Not logged in (server) | Redirect to `/auth/sign-in` |
+| Not logged in (client) | Redirect to `/signin` |
+| Unverified email | Redirect to `/verify` |
+| Onboarding incomplete (list) | Redirect to `/onboarding` |
+| Onboarding incomplete (detail) | Page still loads if campaign exists |
+| Loading | Full-screen spinner |
+| No loyalty program | Empty campaigns + automations; create toasts “create program first” |
+| Program, no campaigns | Telescope empty state + Create |
+| Filters match nothing | “No matching campaigns” |
+| Save as draft | Row with Draft pill, performance `"—"` |
+| Launch with recipients (email) | Status Active, sent counts, toast |
+| Launch with zero matching customers | Error toast; stays draft |
+| Launch SMS | Recipients fail; campaign `failed`; toast |
+| Re-launch `active` | Error: already sent |
+| Re-launch `failed` | Allowed; may duplicate emails to prior recipients |
+| Disable then Enable | Looks Active, never sent, cannot Launch |
+| Edit after send | Saves copy; does not re-send |
+| Delete | Row gone; recipients cascade |
+| Scheduled / Completed tabs | Stay 0 unless status was written elsewhere |
+| Performance after send | `0% Open` / `0% Redeemed` (`opened_count` unused) |
+| Campaign Revenue | `$0.00` |
+| Automations enabled | Config only; no messages go out |
+| Detail, never sent | Donut 0, stats 0, empty engagement |
+| Detail, sent, untiered members | Donut “Other” (or empty Other legend if all mapped) |
+| Detail missing id | Not found card |
+
+---
+
+## Gaps (UI / API / DB) and recommended solutions
+
+Campaigns is a **client-side list** over `campaigns` plus a **synchronous fan-out BFF** for send. Automations are **config-only**. Existing backend remains the primary API ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)); do not grow Next into a campaign worker ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)).
+
+### Gap map (widget → layer)
+
+| Widget / flow | UI gap | API gap | DB gap | Recommended fix |
+|---------------|--------|---------|--------|-----------------|
+| **Create without program** | Toast only | n/a | One program per owner | Keep; optionally empty-state CTA like Analytics |
+| **Scheduled tab / `scheduled_at`** | Tab always 0 | No schedule job | Column unused | Hide tab **or** add schedule picker + worker that flips `scheduled` → send at `scheduled_at` |
+| **Completed tab** | Always 0 | Send writes `active`, not `completed` | No lifecycle | Either map successful send → `completed`, or drop the tab. `active` today means “sent” |
+| **Enable / Disable vs Launch** | Enable sets `active` without sending | Send blocks `active` | One status string, two meanings | Split: `draft` / `scheduled` / `sending` / `sent` / `failed` / `paused`. Enable/Disable only for automations or pause-future-sends |
+| **Performance % Open** | Shows `0%` after send | No open webhook | `opened_count` unused | Pixel / ESP events → increment `opened_count` (and recipient-level open). Until then show `"—"` not `0%` |
+| **SMS “% Redeemed”** | Misleading label | No redemption join | No `campaign_id` on `customer_rewards` | Don’t use `opened_count`. Join redemptions in a window after send, or hide until tracked |
+| **Campaign Revenue / Revenue Influenced** | `$0.00` looks real | Never written | No orders; `revenue_cents` unused | Same as Analytics revenue: orders + `campaign_id` / tracking links. UI: `"—"` until data exists |
+| **At Risk audience** | Label matches Customers | Query uses `"at-risk"` | Customers store `"at_risk"` | One status value. Prefer recency job **or** stop using `status` (see Analytics shared rules) |
+| **VIP / Gold / Silver audience** | Options exist | `ilike` on empty `tier` | `customers.tier` unset | Write tier on enroll/check-in from `loyalty_program_tiers` ([analytics-page.md](analytics-page.md#how-customer-tiers-actually-work)) |
+| **Birthday audience** | Month-only, server TZ | Filter in JS after fetch | `birth_date` optional | SQL: month+day in owner TZ; document “birthday this month” vs “today” |
+| **SMS send** | Channel selectable | Throws per recipient | n/a | Keep UX; stub transport ([17-messaging-templates.md](17-messaging-templates.md)). Don’t mark campaign `failed` for all if product wants “saved but unsendable” |
+| **Fan-out in Next** | Launch waits on HTTP | Unbounded loop in Route Handler | n/a | Enqueue **one** job; worker sends. Next returns `202` + `sending`. Align with ADR-013 |
+| **Retry / idempotency** | Re-launch failed resends everyone | `ignoreDuplicates` then send anyway | Unique pair exists | Skip `status = sent`; use `message_id` idempotency already in payload |
+| **Messaging contracts** | n/a | Service copies `buildHtml` | n/a | Call `src/lib/server/messaging/` only; delete duplicate helpers |
+| **Lovable `enqueue_email`** | n/a | Still RPC + Lovable-shaped queue | Queue product TBD | Withdraw per ADR-009/013; keep log/idempotency fields |
+| **Personalization UX** | Tokens undocumented; preview is raw | Tokens work on send | n/a | Hint in dialog; preview with sample `{{first_name}}` |
+| **Edit after send** | Allowed, silent | No versioning | Message overwritten | Freeze copy after send **or** snapshot body onto recipients |
+| **Automations** | Look like live journeys | No runner | `config` unused | Worker per type (birthday cron, welcome on enroll, …) **or** hide section until built. Store real config (offset days, template, channel) |
+| **Detail Top Engaged / Rewards Redeemed** | Empty / `0` | No events | No opens/clicks/redemptions | Recipient engagement events; don’t show `0` |
+| **Detail donut** | Other = untiered | Uses stored `tier` | Same as Analytics | Same tier-write as loyalty; use program colors |
+| **List loads all campaigns** | Client filter/sort | No list API | OK at small N | BFF/backend list with query params when volume grows |
+| **Insight CTAs on Analytics** | Send/Nudge unwired | No “create from insight” | n/a | Prefill `CreateCampaignDialog` audience from the insight |
+
+### What already exists (do not rebuild)
+
+| Exists | Use for |
+|--------|---------|
+| `campaigns` + RLS owner CRUD | List/create/edit/delete |
+| `campaign_recipients` unique pair | Delivery log |
+| `sendCampaign` audience + enqueue | Starting point for a **worker**, not the long-term Next loop |
+| `{{name}}` / `{{first_name}}` / `{{business_name}}` + HTML wrapper | Content parity |
+| `campaign_automations` unique type | Config store once a worker exists |
+| `enqueue_email` / `email_send_log` / unsubscribe token | Observability until queue product is chosen |
+| One program per owner | Scope all campaigns |
+
+### Recommended send + attribution model
+
+1. **Job, not request:** `POST /api/campaigns/send` (or Backend API) inserts a `campaign_jobs` row and returns. Worker loads audience, writes recipients, calls messaging **contracts**, updates counts. Visibility timeout + idempotent `message_id`.
+2. **Status enum:** `draft` \| `scheduled` \| `sending` \| `sent` \| `failed` \| `cancelled`. Pause ≠ sent.
+3. **Audience as structured filter** (json), not a display string: `{ type: "tier", value: "gold" }` / `{ type: "status", value: "at_risk" }` / `{ type: "recency", days: 60 }`. One shared module with Customers + Analytics.
+4. **Opens/clicks:** ESP webhook or pixel → `campaign_recipients.opened_at` / `clicked_at` and roll up to `opened_count` / `clicked_count`.
+5. **Revenue:** `orders.campaign_id` + `attributed_channel` ([analytics-page.md](analytics-page.md#revenue-by-channel--what-channel-means)). Then `revenue_cents` is a rollup, not a manual column.
+6. **Automations:** worker reads `enabled` + `config`; reuse the same send path with a system-owned campaign or a dedicated `automation_runs` table.
+
+### Recommended API shape
+
+Do **not** keep fan-out in the browser or in a Vercel request.
+
+- `POST /api/campaigns` (or Backend) create draft
+- `POST /api/campaigns/:id/send` → enqueue job (`202`)
+- `GET /api/campaigns/:id` including recipient summary
+- `GET /api/campaigns/:id/preview` personalized HTML
+- Worker-only: process job, provider webhooks for open/bounce
+
+Authz: owner session; scope to their `loyalty_program_id`. Service-role only in the worker.
+
+### Suggested delivery order
+
+| Phase | Scope | Unlocks |
+|-------|--------|---------|
+| **0 — Honesty in UI** | `"—"` for revenue and open rate until tracked; hide Scheduled/Completed **or** label them unused; document tokens; don’t Enable-to-`active` | Stops fake metrics and the draft trap |
+| **1 — Audience truth** | Fix `at-risk` vs `at_risk`; apply tier ladder on check-in; shared segment module | VIP/Gold/At Risk campaigns actually match people |
+| **2 — Send out of Next** | One enqueue + worker; skip already-`sent` recipients; messaging contracts | ADR-013, timeouts, duplicates |
+| **3 — SMS stub policy** | Explicit failure vs “channel saved, send disabled” | No surprise `failed` campaigns |
+| **4 — Opens + schedule** | Pixel/ESP; `scheduled_at` worker | Real performance %; Scheduled tab |
+| **5 — Automations runner** | Cron/event per type using `config` | Section becomes real |
+| **6 — Attribution** | Orders + `campaign_id` | Revenue cards, Analytics channel chart |
+
+Phase 0–1 need little or no new infrastructure. Phase 2 is the hard stop for production send volume.
+
+---
+
+## Known limitations
+
+Documented in source via `TODO(feature)` on the detail page and by ADR-013. Full analysis: [Gaps](#gaps-ui--api--db-and-recommended-solutions).
+
+Short list:
+
+1. **Open/click tracking** — `opened_count` / `clicked_count` unused; list shows `0% Open` after send
+2. **Revenue** — `revenue_cents` never written; UI shows `$0.00`
+3. **SMS** — provider not configured; all SMS launches fail
+4. **Fan-out in Next** — violates ADR-013; timeout / partial send risk
+5. **At Risk audience** — queries `"at-risk"`; customers use `"at_risk"`
+6. **Tier audiences** — `customers.tier` usually null
+7. **Scheduled / Completed** — tabs with no writer
+8. **Enable without send** — sets `active` and blocks Launch
+9. **Automations** — CRUD only; `config` unused; no worker
+10. **Birthday** — month only, server timezone
+11. **Retry** — re-sends already-sent recipients
+12. **Messaging** — send service duplicates campaign HTML helpers instead of contracts
+13. **Detail engagement / rewards redeemed** — placeholders
+14. **Personalization tokens** — work on send, hidden in the UI
+15. **One program per owner** — campaigns belong to that program; no program switcher
+
+---
+
+## Component tree
+
+```
+Page (campaigns/page.tsx)
+└── CampaignsPage
+    ├── [loading] Spinner
+    └── DashboardShell
+        ├── DashboardSidebar (Growth → Campaigns)
+        ├── DashboardHeader
+        ├── MobileNavDrawer
+        └── Main content
+            ├── Header (title, Create Campaign*)
+            ├── StatCard × 4
+            ├── List card
+            │   ├── Status tabs + counts
+            │   ├── Search + type + audience + sort
+            │   ├── Empty (telescope) OR table
+            │   │   └── Row: name, audience, type, performance, StatusPill, RowMenu
+            │   └── RowMenu → View | Edit | Launch† | Disable/Enable | Delete
+            ├── AutomationsSection
+            │   ├── Search + New automation
+            │   ├── Empty OR list (icon, name, Active/Paused, Switch, menu)
+            │   ├── AutomationDialog (create/edit)
+            │   └── Delete AlertDialog
+            ├── CreateCampaignDialog (create)
+            ├── CreateCampaignDialog (edit)
+            └── Delete AlertDialog
+
+Page (campaigns/[campaignId]/page.tsx)
+└── CampaignDetailPage
+    ├── [loading] Spinner
+    ├── [not found] DashboardShell + back link
+    └── DashboardShell
+        ├── Breadcrumb
+        ├── Header card (toggle, dates, channel, audience, Edit)
+        ├── Customers Reached (TierDonut + legend)
+        ├── Campaign Stats (banner, StatTile × 3)
+        ├── Top Engaged (always empty)
+        ├── Campaign Message (raw preview)
+        └── CreateCampaignDialog (edit)
+
+* Header Create only if campaigns.length > 0
+† Launch only if status === "draft"
+```

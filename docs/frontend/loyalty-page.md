@@ -232,6 +232,8 @@ Returning scan: updates points or visits as above; may insert `customer_rewards`
 
 Rate limit: in-memory per IP (ADR-012). Replace with Redis/Upstash in production.
 
+**Intended (DECIDED):** shop customers will **register and log in** (role **customer**) so their data is stored on an account and KPIs are **calculated** from that activity — not only from owner **Add Customer**. This join page stays a public capture/check-in path; when customer auth exists, enroll/check-in should attach to that account. Customer login is not `admin` / `staff` `/app` auth. See [11-authentication-migration.md](11-authentication-migration.md#shop-customer-register-and-login-decided) and [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows).
+
 ---
 
 ## Gaps — UI / API / DB and recommended solutions

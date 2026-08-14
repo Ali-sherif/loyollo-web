@@ -52,7 +52,7 @@ flowchart LR
 - Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x; package manager npm.
 - App Router; native route typing; Metadata API; `error`/`not-found`/`loading` ([ADR-002](../architecture/decisions/ADR-002-app-router.md)).
 - Existing backend remains primary API; Route Handlers/Server Actions only when justified ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)).
-- Backend owns authz; Next.js route protection + session-aware rendering; cookies where applicable ([ADR-005](../architecture/decisions/ADR-005-authentication.md)).
+- Backend owns authz; Next.js route protection + session-aware rendering; cookies where applicable ([ADR-005](../architecture/decisions/ADR-005-authentication.md)). Locked roles: `admin` · `staff` (same permissions as `admin` for now) · `customer` ([11-authentication-migration.md](11-authentication-migration.md#locked-role-matrix)).
 - Server-function mapping **DECIDED**: Backend API / Server Action / BFF tree ([15-server-function-mapping.md](15-server-function-mapping.md)).
 - RSC by default; small Client islands; static/SSR/ISR per route ([ADR-003](../architecture/decisions/ADR-003-rendering-strategy.md)).
 - Hybrid data fetching: RSC initial reads; TanStack Query for interactive server state ([ADR-004](../architecture/decisions/ADR-004-data-and-state.md)).
@@ -83,7 +83,7 @@ flowchart LR
 8. [Project structure](08-project-structure.md)
 9. [Dependency rules](09-dependency-rules.md)
 10. [Styling and assets](10-styling-and-assets.md)
-11. [Authentication](11-authentication-migration.md)
+11. [Authentication](11-authentication-migration.md) — including [locked role matrix](11-authentication-migration.md#locked-role-matrix)
 12. [Migration plan](12-migration-plan.md)
 13. [Migration risks](13-migration-risks.md)
 14. [Consolidated architecture](14-frontend-architecture.md)
@@ -101,7 +101,7 @@ flowchart LR
 - [Campaigns (`/app/campaigns`)](campaigns-page.md) — list, send, audience, automations, detail; [product meanings](campaigns-page.md#product-meanings-decided) (Draft → Active while sending → Completed)
 - [Analytics (`/app/analytics`)](analytics-page.md) — components, conditions, and edge cases
 - [System architecture](system-architecture.md) — how pages, BFF, API, and DB communicate
-- [Gaps and solutions](gaps-and-solutions.md) — UI vs API vs DB backlog (**G-01…G-32**)
+- [Gaps and solutions](gaps-and-solutions.md) — UI vs API vs DB backlog (**G-01…G-34**)
 - Backend contracts (separate program, not migration): [../backend/README.md](../backend/README.md) · [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)
 
 **Next step:** slice 3 ΓÇö Server infrastructure (backend/Supabase factories, secret isolation, auth proof / D-28 cookie SSR, portable logging). Slice 2 assets **done** (`npm run scan:assets`). Keep [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md) open until PASSED. Multi-agent roles: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md).

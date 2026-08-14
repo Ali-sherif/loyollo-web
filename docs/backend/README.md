@@ -6,13 +6,13 @@
 
 | Doc | Purpose |
 |-----|---------|
-| [data-contract.md](data-contract.md) | Target schema (incl. `visit_events`, `orders`, `insight_actions`), tier DB functions/triggers, visit metric SQL, ROI formula, write rules, glossary |
+| [data-contract.md](data-contract.md) | Target schema (incl. `visit_events`, `orders`, `insight_actions`), tier DB functions/triggers, visit metric SQL, ROI formula, write rules, glossary (incl. `admin` / `staff` / `customer` roles) |
 | [api-contract.md](api-contract.md) | Endpoint shapes (analytics ROI, `POST /api/insights/:key/actions`), client vs backend boundary |
 | [remediation-roadmap.md](remediation-roadmap.md) | Phases 0–7, G-IDs, acceptance criteria (tier automation, visit metrics, ROI, insight nudges) |
 
 ## Gap backlog
 
-Indexed UI vs API vs DB gaps (**G-01…G-32**): [../frontend/gaps-and-solutions.md](../frontend/gaps-and-solutions.md).
+Indexed UI vs API vs DB gaps (**G-01…G-34**): [../frontend/gaps-and-solutions.md](../frontend/gaps-and-solutions.md).
 
 ## Current system (as built)
 

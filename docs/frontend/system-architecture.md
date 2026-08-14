@@ -71,7 +71,7 @@ flowchart TD
 | Server | `requireUser()` in `src/app/app/(shell)/layout.tsx` |
 | Client | `useAuth()`: session, `email_confirmed_at` → `isVerified` |
 | Onboarding | Each feature page (except Settings) reads `profiles.onboarding_completed` |
-| Authorization | RLS on tables; BFF uses `getUser()` then **admin** client for writes that bypass RLS |
+| Authorization | RLS on tables. Locked roles: **`admin`** (`/app`), **`staff`** (`/app`, same permissions as `admin` for now), **`customer`** (customer login, not `/app`). BFF uses `getUser()` then **admin** client for writes that bypass RLS. [locked role matrix](11-authentication-migration.md#locked-role-matrix) |
 
 Settings skips the onboarding redirect. Branch detail redirects unauthenticated users to `/auth` instead of `/signin`.
 
@@ -257,6 +257,8 @@ sequenceDiagram
 ```
 
 No scan row is written on GET. No `branch_id`. Rate limit is an in-memory `Map` per instance (ADR-012: replace with Redis/Upstash).
+
+**Intended (DECIDED):** shop customers will register/login (role **customer**) so data is stored on an account and KPIs are calculated from activity — not only owner **Add Customer**. Join remains a public capture path; customer session is not `admin` / `staff` `/app` auth. [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows).
 
 ---
 

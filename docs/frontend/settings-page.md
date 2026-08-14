@@ -208,7 +208,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 4. Avatar signed URLs expire
 5. Field labels vs `profiles` columns are inconsistent
 6. Two password UIs; only one sends the email
-7. No team-members UI despite page subtitle mentioning “team members”
+7. No team-members UI despite page subtitle mentioning “team members” — **DECIDED:** `admin` will add `admin` or `staff` via a form; create account emails a random temp password; **first login must change it** ([admin adds admin or staff](11-authentication-migration.md#admin-adds-admin-or-staff-decided), [G-34](gaps-and-solutions.md#g-34--admin-cannot-create-adminstaff-with-emailed-temp-password))
 
 ---
 

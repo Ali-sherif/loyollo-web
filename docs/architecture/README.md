@@ -13,7 +13,7 @@
 - **DECIDED:** Initial hosting target is Vercel. See [ADR-008](decisions/ADR-008-deployment.md).
 - **DECIDED:** Target Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x, and Node.js 24 LTS for Node-based deployments. Cloudflare Workers (if used) target `workerd` via OpenNext with separate Node compatibility validation. See [ADR-001](decisions/ADR-001-nextjs-version.md).
 - **RECOMMENDED:** Preserve Supabase schema and contracts. Keep the existing backend as the primary API; Next.js orchestrates and protects routes but does not replace backend ownership.
-- **DECIDED:** App Router, rendering/caching, data/state, auth ownership, server/API boundaries, and project structure ([ADR-002](decisions/ADR-002-app-router.md) through [ADR-007](decisions/ADR-007-project-structure.md)).
+- **DECIDED:** Authentication ownership in the backend ([ADR-005](decisions/ADR-005-authentication.md)). Locked roles: **`admin`** (buyer / owner), **`staff`** (same permissions as admin for now), **`customer`** (shop member login).
 - **DECIDED:** Canonical package manager is npm (`package-lock.json`); remove `bun.lock` at implementation start.
 - **DECIDED:** Production route map approved and restructured ΓÇö [02-route-migration.md](../frontend/02-route-migration.md).
 - **DECIDED:** RLS/storage for this migration ΓÇö retain existing Lovable policies in Phase 1; Phase 2 custom Backend APIs own all data/storage access. See [ADR-011](decisions/ADR-011-rls-storage-strategy.md).

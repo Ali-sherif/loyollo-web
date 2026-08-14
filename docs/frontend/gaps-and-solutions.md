@@ -379,10 +379,32 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | `PLAN_CONTACT_LIMITS`, `PLAN_ADMIN_LIMITS`; Settings mentions team |
 | **Blocked by** | Limits unused; no team UI |
-| **Solution** | Enforce on enroll + add; team members later |
+| **Solution** | Enforce contact/branch caps on enroll + add. Merchant `/app` roles: **`admin`** (buyer) and **`staff`** (**same permissions as `admin` for now**). Shop members are **`customer`**. [locked role matrix](11-authentication-migration.md#locked-role-matrix) |
 | **Status** | `DEFERRED-BACKEND` |
 | **Owner** | Backend program |
 | **Phase** | 5 |
+
+### G-33 — Shop customers have no register/login; KPIs rely on owner-typed rows
+
+| Field | Value |
+|-------|--------|
+| **Where** | `/app/customers` Add Customer; public `/join/[programId]`; Dashboard / Analytics KPIs |
+| **Blocked by** | No shop-customer auth. Rows are owner-created or anonymous join. KPIs use denormalized / owner-typed fields |
+| **Solution** | Customer **register/login** (role **customer**, not `admin` / `staff` `/app`). Store customer-owned profile + activity. **Calculate KPIs** from that data. Owner manual add remains. Routes not locked. [11-authentication-migration.md](11-authentication-migration.md#shop-customer-register-and-login-decided) |
+| **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
+| **Owner** | Backend program |
+| **Phase** | Later (customer portal; not product Phase 1 merchant roles) |
+
+### G-34 — Admin cannot create admin/staff with emailed temp password
+
+| Field | Value |
+|-------|--------|
+| **Where** | Intended `/app` team form (route not locked; likely Settings). No UI today |
+| **Blocked by** | No create-teammate API; no random password + credential email |
+| **Solution** | `admin` form: profile + role `admin` \| `staff` → create `/app` user → random temp password → email (added + email + temp password) via messaging contracts. **First login must change that password** before `/app`. Do not treat current `invite` accept-link as this flow. [11-authentication-migration.md](11-authentication-migration.md#admin-adds-admin-or-staff-decided) |
+| **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
+| **Owner** | Backend program |
+| **Phase** | Later (merchant team; after role names) |
 
 ---
 
@@ -426,5 +448,6 @@ Canonical glossary: [data-contract.md § Unified glossary](../backend/data-contr
 | Champion / Gold / VIP | Avatar color from `tier` text | Filter on `tier` text | Segments vs engagement levels vs `tier` | Audience by `tier` |
 | Revenue | Sum of campaign cents | Column `"—"` | Empty tab | `revenue_cents` unused |
 | Active | `status === "active"` | Same | Mix of status and recency | **Campaign status:** Active = currently sending (working); Completed = all messages processed. Unrelated to member `active`. See [campaigns-page.md](campaigns-page.md#product-meanings-decided) |
+| Owner / admin | Signed-in `/app` user | Same | Same | Role **`admin`** (buyer). **`staff`** is a different name with **the same permissions for now**. Not a loyalty customer. [locked role matrix](11-authentication-migration.md#locked-role-matrix) |
 
 Pick one glossary and one writer before adding more UI.

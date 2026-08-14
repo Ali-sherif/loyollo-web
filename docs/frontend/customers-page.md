@@ -2,7 +2,7 @@
 
 Reference for all components, conditions, and edge cases on the Customers list route, plus the linked detail page (`/app/customers/[customerId]`). Includes domain notes for frontend + backend work, plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
 
-**Jump to:** [route](#route-structure) · [page flow](#high-level-page-flow) · [stat cards](#stat-cards-5) · [status tabs](#status-tabs) · [filters](#search--filters--sort) · [table](#customer-table) · [row menu](#row-menu) · [add / edit](#add--edit-dialog) · [delete](#delete) · [export](#csv-export) · [detail](#detail-page-appcustomerscustomerid) · [how status works](#how-customer-status-actually-works) · [how tiers work](#how-customer-tiers-actually-work) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
+**Jump to:** [route](#route-structure) · [how customers are created](#how-customers-are-created-today-vs-intended) · [page flow](#high-level-page-flow) · [stat cards](#stat-cards-5) · [status tabs](#status-tabs) · [filters](#search--filters--sort) · [table](#customer-table) · [row menu](#row-menu) · [add / edit](#add--edit-dialog) · [delete](#delete) · [export](#csv-export) · [detail](#detail-page-appcustomerscustomerid) · [how status works](#how-customer-status-actually-works) · [how tiers work](#how-customer-tiers-actually-work) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
 **Source files:**
 
@@ -15,6 +15,18 @@ Reference for all components, conditions, and edge cases on the Customers list r
 - Public enroll (creates rows): `src/lib/server/join-service.ts` → `/api/join/enroll`
 - Schema: `supabase/migrations/20260714191332_*.sql`
 - Related: [loyalty-page.md](loyalty-page.md) (tier config), [analytics-page.md](analytics-page.md) (segments vs status), [campaigns-page.md](campaigns-page.md) (audience), [dashboard-page.md](dashboard-page.md) (30-day recency)
+- Product: [shop-customer register/login](11-authentication-migration.md#shop-customer-register-and-login-decided) (DECIDED; not shipped)
+
+---
+
+## How customers are created (today vs intended)
+
+**Today** a `customers` row comes from:
+
+1. Shop owner **Add Customer** in this page (manual)
+2. Public QR **join/enroll** (`POST /api/join/enroll`) — no customer login
+
+**Intended (DECIDED):** shop customers **register and log in** (role **customer**) so we **store their data** and **calculate KPIs** from activity — not only from owner-typed rows. Owner (`admin`) manual add stays as a merchant tool. Customer login is **not** `/app` `admin` / `staff` auth. See [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows).
 
 ---
 
@@ -335,6 +347,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 | — | **Send Campaign** | No audience prefills | — | — | Prefill create dialog |
 | [G-11](gaps-and-solutions.md#g-11--customer-list-will-not-scale) | **CSV** | Client-only snapshot | No export endpoint | — | BFF export when paginated |
 | [G-21](gaps-and-solutions.md#g-21--birthday-stored-automation-unused) | **birth_date** | Stored | Birthday automation unused | OK | Automation worker |
+| [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows) | **Customer register / login** | Owner add + anonymous join only | No customer session | No customer auth identity | Customer register/login; KPIs from stored activity; owner add remains |
 
 ---
 

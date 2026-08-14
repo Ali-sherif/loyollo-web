@@ -12,6 +12,8 @@ Templates and personalization stay. Lovable transport packages and `/lovable/ema
 | ------------------ | ---------------------------------------------- | ---------------------- | -------- |
 | `signup`           | `src/lib/email-templates/signup.tsx`           | Confirm your email     | Yes      |
 | `invite`           | `src/lib/email-templates/invite.tsx`           | You've been invited    | Yes      |
+
+**Teammate created by `admin` (DECIDED, not shipped):** when an `admin` creates an `admin` or `staff` account, send a **separate** email with: they were added, their **email**, and a **random temporary password**. That is not the current `invite` accept-link. Add via messaging contracts; do not delete or silently overwrite `invite.tsx`. See [11-authentication-migration.md](11-authentication-migration.md#admin-adds-admin-or-staff-decided).
 | `magiclink`        | `src/lib/email-templates/magic-link.tsx`       | Your login link        | Yes      |
 | `recovery`         | `src/lib/email-templates/recovery.tsx`         | Reset your password    | Yes      |
 | `email_change`     | `src/lib/email-templates/email-change.tsx`     | Confirm your new email | Yes      |

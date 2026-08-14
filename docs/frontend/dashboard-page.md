@@ -225,6 +225,8 @@ Always the dashed empty state: “Activity log will appear here as customers sca
 
 Filters campaigns where `status` is `"sent"` \| `"active"` \| `"scheduled"`, then takes the first 3 (already ordered by `sent_at`).
 
+**Intended** (2026-08-14, [campaigns-page.md](campaigns-page.md#product-meanings-decided)): this card is **currently running** campaigns only — `active` / `sending` (and `scheduled` if scheduling is wired). **Completed** means the send is finished and must **not** appear here. Today a successful send stays `active`, so finished campaigns still show in this card.
+
 | Condition | Render |
 |-----------|--------|
 | None match | “No active campaigns.” |

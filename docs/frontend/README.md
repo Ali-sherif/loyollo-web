@@ -98,7 +98,7 @@ flowchart LR
 - [Loyalty Program (`/app/loyalty`)](loyalty-page.md) — program types, rewards, referrals, QR, join/check-in
 - [Branches (`/app/branches`)](branches-page.md) — plan limits, cards, detail placeholders
 - [Settings (`/app/settings`)](settings-page.md) — general, notifications, integrations, billing, security
-- [Campaigns (`/app/campaigns`)](campaigns-page.md) — list, send, audience, automations, detail
+- [Campaigns (`/app/campaigns`)](campaigns-page.md) — list, send, audience, automations, detail; [product meanings](campaigns-page.md#product-meanings-decided) (Draft → Active while sending → Completed)
 - [Analytics (`/app/analytics`)](analytics-page.md) — components, conditions, and edge cases
 - [System architecture](system-architecture.md) — how pages, BFF, API, and DB communicate
 - [Gaps and solutions](gaps-and-solutions.md) — UI vs API vs DB backlog (**G-01…G-32**)

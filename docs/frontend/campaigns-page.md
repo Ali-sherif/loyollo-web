@@ -2,7 +2,7 @@
 
 Reference for all components, conditions, and edge cases on the Campaigns list route, plus the linked detail page (`/app/campaigns/[campaignId]`), send pipeline, audience matching, and automations. Includes domain notes for frontend + backend work, plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
 
-**Jump to:** [route](#route-structure) · [page flow](#high-level-page-flow) · [stat cards](#stat-cards-4) · [status tabs](#status-tabs) · [filters](#search--filters--sort) · [table](#campaign-table) · [row menu](#row-menu) · [create / edit](#create--edit-dialog) · [send](#launch--send-pipeline) · [audience](#how-audience-actually-resolves) · [status machine](#campaign-status-machine) · [automations](#scheduled-automations) · [detail page](#detail-page-appcampaignscampaignid) · [performance](#performance--open--redeemed) · [personalization](#personalization-tokens) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
+**Jump to:** [product meanings](#product-meanings-decided) · [route](#route-structure) · [page flow](#high-level-page-flow) · [stat cards](#stat-cards-4) · [status tabs](#status-tabs) · [filters](#search--filters--sort) · [table](#campaign-table) · [row menu](#row-menu) · [create / edit](#create--edit-dialog) · [send](#launch--send-pipeline) · [audience](#how-audience-actually-resolves) · [status machine](#campaign-status-machine) · [automations](#scheduled-automations) · [detail page](#detail-page-appcampaignscampaignid) · [performance](#performance--open--redeemed) · [personalization](#personalization-tokens) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
 **Source files:**
 
@@ -22,6 +22,53 @@ Reference for all components, conditions, and edge cases on the Campaigns list r
 - Runtime ownership: [ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)
 - Mapping: [15-server-function-mapping.md](15-server-function-mapping.md) (`sendCampaign`)
 - Related: [analytics-page.md](analytics-page.md) (tiers, “at risk”, `revenue_cents`)
+- Glossary: [data-contract.md § Unified glossary](../backend/data-contract.md#unified-glossary)
+- Product note: [product-manager-meeting-report.md](../product-manager-meeting-report.md)
+
+---
+
+## Product meanings (DECIDED)
+
+Recorded **2026-08-14**. This is the intended product language for `/app/campaigns`. The UI labels already exist; **writers have not been updated yet**. Current behavior stays documented below as “today.”
+
+**Completed** and **Performance** are different things. Completed is a **status**. Performance is a **results column**.
+
+### Completed campaign
+
+A **Completed** campaign is one whose send is **finished**: every email or SMS for that launch has been processed. It is no longer running.
+
+It is not a performance score. A completed campaign can still show `0% Open` until open tracking exists.
+
+### Performance
+
+**Performance** is how well a **sent** campaign did with recipients:
+
+| Channel | Meaning | Formula |
+|---------|---------|---------|
+| Email | Share of sent messages that were **opened** | `round(opened_count / sent_count * 100)` → `{n}% Open` |
+| SMS | Share of sent messages that were **redeemed** | same formula → `{n}% Redeemed` |
+| Never sent (`sent_count` is 0) | No results yet | `"—"` |
+
+Highest / lowest performance sorts use that same percent. Drafts and unsent campaigns should sort as 0% / display `"—"`.
+
+SMS “Redeemed” is the **intended** label for SMS results. Today it is a label only (no redemption join). Opens are not incremented today, so a sent campaign shows `0% Open` / `0% Redeemed` rather than `"—"`.
+
+### Intended lifecycle
+
+A campaign **must not start as Active**. Create always starts as **Draft**. **Active** means the campaign is **working** (send in progress). When all emails/SMS have been processed, status becomes **Completed**.
+
+| Status | Product meaning |
+|--------|-----------------|
+| **Draft** | Saved, not started. Starting status. |
+| **Active** | Launch started; messages are going out. The campaign is working. |
+| **Completed** | All emails/SMS for this send have been processed (`sent_count > 0`). Finished. |
+| **Failed** | Launch ran; nothing was sent (`sent_count === 0`). |
+| **Disabled** | Owner turned it off. |
+| **Scheduled** | Set to start later (`scheduled_at`). Tab exists; scheduling is not wired yet. |
+
+Internal `sending` may still be written during fan-out. The **Active** tab/pill should treat `sending` as Active (working). Do not leave a successful send as Active after fan-out finishes.
+
+**Enable** must not write `active` without sending. Enable on a disabled draft should restore **draft**, not Active. Send should refuse `completed` as already finished, and refuse `active` / `sending` as already running.
 
 ---
 
@@ -173,25 +220,24 @@ Five pills. Each shows a **count badge**. Active pill is navy (`#0a152f`).
 | Tab value | Label | Count rule |
 |-----------|-------|------------|
 | `all` | All Campaigns | `campaigns.length` |
-| `active` | Active | `status === "active"` |
+| `active` | Active | **Today:** `status === "active"` only. **Intended:** `active` or `sending` (working) |
 | `scheduled` | Scheduled | `status === "scheduled"` |
 | `draft` | Drafts | `status === "draft"` |
 | `completed` | Completed | `status === "completed"` |
 
-Filtering is **exact string match** on `campaigns.status`. Tabs that the send pipeline never writes stay at **0** unless something else wrote that status:
+Filtering is **exact string match** on `campaigns.status`. **Intended** meanings: [product meanings](#product-meanings-decided). **Today**, tabs that the send pipeline never writes stay at **0** unless something else wrote that status:
 
-| Status in DB / UI | Who writes it today |
-|-------------------|---------------------|
-| `draft` | Insert on create |
-| `sending` | Send service, briefly, during fan-out |
-| `active` | Send service if `sentCount > 0`; also **Enable** / detail toggle |
-| `failed` | Send service if `sentCount === 0` |
-| `disabled` | Row menu Disable / detail toggle |
-| `scheduled` | **Nobody** (`scheduled_at` unused) |
-| `completed` | **Nobody** |
-| `sending` | Transient; no dedicated tab (falls under All only) |
+| Status in DB / UI | Intended meaning | Who writes it today |
+|-------------------|------------------|---------------------|
+| `draft` | Saved, not started | Insert on create |
+| `sending` | Working (treat as Active in UI) | Send service, briefly, during fan-out |
+| `active` | Working — send in progress | Send service if `sentCount > 0`; also **Enable** / detail toggle (**wrong** vs intended: successful send should become `completed`, Enable must not set `active`) |
+| `failed` | Launch ran, nothing sent | Send service if `sentCount === 0` |
+| `disabled` | Owner turned it off | Row menu Disable / detail toggle |
+| `scheduled` | Starts later | **Nobody** (`scheduled_at` unused) |
+| `completed` | Send finished; all messages processed | **Nobody** (gap vs intended) |
 
-`StatusPill` also styles `sending` and `failed` if they appear in the table (All tab).
+`StatusPill` also styles `sending` and `failed` if they appear in the table (All tab). Until writers change, **Completed** stays empty and a successful launch stays **Active**.
 
 ---
 
@@ -272,6 +318,8 @@ Row click does **not** navigate. View is only via the ⋮ menu.
 
 ## Performance (“% Open” / “% Redeemed”)
 
+Product meaning: [Performance](#performance) under product meanings. This is **not** the Completed status. It is the results column for sent campaigns.
+
 ```text
 performancePct = sent_count === 0 ? 0 : round(opened_count / sent_count * 100)
 ```
@@ -282,7 +330,7 @@ performancePct = sent_count === 0 ? 0 : round(opened_count / sent_count * 100)
 | Email + sent | `"{pct}% Open"` |
 | SMS + sent | `"{pct}% Redeemed"` |
 
-`opened_count` is **never incremented**. After a successful send it stays 0, so the cell shows **`0% Open`** (or `0% Redeemed` for SMS), not `"—"`.
+`opened_count` is **never incremented**. After a successful send it stays 0, so the cell shows **`0% Open`** (or `0% Redeemed` for SMS), not `"—"`. Performance belongs on Active (while sending) and **Completed** rows; drafts stay `"—"`.
 
 SMS “Redeemed” is a **label only**. It does not join `customer_rewards` or orders. There is no redemption event tied to a campaign.
 
@@ -296,19 +344,19 @@ SMS “Redeemed” is a **label only**. It does not join `customer_rewards` or o
 | Edit | Always | Opens edit dialog (does **not** change status) |
 | Launch Campaign | Only if `status === "draft"` | [Send pipeline](#launch--send-pipeline) |
 | Disable | If not `disabled` | `status → "disabled"` |
-| Enable | If `disabled` | `status → "active"` (**does not send**) |
+| Enable | If `disabled` | **Today:** `status → "active"` (**does not send**). **Intended:** restore **draft** (or prior non-running status), never Active without a send |
 | Delete | Always | Confirm, then hard delete |
 
 Launch is disabled while `launchingId === campaign.id` (“Launching…”).
 
-### Trap: Disable a draft, then Enable
+### Trap: Disable a draft, then Enable (today)
 
 1. Draft → Disable → `disabled` (Launch item disappears)
 2. Enable → `active` without sending
 3. Send refuses `active` campaigns (“already sending or has been sent”)
 4. Campaign looks Active, `sent_count` stays 0
 
-There is no “mark completed” or “unsend.”
+**Intended:** there is still no manual “mark completed” or “unsend.” Completion is written by the send pipeline when all messages are processed. Enable must not impersonate Active.
 
 ---
 
@@ -455,7 +503,8 @@ sequenceDiagram
         Svc->>DB: recipient sent or failed
       end
     end
-    Svc->>DB: status = active if sentCount>0 else failed
+    Svc->>DB: today: status = active if sentCount>0 else failed
+    Note over Svc,DB: Intended: status = completed if sentCount>0 else failed
     Svc-->>UI: { sentCount, failedCount, total, status }
   end
   UI->>DB: refetch that campaign row
@@ -488,7 +537,7 @@ Create+Launch uses the same path after insert.
 | Invalid UUID | Zod throw |
 | Campaign missing | “Campaign not found” |
 | `owner_id !== userId` | “Forbidden” |
-| `status` is `sending` or `active` | “Campaign is already sending or has been sent” |
+| `status` is `sending` or `active` | “Campaign is already sending or has been sent” (**today**). **Intended:** refuse `active`/`sending` as already running; refuse `completed` as already finished |
 | SMS channel | Every recipient fails with “SMS provider not configured” |
 | Email | Personalize subject/body, wrap HTML, `mint_unsubscribe_token`, `enqueue_email` |
 
@@ -496,13 +545,19 @@ From-name: `profiles.business_name` → else `full_name` → else `"Loyollo"`.
 From address: `{businessName} <noreply@loyollo.com>`.  
 Default subject if blank: `A message from {businessName}`.
 
-Final campaign update:
+Final campaign update **today**:
 
 ```text
 status     = sentCount > 0 ? "active" : "failed"
 sent_at    = now()
 sent_count = sentCount
 failed_count = failedCount
+```
+
+**Intended** final status ([product meanings](#product-meanings-decided)):
+
+```text
+status     = sentCount > 0 ? "completed" : "failed"
 ```
 
 `opened_count`, `clicked_count`, `revenue_cents` are **not** updated.
@@ -535,6 +590,26 @@ HTML wrapper: navy heading = business name, escaped paragraphs, footer “Sent b
 
 ## Campaign status machine
 
+### Intended (DECIDED)
+
+```mermaid
+stateDiagram-v2
+  [*] --> draft: create
+  draft --> active: launch (has recipients; working)
+  draft --> scheduled: schedule (not wired)
+  draft --> disabled: Disable
+  active --> completed: all emails/SMS processed and sentCount > 0
+  active --> failed: sentCount = 0
+  failed --> active: launch again (allowed)
+  disabled --> draft: Enable (no send)
+  active --> disabled: Disable
+  scheduled --> active: due time
+```
+
+Internal `sending` may exist during fan-out; UI Active includes it. A campaign **does not start as Active**. Successful send **must** end as **Completed**, not stay Active.
+
+### Today (as implemented)
+
 ```mermaid
 stateDiagram-v2
   [*] --> draft: create
@@ -548,9 +623,7 @@ stateDiagram-v2
   disabled --> disabled: already disabled
 ```
 
-Not in the diagram because nothing writes them: `scheduled`, `completed`.
-
-`active` after a real send **and** `active` after Enable-without-send are the same stored value. Send treats both as “already sent.”
+Nothing writes `scheduled` or `completed`. `active` after a real send **and** `active` after Enable-without-send are the same stored value. Send treats both as “already sent.”
 
 ---
 
@@ -617,7 +690,7 @@ Loads `campaigns` (includes `sent_at`) and `campaign_recipients` with nested `cu
 ### Header card
 
 - Breadcrumb: Campaigns / `{name}`
-- Toggle: green if `status` is `active` **or** `sending`; otherwise gray. Click: `disabled` ↔ `active` (same Enable trap as the list)
+- Toggle: green if `status` is `active` **or** `sending`; otherwise gray. Click **today:** `disabled` ↔ `active` (same Enable trap as the list). **Intended:** green only while working (`active`/`sending`); Enable restores draft, not Active without a send; Completed stays completed (not toggled to Active)
 - Created date · Last Sent (`sent_at` or `"—"`)
 - Channel icon + audience
 - Edit → same `CreateCampaignDialog` in edit mode
@@ -676,7 +749,7 @@ Raw `subject` (email only) + `message` preview. Not the wrapped HTML, not token-
 | `owner_id` | Insert | Ownership check | RLS |
 | `name`, `description` | Yes | — | |
 | `channel` | Yes | Audience contact filter | `"email"` \| `"sms"` — **send medium**, not sale channel |
-| `status` | Tabs / pills | `sending` → `active`/`failed` | Free text, no DB enum |
+| `status` | Tabs / pills | **Today:** `sending` → `active`/`failed`. **Intended:** working → `completed`/`failed` | Free text, no DB enum. See [product meanings](#product-meanings-decided) |
 | `audience` | Display + filter | Substring match | Free text |
 | `subject`, `message` | Dialog | Personalize | |
 | `scheduled_at` | **No** | **No** | Column unused |
@@ -740,16 +813,18 @@ Owners **SELECT** only via campaign ownership. Inserts/updates go through **serv
 | Program, no campaigns | Telescope empty state + Create |
 | Filters match nothing | “No matching campaigns” |
 | Save as draft | Row with Draft pill, performance `"—"` |
-| Launch with recipients (email) | Status Active, sent counts, toast |
+| Launch with recipients (email) | **Today:** status Active, sent counts, toast. **Intended:** Active while sending, then **Completed** |
 | Launch with zero matching customers | Error toast; stays draft |
 | Launch SMS | Recipients fail; campaign `failed`; toast |
-| Re-launch `active` | Error: already sent |
+| Re-launch `active` | **Today:** error (treated as already sent). **Intended:** error as already running |
+| Re-launch `completed` | **Intended:** error as already finished (no writer today) |
 | Re-launch `failed` | Allowed; may duplicate emails to prior recipients |
-| Disable then Enable | Looks Active, never sent, cannot Launch |
+| Disable then Enable | **Today:** looks Active, never sent, cannot Launch. **Intended:** back to Draft, Launch available |
 | Edit after send | Saves copy; does not re-send |
 | Delete | Row gone; recipients cascade |
-| Scheduled / Completed tabs | Stay 0 unless status was written elsewhere |
-| Performance after send | `0% Open` / `0% Redeemed` (`opened_count` unused) |
+| Scheduled tab | Stays 0 unless scheduling is wired |
+| Completed tab | **Today:** always 0. **Intended:** successful sends after fan-out |
+| Performance after send | `0% Open` / `0% Redeemed` (`opened_count` unused). Unrelated to Completed status |
 | Campaign Revenue | `$0.00` |
 | Automations enabled | Config only; no messages go out |
 | Detail, never sent | Donut 0, stats 0, empty engagement |
@@ -770,8 +845,8 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 |------|---------------|--------|---------|--------|-----------------|
 | — | **Create without program** | Toast only | n/a | One program per owner | Keep; optionally empty-state CTA |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Scheduled tab / `scheduled_at`** | Tab always 0 | No schedule job | Column unused | Hide tab or schedule worker |
-| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Completed tab** | Always 0 | Send writes `active` | No lifecycle | Map send → `completed`, or drop tab |
-| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Enable / Disable vs Launch** | Enable sets `active` without sending | Send blocks `active` | One status, two meanings | Split status enum |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Completed tab** | Always 0 | Send writes `active` | No lifecycle | **DECIDED:** after all messages processed, write `completed` (do not drop the tab; do not leave successful sends as Active) |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Enable / Disable vs Launch** | Enable sets `active` without sending | Send blocks `active` | One status, two meanings | **DECIDED:** Active = working only; Enable restores draft; send refuses `completed` as finished |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Performance % Open** | Shows `0%` after send | No open webhook | `opened_count` unused | ESP/pixel; until then `"—"` |
 | [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **SMS “% Redeemed”** | Misleading label | No redemption join | No `campaign_id` on rewards | Hide until tracked |
 | [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Campaign Revenue** | `$0.00` looks real | Never written | No orders | Orders + `campaign_id`; UI `"—"` |

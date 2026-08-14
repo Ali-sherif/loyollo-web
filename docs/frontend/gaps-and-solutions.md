@@ -118,7 +118,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Campaigns performance, Dashboard open rate, Automations Enable |
 | **Blocked by** | Fan-out in Next request (ADR-013); `opened_count` unused; automations CRUD only |
-| **Solution** | `campaign_jobs` + worker; ESP webhooks; automation runner |
+| **Solution** | `campaign_jobs` + worker; ESP webhooks; automation runner. **Lifecycle DECIDED (2026-08-14):** campaigns start as Draft (never Active); Active = send in progress (working); when all emails/SMS are processed write `completed` (`sent_count > 0`) or `failed` (`sent_count === 0`). Enable must not write `active` without sending (restore draft). Do not drop the Completed tab. Performance (`% Open` / `% Redeemed`) is a results column, not a status — see [campaigns-page.md](campaigns-page.md#product-meanings-decided) |
 | **Status** | `DEFERRED-BACKEND` |
 | **Owner** | Backend program |
 | **Phase** | 6 |
@@ -425,6 +425,6 @@ Canonical glossary: [data-contract.md § Unified glossary](../backend/data-contr
 | At risk | 30-day `last_activity_at` | `status === "at_risk"` | Recency buckets (different cutoffs) | Audience string `"at-risk"` |
 | Champion / Gold / VIP | Avatar color from `tier` text | Filter on `tier` text | Segments vs engagement levels vs `tier` | Audience by `tier` |
 | Revenue | Sum of campaign cents | Column `"—"` | Empty tab | `revenue_cents` unused |
-| Active | `status === "active"` | Same | Mix of status and recency | Campaign `status` |
+| Active | `status === "active"` | Same | Mix of status and recency | **Campaign status:** Active = currently sending (working); Completed = all messages processed. Unrelated to member `active`. See [campaigns-page.md](campaigns-page.md#product-meanings-decided) |
 
 Pick one glossary and one writer before adding more UI.

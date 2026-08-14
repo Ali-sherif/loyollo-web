@@ -3,9 +3,11 @@
 **Date:** 2026-08-14  
 **Scope:** Current Next.js App Router app (`src/app`, `src/features`, `src/lib/server`), legacy TanStack Start (`src/routes`), Supabase migrations, and product/architecture docs.  
 **Method:** Code and docs only. Schema/API recommendations are attributed to the **backend program** per [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md). This report does **not** add tables or migrations.  
-**Backlog mapping:** Findings that already exist in [gaps-and-solutions.md](../frontend/gaps-and-solutions.md) are tagged `G-01`…`G-36`. New items are tagged `A-xx` (audit).
+**Backlog mapping:** Findings that already exist in [gaps-and-solutions.md](../frontend/gaps-and-solutions.md) are tagged `G-01`…`G-36`. New items are tagged `A-xx` (audit). Documentation gaps vs the 2026-08-14 status-update checklist are tagged `DG-xx` in [§7](#7-documentation-gap-analysis).
 
 **Role naming note:** The product lock uses **`admin` / `staff` / `customer`**. The buyer is **`admin`**, not `purchaser` ([product-manager-meeting-report.md](../product-manager-meeting-report.md) L52). This report uses those locked names.
+
+**Jump to:** [1. Summary](#1-executive-summary) · [2. Security](#2-security-and-vulnerability-audit) · [3. UI status](#3-ui-implementation-status) · [4. Architecture](#4-system-architecture-and-product-blind-spots) · [5. Rule discrepancies](#5-discrepancies-with-project-rules) · [6. Action plan](#6-prioritized-action-plan) · **[7. Docs gap analysis](#7-documentation-gap-analysis)**
 
 ---
 
@@ -602,6 +604,7 @@ Owners: **Frontend** = this repo (honesty, guards, BFF hygiene). **Backend** = s
 | UI | `src/features/{dashboard,analytics,customers,loyalty,branches,campaigns,settings,join,auth,onboarding}/**` |
 | Schema | `supabase/migrations/*.sql`, `src/integrations/supabase/types.ts` |
 | Product rules | `docs/product-manager-meeting-report.md`, `docs/frontend/gaps-and-solutions.md`, `docs/backend/data-contract.md`, ADRs 005, 006, 009, 010, 012, 013, 014 |
+| Docs scanned for §7 | [settings-page.md](../frontend/settings-page.md), [analytics-page.md](../frontend/analytics-page.md), [campaigns-page.md](../frontend/campaigns-page.md), [loyalty-page.md](../frontend/loyalty-page.md), [11-authentication-migration.md](../frontend/11-authentication-migration.md), [17-messaging-templates.md](../frontend/17-messaging-templates.md), [system-architecture.md](../frontend/system-architecture.md), [dashboard-page.md](../frontend/dashboard-page.md), [api-contract.md](../backend/api-contract.md), [deferred-decisions.md](../architecture/deferred-decisions.md), [ADR-005](../architecture/decisions/ADR-005-authentication.md). **No standalone PRD** exists in `docs/`. |
 
 ## Appendix B — Explicit absences (do not rebuild under another name)
 
@@ -613,6 +616,216 @@ Owners: **Frontend** = this repo (honesty, guards, BFF hygiene). **Backend** = s
 - `/admin` back office — **not found**
 - `vercel.json` crons / GitHub scheduled workflows / `supabase/functions/` — **not found**
 - Sentry / audit_log — **not found**
+- Social auth (Facebook / Google / Apple Sign-In) — **not found in any doc** (`DG-01`)
+- Subscription no-downgrade rule — **not found** (`DG-04`)
+- `profiles.currency` meaning + multi-currency — **not found** (`DG-09`)
+- Marketing-tool integration strategy — **not found** (`DG-07`)
+- Automation `config` schema / trigger schedule — **not found** (`DG-10`)
+- Customer share/refer UX — **not found** (`DG-11`)
+
+---
+
+## 7. Documentation gap analysis
+
+**Date:** 2026-08-14 (same audit).  
+**Question:** Do current PRDs, page specs, architecture, and API docs **explicitly account for** the product status updates below?  
+**Not in scope of §7:** whether the **code** implements the rule (that is §§3–5). This section is **docs vs the checklist**.
+
+**Phase-name collision (read first):** “Phase 1” is **three different things**. [product-manager-meeting-report.md](../product-manager-meeting-report.md) L58: product first ship ≠ Next.js migration Phase 1 ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md)) ≠ remediation Phase 1 (tier ladder). The checklist below is **product Phase 1**. Docs never publish a single **product Phase 1 scope & exclusions** list. That absence is `DG-01`.
+
+**Legend:** **Covered** = the rule is stated as product intent or as current UI behavior. **Ambiguous** = mentioned, but missing lock, enum, formula, or Phase-1 exclusion. **Missing** = not found.
+
+---
+
+### 7.1 Fully covered
+
+These checklist items are already specified in page specs / glossary with enough technical or business detail to implement or to treat as known gaps.
+
+| Checklist item | Verdict | Where it is locked |
+|----------------|---------|-------------------|
+| Campaign **Completed** = status “send finished”, not a score; no target/due date | Covered | [campaigns-page.md](../frontend/campaigns-page.md#completed-campaign); meeting report L15–19 |
+| Campaign **Performance** = `round(opened_count / sent_count * 100)` → `% Open` / `% Redeemed`; unsent = `"—"` | Covered | [campaigns-page.md](../frontend/campaigns-page.md#performance); [data-contract glossary](../backend/data-contract.md#unified-glossary) |
+| Phase 1 does **not** track opens; sent campaigns show **0% Open** | Covered | Meeting report L35; campaigns-page “`opened_count` is never incremented” |
+| SMS **Redeemed** is a **display label only** (no redemption join) | Covered | campaigns-page Performance; G-20 |
+| Analytics **“This month” is not applied** | Covered | [analytics-page.md](../frontend/analytics-page.md) L124–125, L262 |
+| Shared load: `loyalty_programs` then `customers` + `rewards`; **Revenue tab queries nothing** | Covered (usage) | analytics-page data sequence L100–106; tab dependency L133–135 |
+| Overview stat cards: Active `status === "active"`; redemption `redeemed / (current + redeemed)`; liability `balances / active`; repeat `visits >= 2` | Covered | analytics-page L154–163 (`pointsRedeemed / (totalPointsIssued + pointsRedeemed)`) |
+| Points issued vs redeemed: issued proxied by weekly `created_at`; redeemed bars **static 0** | Covered | analytics-page L165–176 |
+| Members by tier: group stored `customers.tier` string, **not** live ladder math | Covered | analytics-page L179–201 |
+| Top redeemed rewards: `redeemed_count > 0`, top 5 | Covered | analytics-page L203–207 |
+| Overview segments: Champions `>=10`, Loyal `3–9`, New `<=30d`, At risk `>60d`, **overlaps allowed** | Covered | analytics-page L223–231 |
+| Overview AOV / Revenue impact card: static `"—"` pending orders | Covered | analytics-page L233–248 |
+| Engagement stats: avg visits `sum(visits)/count`; QR scans & days-between `"—"`; retention only if member `>=30` days old | Covered | analytics-page L260–277 |
+| Visit frequency chart **always empty/stubbed** | Covered | analytics-page L279–294 |
+| Insights: at-risk `20–60` days; “1 visit from reward” `visits % 5 === 4`; Peak Hour & Tier nudges static | Covered | analytics-page L296–305 |
+| Most engaged: top 5 by visits, then points | Covered | analytics-page L309–311 |
+| Engagement levels: Champions / Loyal / Occasional / At risk / Dormant cutoffs | Covered | analytics-page L327–339 |
+| Revenue Impact tab: 6 cards + 2 charts + 1 table, all `"—"` / empty pending `orders` | Covered | analytics-page L365–401; G-06 |
+| Admin **adds** `admin` or `staff` (temp password + first-login change) | Covered as **DECIDED, not shipped** | [11-authentication-migration.md](../frontend/11-authentication-migration.md#admin-adds-admin-or-staff-decided); G-34 |
+| Admin **activates/deactivates `staff` and `customer`** | Covered as **DECIDED, not shipped** | 11-auth account status; G-36 |
+| Loyalty **program types** `points` \| `visit` \| `tier` | Covered | [loyalty-page.md](../frontend/loyalty-page.md); [system-architecture.md](../frontend/system-architecture.md) L215 |
+| Referral **settings columns**: `referrer_bonus_points`, `new_customer_discount_pct` | Covered as config only | loyalty-page Referrals tab; data-contract `referrals` writer credits referrer points |
+
+---
+
+### 7.2 Partially covered / ambiguous
+
+Mentioned, but the docs do not lock the Phase-1 product rule, the enum, or the execution logic. **Do not treat these as decided.**
+
+#### Settings exclusions vs “catalog that never connects” (`DG-01`, `DG-02`)
+
+| Checklist | Docs today | Gap |
+|-----------|------------|-----|
+| FB / Google / Apple **Authentication** deferred from product Phase 1 | **Never mentioned.** Auth docs cover email/password + MFA only ([ADR-005](../architecture/decisions/ADR-005-authentication.md), 11-auth). | No social-login exclusion **or** inclusion. Cannot confirm they are deferred. |
+| **2FA** deferred from product Phase 1 | Opposite: Settings documents **real** TOTP MFA ([settings-page.md](../frontend/settings-page.md#2fa-twofactorcard)); G-26 is “enroll works, login challenge missing.” | If product Phase 1 **excludes** 2FA, docs **contradict**. If Phase 1 **includes** enroll, login challenge is still unspecified as required vs later. |
+| **POS** deferred from product Phase 1 | Integrations catalog lists Square/Clover/Toast/Lightspeed/Shopify POS; toggle records `pending`; “Needed later for `orders`” (settings-page L119–132). G-19 Phase 5. | **Deferred-as-gap**, not **locked Phase-1 exclusion**. UI still shows Connect. |
+| **QR & Wallet** (Apple Wallet / Google Wallet) deferred | Same catalog row. No OAuth. | Same: visible, not excluded. No statement that the Integrations **tab** or those rows are hidden in product Phase 1. |
+
+#### Overview “Revenue Impact” hidden vs placeholder (`DG-03`)
+
+Checklist: **exclude/hide** the Overview Revenue Impact block (and by implication the Revenue tab) in product Phase 1 because there is no POS.
+
+Docs: the Overview AOV card and the **Revenue Impact tab stay visible** and show `"—"`. G-06 solution text says “hide until first order” as a **recommended fix**, not a locked Phase-1 UX. Analytics subtitle still promises “revenue impact.”
+
+**Contradiction:** honesty-with-dashes (ADR-014, analytics-page) vs hide-for-Phase-1 (this checklist). Not resolved.
+
+#### Subscription: no downgrade (`DG-04`)
+
+Checklist: users **cannot downgrade** package.
+
+Docs: Billing is a placeholder that **writes `profiles.plan` in any direction** (settings-page Billing; G-07). api-contract has `POST /api/billing/checkout` + webhook as sole writer — **no upgrade/downgrade matrix**, no “current plan ≥ new plan” rule, no proration.
+
+#### Business Type as a **fixed dropdown** (`DG-05`)
+
+Checklist: Business Type is a fixed dropdown in UI **and** backend.
+
+Docs: a profile field exists; **UI label “Business Type” writes `business_category`**, “Industry” writes `business_type`; `industry` has **no input** (G-24). No option list, no CHECK/enum, no “immutable after onboarding” rule.
+
+#### User management vs RBAC (`DG-06`)
+
+Covered: admin creates admin/staff; admin sets staff/customer active/inactive.
+
+**Not locked / contradicts a full RBAC reading:**
+
+- Toggling **another `admin`** is **explicitly out of the decision** (11-auth L97; meeting report L116).
+- `staff` has **the same permissions as `admin` for now** — there is **no** resource×action matrix (campaigns send, billing, delete account, add teammate).
+- Whether `staff` can use the add-teammate form is **not locked**.
+- Whether the account list shows `admin` rows is **not locked**.
+- Route for team UI is **not locked**.
+- Schema (`profiles.role`, `account_status`) is **not shipped** (this audit §2.1).
+
+“Proper RBAC” is therefore **product-intent for two flows**, not a permission model.
+
+#### Marketing tools (`DG-07`)
+
+Settings lists Mailchimp / Klaviyo. G-19: per-provider connect later. api-contract: `POST /api/integrations/:provider/connect`.
+
+**Missing:** what is synced (lists, segments, suppressions), direction, identity match, whether Loyollo campaigns **or** the ESP is source of truth, and whether this is in or out of product Phase 1.
+
+#### Communication channels (`DG-08`)
+
+**Covered:** campaign channel is `email` \| `sms`; SMS stub fails; email needs a recipient email, SMS a phone; ADR-010 / 17-messaging defer the SMS provider; Notifications tab is owner email/report toggles.
+
+**Missing as “channel rules”:** marketing vs transactional; opt-in/consent storage (join disclaimer is copy-only — this audit §4.1); frequency caps; quiet hours; preferred channel; unsubscribe vs `suppressed_emails`; whether SMS is in product Phase 1 at all (UI still offers the channel).
+
+#### Currency (`DG-09`)
+
+`profiles.currency` is loaded/saved on Settings General. Dashboard **ignores it** and hardcodes USD ([dashboard-page.md](../frontend/dashboard-page.md) L184). `orders.amount_cents` in the data-contract has **no currency column**.
+
+**Undefined:** display vs billing vs points valuation; ISO 4217 vs free text; one currency per shop vs per order; FX; what changing currency does to historical `*_cents`.
+
+#### Scheduled automations — behavior (`DG-10`)
+
+CRUD, seven `type` values, unique `(owner_id, type)`, and “enabled does not send” are documented ([campaigns-page.md](../frontend/campaigns-page.md#scheduled-automations)). Meeting report L122: automations **not decided**.
+
+**Missing:** trigger (event vs cron), timezone, `config` jsonb schema per type, message template, audience, idempotency, and whether automations are in product Phase 1.
+
+#### Loyalty programs ↔ “bill types” (`DG-12`)
+
+If “bill types” means **program types** (`points` / `visit` / `tier`): relationship is documented; check-in still ignores most rules (G-10). Whether type can change after members exist is **not locked** (G-31).
+
+If it means **POS ticket / invoice types**: **not in any doc.**
+
+#### Referral share UX and reward sides (`DG-11`)
+
+Intended enroll `?ref=` / code and `referrer_bonus_points` are in the data-contract. Settings also store `new_customer_discount_pct`.
+
+**Missing:** how the customer **shares** (link, code, QR, in-app, SMS); when the discount is applied (join, first order, POS); whether the joiner can get **points** instead of %; whether the referrer can get a **discount** instead of points; fraud / self-referral; program-type interaction (visit vs points).
+
+#### Analytics fetch vs tab-conditional load (`DG-13`)
+
+Checklist: Overview **and** Engagement load `customers`; **only** Overview loads `rewards`; Revenue loads nothing.
+
+Docs: the **page** always parallel-fetches `customers` **and** `rewards` when a program exists (analytics-page L100–106), then tabs **use** a subset. Behavior matches “Revenue gets nothing”; it does **not** match “only Overview fetches rewards.”
+
+#### Canonical “At risk” vs Overview 60-day segment (`DG-14`)
+
+[data-contract glossary](../backend/data-contract.md#unified-glossary) wants **one** At risk = no activity in **30 days**. Analytics Overview (and this checklist) uses **> 60 days**. Engagement uses **20–60 days**. Dashboard uses **> 30 days**. G-08 records the collision; it does **not** pick the checklist’s 60-day Overview rule as canonical.
+
+#### Engagement-level exclusivity (`DG-15`)
+
+Checklist describes segmentation criteria (implies buckets). analytics-page L339: buckets **can overlap**. data-contract glossary: engagement buckets **should be exclusive**. Unresolved.
+
+---
+
+### 7.3 Missing / unaccounted for (docs need immediate updates)
+
+Lock these in a **product Phase 1 scope** note (meeting report or a new `docs/product/phase-1-scope.md`) and patch the cited page specs. Do **not** add schema from this frontend repo (ADR-014).
+
+| ID | Missing decision | Suggested home | Why it blocks |
+|----|------------------|----------------|---------------|
+| **DG-01** | Product Phase 1 **exclusions list**: social auth (FB/Google/Apple), 2FA, POS, QR & Wallet — hide vs show-as-interest vs remove from Settings | settings-page + meeting report | 2FA is documented as **live**; social auth is **invisible**; Integrations still look connectable |
+| **DG-02** | Whether Settings Integrations tab is **out of Phase 1** or interest-only catalog | settings-page | G-19 is a later phase, not a ship/hide lock |
+| **DG-03** | Hide vs keep `"—"` for Overview Revenue Impact **and** Analytics Revenue tab in Phase 1 | analytics-page; G-06 | Checklist says hide; specs keep the tab |
+| **DG-04** | **No subscription downgrade** (and whether upgrades are paid-only) | settings-page Billing; api-contract billing; G-07 | Checkout contract has no plan-transition rules |
+| **DG-05** | Business Type: control type (select), **option enum**, column (`business_category` vs `business_type`), mutability | settings-page; G-24 | Labels already swapped; no taxonomy |
+| **DG-06** | Admin-on-admin activate/deactivate; resource-level RBAC; staff using add-teammate | 11-auth; ADR-005 | Checklist asks for RBAC; docs freeze staff = admin |
+| **DG-07** | Marketing-tool strategy (Mailchimp/Klaviyo: objects, direction, Phase) | settings-page; api-contract integrations | Catalog ≠ strategy |
+| **DG-08** | Communication **policy** (consent, caps, SMS in/out of Phase 1) | 17-messaging; campaigns-page; join | Channel enum ≠ rules |
+| **DG-09** | What **Currency** is; ISO list; one-per-shop; `orders` currency | settings-page; data-contract `orders` | Field is a write-only string |
+| **DG-10** | Automation **execution** (`config`, triggers, worker) **or** explicit Phase-1 “config only / hide Enable” | campaigns-page automations; G-09 | Types exist; behavior does not |
+| **DG-11** | Referral **share mechanic** + discount vs points for **both** parties | loyalty-page; data-contract `referrals` | Settings imply split rewards; writer only credits referrer points |
+| **DG-12** | Loyalty program ↔ **bill/ticket type** (if that is a POS concept) | loyalty-page; data-contract `orders` | Word “bill type” does not appear |
+| **DG-13** | Confirm analytics fetch: page-level both tables vs tab-conditional `rewards` | analytics-page | Spec vs checklist wording |
+| **DG-14** | Single At-risk definition for product Phase 1 (30 vs 60 vs 20–60) | data-contract glossary; G-08 | Four rules still published |
+| **DG-15** | Engagement levels exclusive vs overlapping | analytics-page; glossary | Checklist vs current spec |
+
+---
+
+### 7.4 Open questions (no technical or business definition in docs)
+
+1. Is **2FA** in product Phase 1 (code + settings-page) or out (this checklist)?  
+2. Are Facebook / Google / Apple Sign-In **never**, **later**, or **hidden**?  
+3. Is the Analytics **Revenue Impact tab** removed in Phase 1, or kept as `"—"`? Same for the Overview AOV card.  
+4. Allowed plan transitions: upgrade only? downgrade blocked even on placeholder Billing?  
+5. Canonical Business Type list and which `profiles` column stores it.  
+6. May an `admin` deactivate **another `admin`**? May `staff` create teammates?  
+7. What does Settings **Currency** affect (display, billing, points-to-cash, orders)? Multi-currency: yes/no.  
+8. Per automation type: **when** it fires, **who** gets the message, **what** is sent, owner TZ.  
+9. How does a member **share** a referral, and when does `new_customer_discount_pct` hit a bill vs wallet?  
+10. Does “bill type” mean `program_type`, or a POS ticket class?  
+11. Product Phase 1: is **SMS** a real send path, a visible-fail stub, or hidden?  
+12. After glossary lock, do Overview “At risk” and Engagement “At risk” **keep different cutoffs** (analytics-page documents both) or converge?
+
+---
+
+### 7.5 Checklist scorecard
+
+| # | Item | Docs |
+|---|------|------|
+| 1.1 | Settings exclusions (FB/Google/Apple auth, 2FA, POS, QR & Wallet) | **Missing** as Phase-1 exclusions; 2FA **contradicts** (`DG-01`) |
+| 1.2 | Overview Revenue Impact hidden in Phase 1 | **Ambiguous** — placeholders, not hidden (`DG-03`) |
+| 2.1 | No subscription downgrade | **Missing** (`DG-04`) |
+| 2.2 | Business Type fixed dropdown | **Ambiguous** — field + swapped labels, no enum (`DG-05`) |
+| 2.3 | Admin add / deactivate with RBAC | **Partial** — add + staff/customer status DECIDED; admin-on-admin and RBAC matrix not (`DG-06`) |
+| 3.1 | Marketing tools strategy | **Missing** (`DG-07`) |
+| 3.2 | Communication channel rules | **Partial** — email/sms enum; no policy (`DG-08`) |
+| 3.3 | Currency definition | **Missing** (`DG-09`) |
+| 4.1 | Scheduled automation execution | **Partial** — CRUD only (`DG-10`) |
+| 4.2 | Completed / Performance / 0% opens / SMS label | **Covered** |
+| 4.3 | Loyalty ↔ bill types | **Ambiguous / missing** (`DG-12`) |
+| 4.4 | Referral share + both-party rewards | **Partial** (`DG-11`) |
+| 5.1–5.3 | Analytics fetch, Overview, Engagement, Revenue formulas | **Covered** (fetch wording `DG-13`; at-risk `DG-14`; overlap `DG-15`) |
 
 ---
 

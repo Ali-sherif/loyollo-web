@@ -83,7 +83,7 @@ flowchart TD
 | **G-IDs** | G-05, G-09, G-14, G-21 |
 | **Depends on** | `referrals`, `campaign_jobs` / worker, search API, `insight_actions` |
 | **Deliverables** | `POST /api/insights/:key/actions` (`send` \| `nudge` \| `create`); `insight_actions` audit table; CTA → draft campaign → optional `campaign_jobs` enqueue ([api-contract](api-contract.md#insights--nudge-automation)) |
-| **Acceptance** | Enroll with `?ref=` creates referral and credits points. Campaign send returns 202 job; opens via ESP webhook. Header search returns results. Birthday automation can run. Analytics Send / Nudge / Create create real campaigns (and jobs for send/nudge), not no-ops. |
+| **Acceptance** | OTP (SMS/WhatsApp) succeeds **before** `customers` / `referrals` / rewards exist. Enroll with `?ref=` then creates a `referrals` row and grants the **referred** reward. The **referrer** is granted only on first `Invoice.Paid` (`orders.paid_at`) **and** only if status is `pending`. Discount awards are `vouchers` (`active`/`used`/`expired`), not cart auto-apply. DB `CHECK (referrer_id <> referred_id)` and `UNIQUE (referred_id)` reject bad inserts. Same device or same public IP in the same minute → `pending_review`. Points lots carry `expires_at`. Campaign send returns 202 job; opens via ESP webhook. Header search returns results. Birthday automation can run. Analytics Send / Nudge / Create create real campaigns (and jobs for send/nudge), not no-ops. |
 
 ## Phase 7 — Analytics / customers APIs + pagination
 

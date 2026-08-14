@@ -68,7 +68,7 @@ Shop customers get role **`customer`**. They register/login so we **store their 
 | Today | Intended |
 |-------|----------|
 | Shop owner **manually adds** customers in `/app/customers` | Still allowed (`admin` / `staff` tool). Row role remains **`customer`**. |
-| Public QR `/join/[programId]` enrolls **without** login | Capture/check-in; then **link** to the `customer` account when they register |
+| Public QR `/join/[programId]` enrolls **without** login | Capture/check-in after **OTP** (SMS/WhatsApp); then **link** to the `customer` account when they register |
 | KPIs on owner-typed rows / counters | KPIs **calculated** from stored `customer` activity |
 
 Customer-portal URLs and the exact KPI list are **not** locked. Implementation is backend-owned ([ADR-014](architecture/decisions/ADR-014-product-data-ownership.md)).
@@ -117,7 +117,55 @@ Toggling another **`admin`** is not in this decision. Route is not locked.
 
 ---
 
+## 7. Referral rewards (both parties)
+
+**Status:** DECIDED (not shipped)  
+**Source of truth:** [loyalty-page.md](frontend/loyalty-page.md#referral-rewards-decided) · [OTP](frontend/loyalty-page.md#otp-verification-decided) · [fraud controls](frontend/loyalty-page.md#referral-fraud-controls-decided) · [data-contract.md](backend/data-contract.md#referrals) · [G-14](frontend/gaps-and-solutions.md#g-14--referrals-settings-without-attribution)
+
+Both the new member and the person who invited them get a reward.
+
+| Party | When | Points | Discount |
+|-------|------|--------|----------|
+| **Referred** (new) | After **OTP** (SMS/WhatsApp) and successful **register** with a valid share | Wallet credit immediately (`points_ledger`, `expires_at`) | **`vouchers`** row (`active`) they redeem later — not an automatic % on join or the current cart |
+| **Referrer** (existing) | When the new member’s **first paid invoice** (`Invoice.Paid` / `orders.paid_at`) is written | Wallet credit then | `vouchers` row then |
+
+New public registration **must not** insert `customers` / `referrals` / rewards until OTP succeeds.
+
+The referrer is **not** granted at enroll. Points (or voucher) land only after a **real paid order**. That gate is the primary anti-fraud control: a fake invite is worthless until someone actually pays.
+
+**Share:** personal **link** or **QR** of `/join/{programId}?ref={referral_code}`.
+
+**Expiry:** referral point lots and referral vouchers each have `expires_at`. Shop sets `points_expiry_days` and `voucher_expiry_days` (default day counts not locked). Voucher states: `active` → `used` / `expired`.
+
+**Database (hard reject — no row):**
+
+- `referrer_id` **cannot** equal `referred_id` (`CHECK`). The inviter cannot be the invitee.
+- `referred_id` is **UNIQUE**: a customer can be invited **once in their lifetime**.
+
+**Device / IP matching:** if the invite and the registration happen from the **same device** or the **same Wi-Fi / public IP** in the **same minute**, the backend marks the row **Pending Review** (`pending_review`). The referrer is not granted until a reviewer clears it.
+
+Returning check-in with `ref` does not create another referral.
+
+The share **link / QR** appears on **that program’s card** in the customer wallet ([§8](#8-customer-wallet-per-program)).
+
+---
+
+## 8. Customer wallet (per program)
+
+**Status:** DECIDED (not shipped)  
+**Source of truth:** [loyalty-page.md](frontend/loyalty-page.md#customer-wallet-per-program-decided) · [11-authentication-migration.md](frontend/11-authentication-migration.md#customer-wallet-decided) · [data-contract write rule 13](backend/data-contract.md#binding-write-rules)
+
+Points belong to the **program** they were earned in. They do **not** mix.
+
+| Program 1 | Program 2 | Customer must see |
+|-----------|-----------|-------------------|
+| 100 points, that program’s expiry (e.g. 1 month per lot) | 200 points, that program’s expiry (e.g. 1 week per lot) | **Two** wallets: 100 and 200 — **not** 300 |
+
+Each program card: name, spendable points, expiry date(s) (split by lot if mixed), vouchers + their dates, personal share link + QR. Portal **URL** still not locked. Pixel layout not locked.
+
+---
+
 ## Not decided in this discussion
 
-Open tracking, SMS delivery, automations, campaign revenue (G-09 / G-06 / G-20). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever. Whether `staff` can also use the add-teammate form. Customer-portal routes and which KPIs appear on the customer vs merchant side. Whether more than one loyalty program can be `active` at the same time. Whether the account list also shows `admin` rows.
+Open tracking, SMS delivery, automations, campaign revenue (G-09 / G-06 / G-20). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever. Whether `staff` can also use the add-teammate form. Customer-portal **URLs** (wallet **contents** are locked in §8). Whether more than one loyalty program can be `active` at the same time. Whether the account list also shows `admin` rows. Default referral expiry **day counts**. OTP challenge TTL and attempt cap. Merchant UI for **Pending Review** (status and backend review path are locked; the screen is not). Device-fingerprint algorithm (hashes and same-minute rule are locked). SMS vs WhatsApp **provider** (channel enum is locked; adapters stay stubs).
 

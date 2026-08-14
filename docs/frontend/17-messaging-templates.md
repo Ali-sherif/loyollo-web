@@ -32,6 +32,7 @@ These are currently rendered by Lovable auth webhook/preview routes. After withd
 | Password changed              | `src/lib/security.functions.ts`                              | Email          | Security notice copy                                                                 |
 | Campaign email                | `src/lib/campaigns.functions.ts` `buildHtml` / `personalize` | Email          | User-authored subject/message + HTML wrapper                                         |
 | Campaign SMS                  | `src/lib/campaigns.functions.ts`                             | SMS            | Same personalization tokens; provider currently throws `SMS provider not configured` |
+| Join / register OTP           | **DECIDED, not shipped** — messaging contracts               | SMS or WhatsApp | Code only; never log plaintext. Channel chosen at `POST /api/join/otp/request`. [OTP](loyalty-page.md#otp-verification-decided) |
 
 ## Personalization tokens to preserve
 
@@ -70,7 +71,7 @@ Until a real provider replaces the stubs:
 
 1. Keep Supabase enqueue/log RPCs if they remain useful.
 2. Do not bind template modules to Lovable SDK types.
-3. Keep SMS channel UX and message storage; stub transport fails explicitly when SMS send is attempted.
+3. Keep SMS **and WhatsApp** channel UX for OTP; stub transport fails explicitly when send is attempted.
 4. Do not delete templates or change copy during framework migration.
 5. Do not let features depend directly on delivery providers.
 6. Email stub must not silently pretend success in production paths without an explicit no-op/log policy recorded at stub implementation.

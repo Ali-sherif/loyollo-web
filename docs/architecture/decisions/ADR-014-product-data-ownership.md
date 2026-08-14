@@ -16,7 +16,7 @@ Shipping new product tables from this frontend repo (or writing them from Next B
 
 ### Ownership
 
-- Any **new table** required to close product gaps — including but not limited to `orders`, `visit_events`, `points_ledger`, `referrals`, `campaign_jobs` — is owned by the **backend / database program** (ADR-011 Phase 2).
+- Any **new table** required to close product gaps — including but not limited to `orders`, `visit_events`, `points_ledger`, `referrals`, `otp_verifications`, `vouchers`, `campaign_jobs` — is owned by the **backend / database program** (ADR-011 Phase 2).
 - Any **new column** on existing tables required for the same gaps — including but not limited to `branch_id` on customers/events/redemptions/orders, `customers.tier_id`, `rewards.cost_cents`, `customer_rewards.order_id` — is owned by that same program.
 - Agents and engineers **must not** add Supabase migrations for these gaps in this frontend repo, and **must not** introduce Next Route Handlers or Server Actions whose primary job is to own that persistence.
 - Authoritative contracts live under [`docs/backend/`](../../backend/README.md): [data-contract.md](../../backend/data-contract.md), [api-contract.md](../../backend/api-contract.md), [remediation-roadmap.md](../../backend/remediation-roadmap.md).

@@ -124,9 +124,19 @@ Purpose:
 1. **Store their data** on a customer account (profile + activity), not only an owner-created row.
 2. **Calculate KPIs** from that stored data (visits, stamps, points, redemptions, recency) — merchant Analytics/Dashboard and customer-facing progress — instead of relying only on fields the owner typed.
 
-**Today:** owner **Add Customer** in `/app/customers`, plus unauthenticated QR join/enroll (`/join/[programId]`). Owner (`admin`) manual add **remains** as a merchant tool. Join/check-in remains a capture path until (and likely after) customer auth; enroll should **link** to the customer account when that identity exists.
+**Today:** owner **Add Customer** in `/app/customers`, plus unauthenticated QR join/enroll (`/join/[programId]`). Owner (`admin`) manual add **remains** as a merchant tool (no customer OTP). Join/check-in remains a capture path until (and likely after) customer auth; enroll should **link** to the customer account when that identity exists.
 
-Customer auth must **not** grant `admin` / `staff` `/app` access. Rate-limit public signup/enrollment ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)). Schema and APIs are backend-owned ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)). Gap: [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows).
+**DECIDED:** public **new** register (join and shop-customer self-register) requires **OTP via SMS or WhatsApp** before the `customers` row is finalized. [OTP](loyalty-page.md#otp-verification-decided).
+
+Customer auth must **not** grant `admin` / `staff` `/app` access. Rate-limit public signup/enrollment and OTP request ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)). Schema and APIs are backend-owned ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)). Gap: [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows).
+
+### Customer wallet (DECIDED)
+
+After login, the `customer` sees **one card per program** they belong to — never a single mixed points total.
+
+Each card must show: program name, **spendable** points for **that** program, expiry (one date if lots share it; otherwise amount + date groups), vouchers with their dates, and that program’s share **link** + **QR**.
+
+Example: 100 points in program 1 (month window) and 200 in program 2 (week window) = two cards, not 300. [loyalty-page.md](loyalty-page.md#customer-wallet-per-program-decided). Portal URL still **not** locked.
 
 ## Backend change required
 

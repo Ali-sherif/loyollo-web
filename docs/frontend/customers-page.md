@@ -26,7 +26,7 @@ Reference for all components, conditions, and edge cases on the Customers list r
 1. Shop owner **Add Customer** in this page (manual)
 2. Public QR **join/enroll** (`POST /api/join/enroll`) — no customer login
 
-**Intended (DECIDED):** shop customers **register and log in** (role **customer**) so we **store their data** and **calculate KPIs** from activity — not only from owner-typed rows. Owner (`admin`) manual add stays as a merchant tool. Customer login is **not** `/app` `admin` / `staff` auth. See [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows).
+**Intended (DECIDED):** shop customers **register and log in** (role **customer**) so we **store their data** and **calculate KPIs** from activity — not only from owner-typed rows. Public **new** join requires OTP (SMS/WhatsApp) before the member row exists. Owner (`admin`) manual add stays as a merchant tool (no OTP). Customer login is **not** `/app` `admin` / `staff` auth. See [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows) · [OTP](loyalty-page.md#otp-verification-decided).
 
 ---
 
@@ -346,7 +346,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 | [G-36](gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer) | **Account active/inactive** | No login gate | No account status | Distinct from member `status` | Admin page: `active`/`inactive` + filters |
 | [G-11](gaps-and-solutions.md#g-11--customer-list-will-not-scale) | **Pagination** | Full table in browser | List is client `select *` | OK at small N | `GET /api/customers?cursor=` |
 | [G-17](gaps-and-solutions.md#g-17--join-only-customer-fields-hidden-from-owner) | **Manual add fields** | No gender/city/custom | Join API has them | Columns exist | Add to dialog or show on detail |
-| [G-13](gaps-and-solutions.md#g-13--detail-pages-are-shells) | **Detail rewards / LTV / referrals** | Hardcoded 0 | Detail never queries `customer_rewards` | No LTV/referral events | Query rewards; LTV from orders; referrals table |
+| [G-13](gaps-and-solutions.md#g-13--detail-pages-are-shells) | **Detail rewards / LTV / referrals** | Hardcoded 0 | Detail never queries `customer_rewards` | No LTV/referral events | Query rewards; LTV from orders; `referrals` count + `referral_code` ([referral rewards](loyalty-page.md#referral-rewards-decided)) |
 | — | **Send Campaign** | No audience prefills | — | — | Prefill create dialog |
 | [G-11](gaps-and-solutions.md#g-11--customer-list-will-not-scale) | **CSV** | Client-only snapshot | No export endpoint | — | BFF export when paginated |
 | [G-21](gaps-and-solutions.md#g-21--birthday-stored-automation-unused) | **birth_date** | Stored | Birthday automation unused | OK | Automation worker |

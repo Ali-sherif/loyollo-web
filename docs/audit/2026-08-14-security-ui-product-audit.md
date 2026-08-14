@@ -303,7 +303,7 @@ Operational end-to-end **for the owner session**, assuming Supabase is up:
 | Orders / GMV / ROI | No `orders` | `G-06` |
 | QR scan counts | No `visit_events` | `G-01` |
 | Per-branch metrics | No `branch_id` on customers/events | `G-04` |
-| Referrals that pay | No `referrals` + `?ref=` | `G-14` |
+| Referrals that pay | No `referrals` + `?ref=` | `G-14` (product **DECIDED**, not shipped) |
 | Real integrations | Toggle → `pending` | `G-19` |
 | Paid plans + quotas | Client writes `plan` | `G-07` |
 | Campaign Completed / Performance | Status stuck `active`; opens never increment | `G-09` |
@@ -664,7 +664,7 @@ These checklist items are already specified in page specs / glossary with enough
 | Admin **adds** `admin` or `staff` (temp password + first-login change) | Covered as **DECIDED, not shipped** | [11-authentication-migration.md](../frontend/11-authentication-migration.md#admin-adds-admin-or-staff-decided); G-34 |
 | Admin **activates/deactivates `staff` and `customer`** | Covered as **DECIDED, not shipped** | 11-auth account status; G-36 |
 | Loyalty **program types** `points` \| `visit` \| `tier` | Covered | [loyalty-page.md](../frontend/loyalty-page.md); [system-architecture.md](../frontend/system-architecture.md) L215 |
-| Referral **settings columns**: `referrer_bonus_points`, `new_customer_discount_pct` | Covered as config only | loyalty-page Referrals tab; data-contract `referrals` writer credits referrer points |
+| Referral **settings columns**: `referrer_bonus_points`, `new_customer_discount_pct` | Covered as config; **product grants DECIDED** | loyalty-page [referral rewards](../frontend/loyalty-page.md#referral-rewards-decided); data-contract write rule 12 |
 
 ---
 
@@ -748,9 +748,9 @@ If it means **POS ticket / invoice types**: **not in any doc.**
 
 #### Referral share UX and reward sides (`DG-11`)
 
-Intended enroll `?ref=` / code and `referrer_bonus_points` are in the data-contract. Settings also store `new_customer_discount_pct`.
+**DECIDED (2026-08-14):** both parties rewarded. Referred granted at new enroll/register; referrer granted on the referred member’s first invoice. Share is a personal **link** or **QR** on **that program’s customer wallet card**. **Points** credit the wallet at that grant instant; **discount** is a `customer_rewards` voucher redeemed later. Point lots and vouchers have `expires_at`. Wallet is **per program** (never a mixed total). [loyalty-page.md](../frontend/loyalty-page.md#referral-rewards-decided) · [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-program-decided).
 
-**Missing:** how the customer **shares** (link, code, QR, in-app, SMS); when the discount is applied (join, first order, POS); whether the joiner can get **points** instead of %; whether the referrer can get a **discount** instead of points; fraud / self-referral; program-type interaction (visit vs points).
+**Still not locked:** default expiry day counts; customer-portal **URL**.
 
 #### Analytics fetch vs tab-conditional load (`DG-13`)
 
@@ -784,7 +784,7 @@ Lock these in a **product Phase 1 scope** note (meeting report or a new `docs/pr
 | **DG-08** | Communication **policy** (consent, caps, SMS in/out of Phase 1) | 17-messaging; campaigns-page; join | Channel enum ≠ rules |
 | **DG-09** | What **Currency** is; ISO list; one-per-shop; `orders` currency | settings-page; data-contract `orders` | Field is a write-only string |
 | **DG-10** | Automation **execution** (`config`, triggers, worker) **or** explicit Phase-1 “config only / hide Enable” | campaigns-page automations; G-09 | Types exist; behavior does not |
-| **DG-11** | Referral **share mechanic** + discount vs points for **both** parties | loyalty-page; data-contract `referrals` | Settings imply split rewards; writer only credits referrer points |
+| **DG-11** | Referral **share mechanic** + discount vs points for **both** parties | loyalty-page; data-contract `referrals` | **DECIDED** — remaining: default expiry days + portal URL |
 | **DG-12** | Loyalty program ↔ **bill/ticket type** (if that is a POS concept) | loyalty-page; data-contract `orders` | Word “bill type” does not appear |
 | **DG-13** | Confirm analytics fetch: page-level both tables vs tab-conditional `rewards` | analytics-page | Spec vs checklist wording |
 | **DG-14** | Single At-risk definition for product Phase 1 (30 vs 60 vs 20–60) | data-contract glossary; G-08 | Four rules still published |
@@ -802,7 +802,7 @@ Lock these in a **product Phase 1 scope** note (meeting report or a new `docs/pr
 6. May an `admin` deactivate **another `admin`**? May `staff` create teammates?  
 7. What does Settings **Currency** affect (display, billing, points-to-cash, orders)? Multi-currency: yes/no.  
 8. Per automation type: **when** it fires, **who** gets the message, **what** is sent, owner TZ.  
-9. How does a member **share** a referral, and when does `new_customer_discount_pct` hit a bill vs wallet?  
+9. ~~How does a member **share** a referral, and when does `new_customer_discount_pct` hit a bill vs wallet?~~ **DECIDED:** link or QR on that program’s wallet card; points to wallet at grant time; discount as voucher. Default expiry days and portal URL still open.  
 10. Does “bill type” mean `program_type`, or a POS ticket class?  
 11. Product Phase 1: is **SMS** a real send path, a visible-fail stub, or hidden?  
 12. After glossary lock, do Overview “At risk” and Engagement “At risk” **keep different cutoffs** (analytics-page documents both) or converge?
@@ -824,7 +824,7 @@ Lock these in a **product Phase 1 scope** note (meeting report or a new `docs/pr
 | 4.1 | Scheduled automation execution | **Partial** — CRUD only (`DG-10`) |
 | 4.2 | Completed / Performance / 0% opens / SMS label | **Covered** |
 | 4.3 | Loyalty ↔ bill types | **Ambiguous / missing** (`DG-12`) |
-| 4.4 | Referral share + both-party rewards | **Partial** (`DG-11`) |
+| 4.4 | Referral share + both-party rewards | **Covered** (`DG-11` DECIDED; default expiry days / portal URL still open) |
 | 5.1–5.3 | Analytics fetch, Overview, Engagement, Revenue formulas | **Covered** (fetch wording `DG-13`; at-risk `DG-14`; overlap `DG-15`) |
 
 ---

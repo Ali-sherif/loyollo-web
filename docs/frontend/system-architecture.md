@@ -2,7 +2,7 @@
 
 How authenticated product pages, public join, Next.js BFF routes, Supabase (Auth + Postgres + Storage + RPCs), and the email queue talk to each other **today**. Page-level UI is in the per-route docs. Gaps and the recommended data model are in [gaps-and-solutions.md](gaps-and-solutions.md); target schema/API for backend remediation: [../backend/README.md](../backend/README.md) ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
-**Jump to:** [layers](#layers) · [auth](#auth-flow) · [who-talks-to-what](#who-talks-to-what) · [api inventory](#api-route-inventory) · [direct supabase](#client-side-supabase-inventory) · [er](#database-relationships) · [join](#public-join-and-check-in) · [email](#email-pipeline) · [notifications](#notifications) · [plans](#plans-and-limits)
+**Jump to:** [layers](#layers) · [auth](#auth-flow) · [who-talks-to-what](#who-talks-to-what) · [api inventory](#api-route-inventory) · [direct supabase](#client-side-supabase-inventory) · [er](#database-relationships) · [join](#public-join-and-check-in) · [referral lifecycle](#referral-lifecycle-intended) · [email](#email-pipeline) · [notifications](#notifications) · [plans](#plans-and-limits)
 
 **Related:** [ADR-005](../architecture/decisions/ADR-005-authentication.md), [ADR-006](../architecture/decisions/ADR-006-server-boundaries.md), [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md), [ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md), [ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md), [15-server-function-mapping.md](15-server-function-mapping.md), generated types `src/integrations/supabase/types.ts`.
 
@@ -223,7 +223,7 @@ Target schema for these gaps: [data-contract.md](../backend/data-contract.md). O
 |----------------|--------|------|
 | Scan / visit event log | **Does not exist** | [G-01](gaps-and-solutions.md#g-01--qr-scan-tracking-is-always-0), [G-02](gaps-and-solutions.md#g-02--visit--stamp-progress-is-always-empty) |
 | `orders` / points ledger | **Does not exist** | [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) |
-| `referrals` events | **Does not exist** — only `referral_settings` | [G-14](gaps-and-solutions.md#g-14--referrals-settings-without-attribution) |
+| `referrals` / `otp_verifications` / `vouchers` | **Do not exist.** **DECIDED:** OTP then atomic enroll; both-party grants; referrer on `Invoice.Paid`; DB self-invite + once-in-lifetime `referred_id`; device/IP → Pending Review; discount = `vouchers` not cart % ([loyalty-page.md](loyalty-page.md#referral-rewards-decided), [OTP](loyalty-page.md#otp-verification-decided), [fraud](loyalty-page.md#referral-fraud-controls-decided)) | [G-14](gaps-and-solutions.md#g-14--referrals-settings-without-attribution) |
 | `customers.tier` | Column exists; enroll/check-in never set it | [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) |
 | `campaigns.revenue_cents`, `opened_count` | Columns exist; send path does not maintain them | [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere), [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) |
 | `integrations.status=connected` | UI only writes `pending` | [G-19](gaps-and-solutions.md#g-19--integrations-never-connect) |
@@ -258,7 +258,34 @@ sequenceDiagram
 
 No scan row is written on GET. No `branch_id`. Rate limit is an in-memory `Map` per instance (ADR-012: replace with Redis/Upstash).
 
-**Intended (DECIDED):** shop customers will register/login (role **customer**) so data is stored on an account and KPIs are calculated from activity — not only owner **Add Customer**. Join remains a public capture path; customer session is not `admin` / `staff` `/app` auth. [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows).
+**Intended (DECIDED):** shop customers will register/login (role **customer**) so data is stored on an account and KPIs are calculated from activity — not only owner **Add Customer**. Join remains a public capture path; customer session is not `admin` / `staff` `/app` auth. New enroll requires OTP. [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows) · [OTP](loyalty-page.md#otp-verification-decided).
+
+---
+
+## Referral lifecycle (intended)
+
+Target flow (backend-owned; not how join works today). Full schema/SQL: [data-contract referral lifecycle](../backend/data-contract.md#referral-lifecycle-atomic).
+
+```mermaid
+sequenceDiagram
+  participant P as Phone
+  participant J as /join/{id}?ref=
+  participant API as /api/join/*
+  participant Msg as Messaging contracts
+  participant DB as Postgres
+  participant POS as Invoice.Paid
+
+  P->>J: Open share link or QR
+  J->>API: GET program + ref
+  API->>DB: Invite telemetry only
+  P->>API: POST otp/request sms or whatsapp
+  API->>DB: otp_verifications pending
+  API->>Msg: Send OTP
+  P->>API: POST enroll otp_id + code + ref
+  API->>DB: Atomic customers + referrals + referred reward
+  POS->>API: Webhook Invoice.Paid
+  API->>DB: orders.paid_at + referrer grant if pending
+```
 
 ---
 

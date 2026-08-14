@@ -17,7 +17,7 @@ Authz unless noted: **owner session** = **`admin`** (buyer of Loyollo; [data-con
 | Method | Path | Purpose | Request | Response (shape) | Unlocks |
 |--------|------|---------|---------|------------------|---------|
 | GET | `/api/customers` | Paginated list + server filters | Query: `cursor`, `q`, `status`, `tier`, `limit` | `{ items: CustomerSummary[], next_cursor? }` | G-11, G-12 scale |
-| GET | `/api/customers/:id` | Detail with rewards + activity | Path id (ownership check) | `{ customer, rewards[], visits_summary, ltv_cents?, referrals_count }` | G-13 |
+| GET | `/api/customers/:id` | Detail with rewards + activity | Path id (ownership check) | `{ customer, rewards[], visits_summary, ltv_cents?, referrals_count, referral_code }` | G-13, G-14 |
 | POST | `/api/customers/:id/redeem` | Explicit redeem | Body: `{ reward_id, branch_id?, order_id?, amount_cents? }` | `{ customer_reward, redeemed_count, order? }` | G-20, ROI |
 | GET | `/api/customers/export` | CSV export (optional BFF) | Same filters as list | `text/csv` stream | G-11 |
 
@@ -27,6 +27,9 @@ Authz unless noted: **owner session** = **`admin`** (buyer of Loyollo; [data-con
 2. When a ticket exists: create or attach `orders` (`amount_cents`, channel/branch as known) and set `customer_rewards.order_id` in the **same transaction**.
 3. Decrement points / insert `points_ledger`; increment `rewards.redeemed_count`.
 4. Redemptions without `order_id` are valid operationally but **excluded from ROI** until linked.
+5. Refuse redeem when `customer_rewards.expires_at` is set and `now() >= expires_at` (expired catalog reward if that column is used).
+6. Refuse spend of a `points_ledger` lot when `expires_at` is set and `now() >= expires_at` (expired referral points). FIFO remaining unexpired lots.
+7. Referral **discount** redeem is `POST /api/vouchers/:id/redeem` on `vouchers` (`active` only; refuse `used` / `expired` / `now() >= expires_at`). Do not auto-apply to a cart.
 
 ### Branches
 
@@ -132,12 +135,150 @@ WHERE loyalty_program_id = :program_id
   AND last_activity_at >= now() - interval '60 days';
 ```
 
-### Join (extend existing)
+### Join — OTP + enroll
+
+Public, unauthenticated. Rate-limit OTP request **and** enroll (ADR-012). New members are **not** written until OTP succeeds.
 
 | Method | Path | Change | Unlocks |
 |--------|------|--------|---------|
-| GET | `/api/join/program` | Log `visit_events` (`source=qr_view`); accept `branch` query | G-01 |
-| POST | `/api/join/enroll` | Log check-in event; update points/visits (tier via `assign_customer_tier` / trigger); accept `branch`, `ref`; rate limit via Redis/Upstash (ADR-012) | G-01, G-02, G-03, G-14, G-18 |
+| GET | `/api/join/program` | Log `visit_events` (`source=qr_view`); accept `branch` query; if `ref` present, persist invite telemetry (hashed IP + device, `invite_at`) for enroll matching | G-01, G-14 |
+| POST | `/api/join/otp/request` | Start SMS or WhatsApp OTP. Insert `otp_verifications` only — **no** `customers` / `referrals` / ledger / vouchers | G-14, G-33, G-18 |
+| POST | `/api/join/enroll` | Verify OTP then atomically create the member (and referral grant). Returning phone in program = check-in only (no new OTP, no second referral) | G-01, G-02, G-03, G-14, G-18 |
+| POST | `/api/vouchers/:id/redeem` | Mark voucher `used`; attach `order_id`. Shop-customer or staff/admin POS. Never auto-apply at issue | G-14, G-20 |
+
+#### `POST /api/join/otp/request`
+
+```json
+{
+  "program_id": "uuid",
+  "phone": "+201000000000",
+  "channel": "sms",
+  "ref": "ABC123",
+  "branch_id": "uuid"
+}
+```
+
+`channel`: `"sms"` \| `"whatsapp"`. `ref` optional (omit when not a referral join).
+
+```json
+{
+  "otp_id": "uuid",
+  "expires_at": "2026-08-14T19:15:00Z",
+  "channel": "sms"
+}
+```
+
+Errors: `429` rate limit; `400` invalid phone/channel; `404` program not `active`. Transport failure (stub SMS/WhatsApp) → `503` with a generic message — do not leak provider errors.
+
+Send the code through [messaging contracts](../frontend/17-messaging-templates.md). Store `code_hash` only.
+
+#### `POST /api/join/enroll`
+
+```json
+{
+  "program_id": "uuid",
+  "otp_id": "uuid",
+  "otp_code": "123456",
+  "phone": "+201000000000",
+  "ref": "ABC123",
+  "branch_id": "uuid",
+  "name": "string",
+  "email": "string",
+  "birth_date": "date",
+  "gender": "string",
+  "city": "string",
+  "custom_field_value": "string"
+}
+```
+
+`otp_id` + `otp_code` + matching `phone` are **required** for a **new** member. Returning member (same phone/email in program): treat as check-in; OTP fields may be omitted.
+
+Success (new member):
+
+```json
+{
+  "customer_id": "uuid",
+  "referral": {
+    "id": "uuid",
+    "status": "pending",
+    "referred_granted": true,
+    "referrer_granted": false
+  },
+  "reward": {
+    "kind": "discount",
+    "voucher_id": "uuid",
+    "expires_at": "2026-09-13T19:10:00Z"
+  }
+}
+```
+
+`referral` is `null` when `ref` is absent or invalid. `status` may be `"pending_review"`. `reward.kind` is `"points"` \| `"discount"` from `referral_settings.referred_reward_kind`. Invalid/expired OTP → **`401` / `410` and no member row**. Self-invite or duplicate `referred_id` → **`409`** (DB constraint).
+
+Also: log check-in `visit_events`; `assign_customer_tier`; stamp lot `expires_at`; device/IP compare for `pending_review`.
+
+### Invoice.Paid (referrer release)
+
+Internal service event. POS or billing adapter is the only writer of `orders.paid_at`. Next.js must not own this persistence ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
+
+| Method | Path | Purpose | Unlocks |
+|--------|------|---------|---------|
+| POST | `/api/webhooks/invoice-paid` | Verify provider signature; set `orders.paid_at`; if this is the customer’s **first paid** invoice in the program and `referrals.status = pending`, grant the **referrer** in the **same transaction** | G-14, G-06 |
+
+Request (shape — provider envelope may wrap this):
+
+```json
+{
+  "event": "Invoice.Paid",
+  "order_id": "uuid",
+  "customer_id": "uuid",
+  "loyalty_program_id": "uuid",
+  "amount_cents": 15000,
+  "paid_at": "2026-08-14T20:01:00Z",
+  "external_invoice_id": "string"
+}
+```
+
+Idempotent on `order_id`: a second `Invoice.Paid` must not double-grant. Unpaid order create **must not** call this path.
+
+Response:
+
+```json
+{
+  "order_id": "uuid",
+  "paid_at": "2026-08-14T20:01:00Z",
+  "referral": {
+    "id": "uuid",
+    "status": "completed",
+    "referrer_granted": true
+  }
+}
+```
+
+`referral` is `null` when the payer is not a pending referred member. `status` stays `pending_review` if still flagged — `referrer_granted` is `false`.
+
+### Customer wallet (session)
+
+**Authz:** shop-**`customer`** session only. Not `/app`. Path is illustrative (portal routes not locked).
+
+| Method | Path | Purpose | Request | Response (shape) | Unlocks |
+|--------|------|---------|---------|------------------|---------|
+| GET | `/api/me/wallet` | Memberships for this login | — | `{ programs: WalletProgram[] }` | G-33, G-14, G-10 expiry |
+
+`WalletProgram`:
+
+```json
+{
+  "program_id": "uuid",
+  "name": "string",
+  "points_spendable": 100,
+  "lots": [{ "amount": 100, "expires_at": "timestamptz|null" }],
+  "vouchers": [{ "voucher_id": "uuid", "discount_pct": 15, "status": "active", "expires_at": "timestamptz" }],
+  "referral_code": "string",
+  "share_url": "/join/{programId}?ref={referral_code}"
+}
+```
+
+Rules: one object per program membership. **Do not** include a top-level summed points field. `lots` grouped by `expires_at` so mixed windows (month vs week) are visible. [loyalty-page.md](../frontend/loyalty-page.md#customer-wallet-per-program-decided).
 
 ### Billing / integrations (backend-owned)
 
@@ -145,7 +286,7 @@ WHERE loyalty_program_id = :program_id
 |--------|------|---------|---------|
 | POST | `/api/billing/checkout` | Start paid plan | G-07 |
 | POST | `/api/billing/webhook` | Sole writer of `profiles.plan` | G-07, G-32 |
-| POST | `/api/integrations/:provider/connect` | OAuth/API keys; POS → `orders` | G-19, G-06 |
+| POST | `/api/integrations/:provider/connect` | OAuth/API keys; POS → `orders` + `Invoice.Paid` | G-19, G-06, G-14 |
 
 Exact provider paths are product choices; this row is the contract intent.
 
@@ -155,7 +296,7 @@ Exact provider paths are product choices; this row is the contract intent.
 
 | Stay client → Supabase (RLS) for now | Move to backend APIs |
 |--------------------------------------|----------------------|
-| Simple owner CRUD that already works under RLS (e.g. draft campaign fields, branch list reads until POST cap exists) | Paginated customers, analytics aggregates (incl. visit metrics + ROI), search, redeem, branch create with plan cap, campaign send enqueue, insight actions, billing, POS/orders ingest |
+| Simple owner CRUD that already works under RLS (e.g. draft campaign fields, branch list reads until POST cap exists) | Paginated customers, analytics aggregates (incl. visit metrics + ROI), search, redeem, branch create with plan cap, campaign send enqueue, insight actions, billing, POS/orders ingest, **customer wallet** (`GET /api/me/wallet`) |
 | Profile fields the owner edits directly | Anything needing service-role, multi-table transactions (visit + tier + ledger), or secrets |
 
 When Phase 2 cutover lands (ADR-011), **all** application traffic moves to backend APIs; this table is the transitional map.

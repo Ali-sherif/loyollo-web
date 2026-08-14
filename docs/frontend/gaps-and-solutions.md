@@ -129,7 +129,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Points/Visit/Tier advanced fields |
 | **Blocked by** | Columns exist; `recordCheckIn` uses a small subset; often needs `orders` |
-| **Solution** | Implement against orders/events, or hide unused fields until POS |
+| **Solution** | Implement against orders/events, or hide unused fields until POS. Issued point lots must stamp `expires_at` from `points_expiry_months` (G-10 expiry). Customer wallet is per-program. |
 | **Status** | `DEFERRED-BACKEND` (hide unused: `FRONTEND-FIXABLE`) |
 | **Owner** | Backend program |
 | **Phase** | 5 |
@@ -177,8 +177,8 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Loyalty Referrals tab; Customer detail Referrals = 0 |
 | **Blocked by** | `referral_settings` only; no `referrals` events |
-| **Solution** | `referrals` table + enroll `?ref=` |
-| **Status** | `DEFERRED-BACKEND` |
+| **Solution** | `otp_verifications` then atomic enroll; `referrals` + `?ref=` / personal QR; both-party grants (referred after OTP, referrer **only** on first **paid** invoice / `Invoice.Paid`); discount → `vouchers` (`active`/`used`/`expired`); `CHECK (referrer_id <> referred_id)`; `UNIQUE (referred_id)`; same device/IP in the same minute → `pending_review`. [DECIDED](loyalty-page.md#referral-rewards-decided) · [fraud](loyalty-page.md#referral-fraud-controls-decided) · [OTP](loyalty-page.md#otp-verification-decided). Schema: [data-contract](../backend/data-contract.md#referrals) |
+| **Status** | `DEFERRED-BACKEND` (product **DECIDED**, not shipped) |
 | **Owner** | Backend program |
 | **Phase** | 6 |
 
@@ -219,9 +219,9 @@ These widgets are visible in production UI and systematically show **zero, even 
 
 | Field | Value |
 |-------|--------|
-| **Where** | `/api/join/enroll`, `/api/join/program` |
+| **Where** | `/api/join/enroll`, `/api/join/otp/request`, `/api/join/program` |
 | **Blocked by** | In-memory `Map` per instance |
-| **Solution** | Redis/Upstash (ADR-012) |
+| **Solution** | Redis/Upstash on program GET, OTP request, and enroll (ADR-012) |
 | **Status** | `DEFERRED-BACKEND` |
 | **Owner** | Backend / infra |
 | **Phase** | Before multi-instance prod |
@@ -390,7 +390,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | `/app/customers` Add Customer; public `/join/[programId]`; Dashboard / Analytics KPIs |
 | **Blocked by** | No shop-customer auth. Rows are owner-created or anonymous join. KPIs use denormalized / owner-typed fields |
-| **Solution** | Customer **register/login** (role **customer**, not `admin` / `staff` `/app`). Store customer-owned profile + activity. **Calculate KPIs** from that data. Owner manual add remains. Routes not locked. [11-authentication-migration.md](11-authentication-migration.md#shop-customer-register-and-login-decided) |
+| **Solution** | Customer **register/login** (role **customer**, not `admin` / `staff` `/app`). Public new register uses **OTP** (SMS/WhatsApp) before the member row is finalized. Store customer-owned profile + activity. **Calculate KPIs** from that data. Owner manual add remains (no OTP). Wallet: **one card per program** (spendable points + expiry groups + `vouchers` + share link/QR); never a cross-program total. Routes not locked. [11-authentication-migration.md](11-authentication-migration.md#shop-customer-register-and-login-decided) · [loyalty-page.md](loyalty-page.md#customer-wallet-per-program-decided) · [OTP](loyalty-page.md#otp-verification-decided) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
 | **Owner** | Backend program |
 | **Phase** | Later (customer portal; not product Phase 1 merchant roles) |
@@ -450,7 +450,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 | `rewards` + `point_cost` + `redeemed_count` | Catalog; count only until redeem API |
 | `customer_rewards` (earned_at, redeemed_at) | Earn events; wire detail + redeem |
 | `qr_page_settings` + join BFF | Branding **is** wired |
-| `referral_settings` | Config; needs event table |
+| `referral_settings` | Config; needs event table + grant writers (G-14 **DECIDED**) |
 | `branches` + `profiles.plan` | Locations + intended caps |
 | `notification_preferences` + `notifications` | Prefs + bell; gate the BFF |
 | `integrations` | Intent rows; POS later |

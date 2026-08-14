@@ -6,7 +6,7 @@
 
 | Doc | Purpose |
 |-----|---------|
-| [data-contract.md](data-contract.md) | Target schema (incl. `visit_events`, `orders`, `insight_actions`), tier DB functions/triggers, visit metric SQL, ROI formula, write rules, glossary (incl. `admin` / `staff` / `customer` roles) |
+| [data-contract.md](data-contract.md) | Target schema (incl. `visit_events`, `orders.paid_at`, `otp_verifications`, `vouchers`, `referrals` + grant/expiry + fraud + OTP), tier DB functions/triggers, visit metric SQL, ROI formula, write rules, glossary |
 | [api-contract.md](api-contract.md) | Endpoint shapes (analytics ROI, `POST /api/insights/:key/actions`), client vs backend boundary |
 | [remediation-roadmap.md](remediation-roadmap.md) | Phases 0–7, G-IDs, acceptance criteria (tier automation, visit metrics, ROI, insight nudges) |
 

@@ -433,6 +433,8 @@ FROM reward_metrics;
 7. **Plan / billing:** checkout + webhook are the only writers of `profiles.plan`. Branch insert and enroll must enforce `PLAN_LIMITS` / contact caps server-side.
 8. **Authz:** owner-scoped to `loyalty_program_id` / `owner_id`. Service-role only in workers and public enroll ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)). Merchant roles: **`admin`** (buyer) and **`staff`** (**same permissions as `admin` for now**). Do not use stored name `purchaser`.
 9. **Shop-customer identity (DECIDED, not shipped):** customers of the shop will register/login (role **customer**) to persist their data. KPIs must be **calculated** from stored activity, not only from owner **Add Customer**. Customer session must not be an `admin` / `staff` `/app` session. Identity schema is backend-owned. Owner manual add remains allowed.
+10. **Multiple loyalty programs (DECIDED, not shipped):** a shop has many `loyalty_programs`. Each has `status` = `draft` \| `active` \| `disabled`. Drop `UNIQUE (owner_id)`. Join/check-in only when the program is `active`. [loyalty-page.md](../frontend/loyalty-page.md#multiple-programs-and-status-decided).
+11. **Account status (DECIDED, not shipped):** `admin` sets `staff` and `customer` to `active` \| `inactive`. Inactive cannot log in to their surface. Distinct from `customers.status`. List filters: role, email, name, phone. [11-authentication-migration.md](../frontend/11-authentication-migration.md#account-active--inactive-decided).
 
 ---
 
@@ -455,6 +457,8 @@ One meaning everywhere (Dashboard, Customers, Analytics, Campaigns). Do not mix 
 | **Active (campaign)** | Campaign is **currently running** (send in progress). Must **not** be the starting status (that is Draft). Unrelated to member `active` | `campaigns.status` = `active` (UI Active tab also includes transient `sending`) |
 | **Completed (campaign)** | Send is **finished**: every email/SMS for that launch has been processed (`sent_count > 0`) | `campaigns.status` = `completed` (writer not implemented yet; send still writes `active`) |
 | **Campaign performance** | Results column, not a status: email `{opened/sent}% Open`; SMS `{opened/sent}% Redeemed`; unsent `"—"` | `opened_count / sent_count`; [campaigns-page.md](../frontend/campaigns-page.md#product-meanings-decided) |
+| **Program status** | Loyalty program lifecycle: `draft` (not live) \| `active` (live) \| `disabled` (off). A shop has **many** programs. | `loyalty_programs.status` (not shipped; today one row per owner). [loyalty-page.md](../frontend/loyalty-page.md#multiple-programs-and-status-decided) |
+| **Account status** | Can this **`staff`** or **`customer`** use the product: `active` (نشط) \| `inactive` (غير نشط). **Not** member `customers.status`, not program status. `admin` sets it. | [11-authentication-migration.md](../frontend/11-authentication-migration.md#account-active--inactive-decided) |
 
 Full collision history: [analytics-page.md](../frontend/analytics-page.md#three-different-systems-do-not-mix-them).
 

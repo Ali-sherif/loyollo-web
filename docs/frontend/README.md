@@ -95,13 +95,13 @@ flowchart LR
 
 - [Overview / Dashboard (`/app/dashboard`)](dashboard-page.md) — checklist, setup-complete canvas, shell chrome
 - [Customers (`/app/customers`)](customers-page.md) — list, filters, CRUD, detail placeholders
-- [Loyalty Program (`/app/loyalty`)](loyalty-page.md) — program types, rewards, referrals, QR, join/check-in
+- [Loyalty Program (`/app/loyalty`)](loyalty-page.md) — program types, rewards, referrals, QR, join/check-in; **DECIDED:** many programs + `draft`/`active`/`disabled`
 - [Branches (`/app/branches`)](branches-page.md) — plan limits, cards, detail placeholders
 - [Settings (`/app/settings`)](settings-page.md) — general, notifications, integrations, billing, security
 - [Campaigns (`/app/campaigns`)](campaigns-page.md) — list, send, audience, automations, detail; [product meanings](campaigns-page.md#product-meanings-decided) (Draft → Active while sending → Completed)
 - [Analytics (`/app/analytics`)](analytics-page.md) — components, conditions, and edge cases
 - [System architecture](system-architecture.md) — how pages, BFF, API, and DB communicate
-- [Gaps and solutions](gaps-and-solutions.md) — UI vs API vs DB backlog (**G-01…G-34**)
+- [Gaps and solutions](gaps-and-solutions.md) — UI vs API vs DB backlog (**G-01…G-36**)
 - Backend contracts (separate program, not migration): [../backend/README.md](../backend/README.md) · [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)
 
 **Next step:** slice 3 ΓÇö Server infrastructure (backend/Supabase factories, secret isolation, auth proof / D-28 cookie SSR, portable logging). Slice 2 assets **done** (`npm run scan:assets`). Keep [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md) open until PASSED. Multi-agent roles: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md).

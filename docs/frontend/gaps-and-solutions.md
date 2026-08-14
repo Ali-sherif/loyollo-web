@@ -406,6 +406,28 @@ These widgets are visible in production UI and systematically show **zero, even 
 | **Owner** | Backend program |
 | **Phase** | Later (merchant team; after role names) |
 
+### G-35 — Shop is limited to one loyalty program; no program status
+
+| Field | Value |
+|-------|--------|
+| **Where** | `/app/loyalty` upsert; Dashboard / Customers / Campaigns / Analytics `maybeSingle` |
+| **Blocked by** | `UNIQUE (owner_id)` on `loyalty_programs`; no `status` column |
+| **Solution** | Many programs per shop. Status **`draft` \| `active` \| `disabled`**. Drop unique-on-owner; stop overwrite-upsert. Join/check-in only for **`active`**. [loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided) |
+| **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
+| **Owner** | Backend program |
+| **Phase** | Later (multi-program) |
+
+### G-36 — No admin account list or active/inactive for staff/customer
+
+| Field | Value |
+|-------|--------|
+| **Where** | Intended `/app` account page (route not locked) |
+| **Blocked by** | No account `active`/`inactive`; no list API with role/email/name/phone filters |
+| **Solution** | `admin` sets **`staff`** and **`customer`** account status `active` \| `inactive`. Page filters: **role**, **email**, **name**, **phone**. Distinct from `customers.status` (at_risk/churned) and program status. [11-authentication-migration.md](11-authentication-migration.md#account-active--inactive-decided) |
+| **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
+| **Owner** | Backend program |
+| **Phase** | Later (merchant team + customer auth) |
+
 ---
 
 ## Recommended shared data model / API / delivery order

@@ -12,7 +12,7 @@
 
 ## Gap backlog
 
-Indexed UI vs API vs DB gaps (**G-01…G-34**): [../frontend/gaps-and-solutions.md](../frontend/gaps-and-solutions.md).
+Indexed UI vs API vs DB gaps (**G-01…G-36**): [../frontend/gaps-and-solutions.md](../frontend/gaps-and-solutions.md).
 
 ## Current system (as built)
 

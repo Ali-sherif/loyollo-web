@@ -32,6 +32,8 @@ Locked stored names: **`admin`** · **`staff`** · **`customer`**. No other logg
 
 **Admin adds teammate:** an `admin` form creates `admin` or `staff`, generates a random temp password, emails added + email + password. **First login must change that password.** [11-authentication-migration.md](../../frontend/11-authentication-migration.md#admin-adds-admin-or-staff-decided).
 
+**Account active/inactive:** `admin` sets `staff` and `customer` to `active` \| `inactive`. Management page filters by role, email, name, phone. [11-authentication-migration.md](../../frontend/11-authentication-migration.md#account-active--inactive-decided).
+
 `staff` subtypes and a future permission split: [deferred-decisions.md](../deferred-decisions.md). Glossary: [data-contract.md](../../backend/data-contract.md#unified-glossary).
 
 ### Migration approach

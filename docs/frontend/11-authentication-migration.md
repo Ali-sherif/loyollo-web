@@ -77,6 +77,38 @@ Exact copy, subject, and layout are **not** locked. The existing auth **`invite`
 
 On **first login** with the temporary password, the new `admin` / `staff` **must change that password** before using `/app`. They cannot skip it. After they set their own password, later logins are normal.
 
+## Account active / inactive (DECIDED)
+
+An **`admin` can set account status** to **`active`** (نشط) or **`inactive`** (غير نشط) for **`staff`** and **`customer`**. This is not shipped. Route in `/app` is **not** locked. Backend-owned. Gap: [G-36](gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer).
+
+This is **account** status (can they use the product?), not:
+
+| Other “status” | Meaning |
+|----------------|---------|
+| Customer **member** status | `active` / `at_risk` / `churned` on `customers` |
+| Loyalty **program** status | `draft` / `active` / `disabled` |
+| **Campaign** status | draft / active / completed / … |
+
+| Account status | Effect |
+|----------------|--------|
+| **`active`** | `staff` may use `/app`; `customer` may use customer login |
+| **`inactive`** | `staff` must not use `/app`; `customer` must not use customer login |
+
+Toggling **other `admin`** accounts is **not** in this decision (only `staff` and `customer`).
+
+### Management page filters (DECIDED)
+
+The page lists accounts the `admin` manages and **must** filter by:
+
+| Filter | On |
+|--------|-----|
+| **Role** | `staff` / `customer` (and `admin` only if that row is shown — not locked) |
+| **Email** | Account email |
+| **Name** | Display / full name |
+| **Phone** | Phone number |
+
+Exact layout is **not** locked. Same page may host add-teammate (G-34); not locked.
+
 ## Shop-customer register and login (DECIDED)
 
 **We will add register and login for Customers of the shop** — not only the current behavior where the shop owner types customers in by hand.

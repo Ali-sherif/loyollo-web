@@ -104,7 +104,7 @@ flowchart TD
 ### Data loading sequence
 
 1. `profiles` — `full_name, business_name, onboarding_completed` where `id = user.id`
-2. `loyalty_programs` — `id` where `owner_id = user.id` (`maybeSingle` — one program per owner)
+2. `loyalty_programs` — `id` where `owner_id = user.id` (`maybeSingle` — **today** one program per owner). **DECIDED:** many programs; [loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided)
 3. If a program exists, `Promise.all` of three `select("id").limit(1).maybeSingle()`:
    - `rewards` where `loyalty_program_id = program.id`
    - `customers` where `loyalty_program_id = program.id`
@@ -323,7 +323,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 4. **Live activity** — no event table
 5. **At-risk definition** — disagrees with Customers / Analytics / Campaigns
 6. **Open rate** — opens never incremented
-7. **One program per owner** — no switcher
+7. **One program per owner (today)** — **DECIDED:** many programs + `draft`/`active`/`disabled` ([loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided))
 8. **Checklist is existence-only** — a draft campaign counts as “launched”
 
 ---

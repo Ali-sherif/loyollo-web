@@ -91,7 +91,33 @@ Not the shop-`customer` signup. Exact form fields beyond name / email / role and
 
 ---
 
+## 5. Multiple loyalty programs + status
+
+**Status:** DECIDED (not shipped)  
+**Source of truth:** [loyalty-page.md](frontend/loyalty-page.md#multiple-programs-and-status-decided) · [G-35](frontend/gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status)
+
+A shop will have **more than one** loyalty program. Each program status is **`draft`**, **`active`**, or **`disabled`**.
+
+Today the DB allows only one program per owner. Join stays `/join/{programId}`. Whether two programs can be `active` at once is **not** locked.
+
+---
+
+## 6. Admin: account active/inactive + filters
+
+**Status:** DECIDED (not shipped)  
+**Source of truth:** [11-authentication-migration.md](frontend/11-authentication-migration.md#account-active--inactive-decided) · [G-36](frontend/gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer)
+
+An **`admin`** can set **`staff`** and **`customer`** accounts to **نشط (`active`)** or **غير نشط (`inactive`)**. Inactive `staff` cannot use `/app`; inactive `customer` cannot use customer login.
+
+This is **not** loyalty member status (`at_risk` / `churned`) and **not** program status.
+
+The page **filters** by **role**, **email**, **name**, and **phone**.
+
+Toggling another **`admin`** is not in this decision. Route is not locked.
+
+---
+
 ## Not decided in this discussion
 
-Open tracking, SMS delivery, automations, campaign revenue (G-09 / G-06 / G-20). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever. Whether `staff` can also use the add-teammate form. Customer-portal routes and which KPIs appear on the customer vs merchant side.
+Open tracking, SMS delivery, automations, campaign revenue (G-09 / G-06 / G-20). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever. Whether `staff` can also use the add-teammate form. Customer-portal routes and which KPIs appear on the customer vs merchant side. Whether more than one loyalty program can be `active` at the same time. Whether the account list also shows `admin` rows.
 

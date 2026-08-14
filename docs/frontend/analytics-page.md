@@ -1,6 +1,6 @@
 # Analytics Page (`/app/analytics`)
 
-Reference for all components, conditions, and edge cases on the Analytics route. Includes domain notes for frontend + backend work (one program per owner, how tiers are stored vs assigned, segment cutoffs, revenue placeholders), plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
+Reference for all components, conditions, and edge cases on the Analytics route. Includes domain notes for frontend + backend work (one program per owner **today**; **DECIDED** many programs with `draft`/`active`/`disabled` — [loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided); how tiers are stored vs assigned, segment cutoffs, revenue placeholders), plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
 
 **Jump to:** [one program](#one-owner--one-loyalty-program) · [how tiers work](#how-customer-tiers-actually-work) · [point ranges](#loyalty-page-point-ranges-saved-vs-ui) · [segments](#customer-segments--card) · [members by tier](#members-by-tier--card--donut) · [engagement stats](#stat-cards-4) · [visit frequency](#visit-frequency-over-time--card--emptychart-disabled) · [insights](#engagement-insights--card-suggestion-cards-not-a-report) · [most engaged / tier column](#most-engaged-members--card--table) · [engagement levels](#engagement-levels--card--horizontal-bars) · [colliding labels](#three-different-systems-do-not-mix-them) · [revenue tab](#tab-3-revenuetab) · [ROI](#roi-from-rewards) · [channel](#revenue-by-channel--what-channel-means) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
@@ -529,25 +529,27 @@ Do not `GROUP BY campaigns.channel` alone — that is send-channel, not sale-cha
 
 Use this when wiring frontend and backend. Analytics assumes the current product model below.
 
-### One owner → one loyalty program
+### One owner → one loyalty program (today)
 
-A business owner **cannot** have more than one loyalty program.
+**Today** a business **cannot** have more than one loyalty program.
 
 - DB: `CONSTRAINT loyalty_programs_owner_unique UNIQUE (owner_id)`  
   (`supabase/migrations/20260713174353_034cd3b0-2acb-430d-b1d9-14efe9174840.sql`)
 - App fetches with `.eq("owner_id", user.id).maybeSingle()` (expects 0 or 1 row)
 - App saves with `.upsert(..., { onConflict: "owner_id" })` — create or **overwrite** that one program
 
-There is **no**:
+**Intended (DECIDED):** a shop has **many** programs; each is `draft` \| `active` \| `disabled`. See [loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided) and [G-35](gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status).
 
-| Capability | Loyalty programs | Campaigns |
-|------------|------------------|-----------|
-| Draft | No | Yes (`status: "draft"`) |
-| Multiple per owner | No | Yes |
-| Switch / select active | No | Filter by status tabs |
-| Archive old + create new | No | N/A |
+There is **no** (today):
 
-`draft` exists only for **campaigns**. Opening Loyalty Program is create-or-edit of the same row.
+| Capability | Loyalty programs (today) | Intended | Campaigns |
+|------------|--------------------------|----------|-----------|
+| Draft | No | Yes (`draft`) | Yes (`status: "draft"`) |
+| Multiple per shop | No | **Yes** | Yes |
+| Status active / disabled | No | `active` \| `disabled` | Campaign has its own machine |
+| Switch / select | No | List/select (UI not locked) | Filter by status tabs |
+
+`draft` exists only for **campaigns** today. Opening Loyalty Program is create-or-edit of the same row until G-35 ships.
 
 ### How customer tiers actually work
 
@@ -804,7 +806,7 @@ Short list:
 5. **Revenue metrics** — need orders/transactions linked to members (no equations today)
 6. **Month-over-month deltas** on stat cards — need historical snapshots
 7. **`customers.tier` never written** — enroll/check-in do not apply `loyalty_program_tiers.points_threshold`; Analytics donut will stay Untiered until backend assigns tiers (or Analytics computes from points)
-8. **One program per owner** — no drafts, no archive-and-create, no program switcher
+8. **One program per owner (today)** — **DECIDED:** many programs + `draft`/`active`/`disabled` ([loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided))
 9. **Segment/level cutoffs** — hardcoded in the frontend; not owner-configurable
 10. **Loyalty “Tier stats”** — member counts hardcoded `"0"` on `/app/loyalty`
 11. **Insight CTAs** — Send / Nudge / Explore / Create have no handlers; “1 visit from a reward” uses hardcoded `visits % 5 === 4`, not program `visits_required`

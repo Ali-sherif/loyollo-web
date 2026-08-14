@@ -211,7 +211,7 @@ erDiagram
 
 ### Unique / enum
 
-- One `loyalty_programs` row per `owner_id`
+- One `loyalty_programs` row per `owner_id` **today**. **DECIDED:** many programs per shop; status `draft` \| `active` \| `disabled` ([loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided))
 - `loyalty_program_type`: `points` \| `visit` \| `tier`
 - `customers.tier` is **text**, not FK to `loyalty_program_tiers`
 

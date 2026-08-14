@@ -1,8 +1,8 @@
 # Loyalty Program Page (`/app/loyalty`)
 
-Reference for all components, conditions, and edge cases on the Loyalty Program route (create + edit of the owner’s single program). Covers the four tabs, program types, QR join URL, and a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
+Reference for all components, conditions, and edge cases on the Loyalty Program route (create + edit). **Today** this is the owner’s single program. **DECIDED:** a shop will have **many** programs, each `draft` \| `active` \| `disabled` ([multiple programs](#multiple-programs-and-status-decided)). Covers the four tabs, program types, QR join URL, and a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
 
-**Jump to:** [route](#route-structure) · [page flow](#high-level-page-flow) · [one program](#one-owner--one-loyalty-program) · [tabs](#tabs) · [points](#points-system) · [visit](#visit-based) · [tier](#tier-based) · [save](#save--upsert) · [qr](#qr-on-the-programs-tab) · [rewards](#rewards-tab) · [referrals](#referrals-tab) · [qr experience](#qr-experience-tab) · [join](#public-join--check-in) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
+**Jump to:** [route](#route-structure) · [page flow](#high-level-page-flow) · [multiple programs](#multiple-programs-and-status-decided) · [one program today](#one-owner--one-loyalty-program-today) · [tabs](#tabs) · [points](#points-system) · [visit](#visit-based) · [tier](#tier-based) · [save](#save--upsert) · [qr](#qr-on-the-programs-tab) · [rewards](#rewards-tab) · [referrals](#referrals-tab) · [qr experience](#qr-experience-tab) · [join](#public-join--check-in) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
 **Source files:**
 
@@ -64,7 +64,38 @@ The same page is **create and edit**. There is no dedicated management overview 
 
 ---
 
-## One owner · one loyalty program
+## Multiple programs and status (DECIDED)
+
+**A shop will have more than one loyalty program.** This is not how the app works today. Schema/API are backend-owned ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)). Gap: [G-35](gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status).
+
+Each program has a **status**:
+
+| Status | Meaning |
+|--------|---------|
+| **`draft`** | Saved, not live. Not for members / join until activated. |
+| **`active`** | Live. Members can join / check in against this program. |
+| **`disabled`** | Turned off. Not live; kept in the shop’s list. |
+
+Stored names: `draft` · `active` · `disabled`. Do not use other spellings (`disable`, `inactive`).
+
+**Today vs intended**
+
+| | Today | Intended |
+|--|--------|----------|
+| How many programs | One per `owner_id` (`UNIQUE`) | **Many** per shop |
+| Status | None (the one row is always “the” program) | `draft` \| `active` \| `disabled` |
+| Save | `upsert` on `owner_id` (overwrite) | Insert/update **that** program; do not overwrite siblings |
+| Join | `/join/{programId}` already identifies one program | Same URL shape; only **`active`** programs should accept new join/check-in |
+
+Customers, rewards, campaigns, and QR stay **program-scoped** (`loyalty_program_id`). `/app` needs a way to list/select programs (UI not locked).
+
+**Not locked:** whether **more than one** program can be `active` at the same time; default status on create; who besides `admin` can create programs (`staff` has the same `/app` permissions for now).
+
+Product note: [product-manager-meeting-report.md](../product-manager-meeting-report.md).
+
+---
+
+## One owner · one loyalty program (today)
 
 `loyalty_programs.owner_id` is unique. Saves use:
 
@@ -73,6 +104,8 @@ The same page is **create and edit**. There is no dedicated management overview 
 ```
 
 There is no program switcher, archive, or second program. Changing `program_type` after customers exist is allowed in the UI (“You can change this anytime”) but **does not migrate** points/visits/tiers.
+
+This uniqueness **must be removed** when multiple programs ship (G-35).
 
 ---
 
@@ -252,13 +285,14 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 | [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **`redeemed_count`** | Catalog shows it | Earn ≠ redeem | No redeem API | Redeem endpoint |
 | [G-14](gaps-and-solutions.md#g-14--referrals-settings-without-attribution) | **Referrals** | Settings only | Enroll has no `referredBy` | No `referrals` table | Codes + rows; credit bonus |
 | [G-31](gaps-and-solutions.md#g-31--program-type-change-after-members-exist) | **Program type change** | Copy says anytime | No migration | One row | Lock or migrate |
+| [G-35](gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status) | **Multiple programs + status** | One upsert row | Unique `owner_id` | No `status` | Many programs; `draft` \| `active` \| `disabled` |
 | [G-10](gaps-and-solutions.md#g-10--check-in-ignores-most-loyalty-rules) | **Tier multipliers** | Saved on tier rows | Unused | OK | Apply on earn once orders exist |
 
 ---
 
 ## Known limitations
 
-1. One program per owner
+1. One program per owner **today** — **DECIDED:** many programs per shop, each `draft` \| `active` \| `disabled` ([multiple programs](#multiple-programs-and-status-decided))
 2. Same page is create + edit; save always returns to dashboard
 3. Scan / visit / tier member stats are zeros
 4. Check-in ignores most saved rules

@@ -6,7 +6,7 @@
 
 Authz unless noted: **owner session** = **`admin`** (buyer of Loyollo; [data-contract glossary](data-contract.md#unified-glossary)). **`staff`** uses the same `/app` APIs with **the same permissions as `admin` for now**. Scope to the caller’s `loyalty_program_id` / `owner_id`. Service-role only in workers and public enroll.
 
-**Shop-customer session (DECIDED, not shipped):** register/login for role **customer** is a separate authz plane from `admin` / `staff`. It must not authorize `/app` merchant APIs. Endpoints and identity are backend-owned ([G-33](../frontend/gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows)).
+**Shop-customer session (DECIDED, not shipped):** register/login for role **customer** is a separate authz plane from `admin` / `staff`. It must not authorize `/app` merchant APIs. **Passwordless:** login and lost access use OTP (SMS/WhatsApp), never merchant `/auth/forgot-password`. Endpoints and identity are backend-owned ([G-33](../frontend/gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows), [credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided)).
 
 ---
 

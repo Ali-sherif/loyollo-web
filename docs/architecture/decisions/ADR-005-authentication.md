@@ -34,6 +34,8 @@ Locked stored names: **`admin`** · **`staff`** · **`customer`**. No other logg
 
 **Account active/inactive:** `admin` sets `staff` and `customer` to `active` \| `inactive`. Management page filters by role, email, name, phone. [11-authentication-migration.md](../../frontend/11-authentication-migration.md#account-active--inactive-decided).
 
+**Credential recovery:** `admin` / `staff` use the owner email reset (`/auth/forgot-password`); `admin` may re-issue a temp password. `customer` is passwordless — lost access is a new OTP (SMS/WhatsApp), never merchant recovery. [credential recovery](../../frontend/11-authentication-migration.md#credential-recovery-decided).
+
 `staff` subtypes and a future permission split: [deferred-decisions.md](../deferred-decisions.md). Glossary: [data-contract.md](../../backend/data-contract.md#unified-glossary).
 
 ### Migration approach

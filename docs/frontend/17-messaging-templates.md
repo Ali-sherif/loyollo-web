@@ -21,6 +21,8 @@ Templates and personalization stay. Lovable transport packages and `/lovable/ema
 
 These are currently rendered by Lovable auth webhook/preview routes. After withdrawal they must be rendered by first-party Route Handlers or server services through a messaging adapter.
 
+**Merchant recovery only:** `recovery` is for `admin` / `staff` `/app` password reset (`/auth/forgot-password`). Do not send it to `customer` (passwordless OTP). Staff may also receive a **re-issued temp password** via the teammate-created mail, not this template. [Credential recovery](11-authentication-migration.md#credential-recovery-decided).
+
 ## Transactional / campaign templates (inline builders)
 
 | Message                       | Source                                                       | Channel        | Notes                                                                                |
@@ -32,7 +34,7 @@ These are currently rendered by Lovable auth webhook/preview routes. After withd
 | Password changed              | `src/lib/security.functions.ts`                              | Email          | Security notice copy                                                                 |
 | Campaign email                | `src/lib/campaigns.functions.ts` `buildHtml` / `personalize` | Email          | User-authored subject/message + HTML wrapper                                         |
 | Campaign SMS                  | `src/lib/campaigns.functions.ts`                             | SMS            | Same personalization tokens; provider currently throws `SMS provider not configured` |
-| Join / register OTP           | **DECIDED, not shipped** — messaging contracts               | SMS or WhatsApp | Code only; never log plaintext. Channel chosen at `POST /api/join/otp/request`. [OTP](loyalty-page.md#otp-verification-decided) |
+| Join / register OTP           | **DECIDED, not shipped** — messaging contracts               | SMS or WhatsApp | Code only; never log plaintext. Channel chosen at `POST /api/join/otp/request`. Same OTP for customer **login and lost-access** (no password). [OTP](loyalty-page.md#otp-verification-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) |
 
 ## Personalization tokens to preserve
 

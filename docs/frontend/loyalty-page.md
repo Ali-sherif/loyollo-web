@@ -332,7 +332,7 @@ A **new** customer (including a referred join) **must** complete OTP via **SMS**
 
 Owner **Add Customer** does not use this OTP. Returning check-in does not require a new OTP. Channel is `sms` \| `whatsapp`; provider stays adapter-stub until chosen ([17-messaging-templates.md](17-messaging-templates.md)). Challenge TTL and attempt cap are backend-owned (**not** locked).
 
-Shop-customer self-register (G-33) uses the same OTP gate.
+Shop-customer self-register, login, and lost-access recovery (G-33) use the same OTP gate. Customers never set a password. [Credential recovery](11-authentication-migration.md#credential-recovery-decided).
 
 ---
 

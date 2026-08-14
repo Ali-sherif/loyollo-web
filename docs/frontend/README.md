@@ -83,7 +83,7 @@ flowchart LR
 8. [Project structure](08-project-structure.md)
 9. [Dependency rules](09-dependency-rules.md)
 10. [Styling and assets](10-styling-and-assets.md)
-11. [Authentication](11-authentication-migration.md) — including [locked role matrix](11-authentication-migration.md#locked-role-matrix)
+11. [Authentication](11-authentication-migration.md) — including [locked role matrix](11-authentication-migration.md#locked-role-matrix) and [credential recovery](11-authentication-migration.md#credential-recovery-decided)
 12. [Migration plan](12-migration-plan.md)
 13. [Migration risks](13-migration-risks.md)
 14. [Consolidated architecture](14-frontend-architecture.md)

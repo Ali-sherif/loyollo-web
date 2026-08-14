@@ -108,9 +108,11 @@ Locked product rules ([product-manager-meeting-report.md](../product-manager-mee
 
 #### S-03 — No staff or customer recovery (Critical) — `G-33`, `G-34`
 
+Product lock ([credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided)): `admin` / `staff` reuse owner `/auth/forgot-password` (plus admin re-issue of a temp password). `customer` is passwordless — lost access is a new OTP, never merchant recovery. **Not shipped.**
+
 - `InviteEmail` template and webhook `action_type: invite` exist; **no UI or API creates a teammate**.
 - `customers` has no `user_id` ([types.ts](../../src/integrations/supabase/types.ts) L275–293).
-- Owner forgot-password **is** wired (`/auth/forgot-password` → `resetPasswordForEmail`). That path depends on S-02 actually delivering mail.
+- Owner forgot-password **is** wired (`/auth/forgot-password` → `resetPasswordForEmail`). That path depends on S-02 actually delivering mail. After G-34, staff use this same path on their own email.
 
 #### S-04 — Points integrity and missing redemption (Critical) — `G-20`
 
@@ -350,7 +352,7 @@ flowchart TD
 | Award points at POS | **No UI** | Staff device + atomic ledger |
 | Redeem reward | **No path** | Balance check, ledger debit, `redeemed_count` |
 | Send campaign | Fan-out in request; status → `active`; mail not delivered | Job runner; status → `completed`/`failed`; opens via ESP |
-| Customer locked out | N/A — customer cannot log in | Customer auth + reset (`G-33`) |
+| Customer locked out | N/A — customer cannot log in | Customer auth + new OTP (`G-33`; no password) |
 | Support | No impersonate / suspend / refund | Internal admin (`A-01`) |
 
 Forgot-password **UI** exists for this role only. If the queue is not drained with a real transport, the owner is as stuck as everyone else.
@@ -361,7 +363,7 @@ Intended: `/app` with **same permissions as `admin`** until a later split; admin
 
 **Break:** there is no staff user. No invite, no `profiles.role`, no first-login password change, no inactive gate. The `InviteEmail` template is dead code until G-34 ships.
 
-Credential reset for staff **cannot** be the owner forgot-password screen: that resets the **buyer**. Staff need invite-or-reset owned by admin, plus the same mail pipe as S-02.
+**Intended recovery** ([credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided)): after G-34, staff use the **same** owner `/auth/forgot-password` screen on **their own** email (not the buyer’s). Admin may re-issue a temp password. Today that screen would only reset the buyer, because no staff auth user exists. Same mail pipe as S-02.
 
 #### Customer (shopper) — enroll then drop
 
@@ -391,7 +393,7 @@ flowchart TD
 - Link QR enroll row → customer account when they later register.
 - Admin add teammate: name, email, role; email includes temp password; first login **must** change it — `G-34`.
 - Account list with filters (role, email, name, phone) and Active/Inactive for staff and customers — `G-36`.
-- Staff/customer forgot-password that is **not** the owner’s `/auth/forgot-password`.
+- Staff recovery via owner `/auth/forgot-password` (own email) plus admin re-issue; customer recovery = new OTP, never merchant `recovery` email — [credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided).
 - Session timeout UX: proxy redirects `/app` to sign-in; `redirectedFrom` is unused so the user lands on a generic sign-in, not the page they wanted.
 
 #### Ledger, POS, redemption
@@ -528,7 +530,7 @@ Owners: **Frontend** = this repo (honesty, guards, BFF hygiene). **Backend** = s
 |----|--------|-------|---------------------------|---------|
 | C1 | **Do not cut over off Lovable** until a real email transport + scheduled drain exist. Stub + no cron = lockout. | Frontend + messaging | [transport.ts](../../src/lib/server/messaging/transport.ts); [queue/process/route.ts](../../src/app/api/email/queue/process/route.ts) — on failure: retry/DLQ/`delete_email`, never infinite re-read | ADR-009/010, S-02 |
 | C2 | Ship **role + account_status** (backend) and enforce in proxy + `requireUser` + every `/api/*` that is merchant-only. Customer sessions must fail `/app`. | Backend then Frontend | data-contract; [guards.ts](../../src/lib/server/auth/guards.ts); [update-session.ts](../../src/integrations/supabase/update-session.ts) | G-33, G-34, G-36, S-01 |
-| C3 | Customer register/login (separate plane) + link to `customers` row; staff invite + temp password + mandatory first-login change. | Backend then Frontend | 11-auth; api-contract shop-customer session | G-33, G-34, S-03 |
+| C3 | Customer register/login (passwordless OTP plane) + link to `customers` row; staff invite + temp password + first-login change; staff then use owner `/auth/forgot-password`. | Backend then Frontend | 11-auth [credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided); api-contract shop-customer session | G-33, G-34, S-03 |
 | C4 | **Points ledger + atomic check-in + redeem API** with `CHECK (points >= 0)` and insufficient-balance errors. Stop owner arbitrary point updates or wrap them as audited adjustments. | Backend | data-contract `points_ledger`; join-service becomes a client of the API | G-20, S-04 |
 | C5 | Sanitize Next notifications like TanStack: allow-list `prefKey`, `sanitizeLinkPath`, honor prefs. | Frontend | [api/notifications/owner/route.ts](../../src/app/api/notifications/owner/route.ts); copy from [notifications.functions.ts](../../src/lib/notifications.functions.ts) L26–34 | S-05, G-15 |
 | C6 | Server-side **email verified** check in `requireUser()` / proxy (not only client). Add `/onboarding` to protected prefixes. | Frontend | [guards.ts](../../src/lib/server/auth/guards.ts); [update-session.ts](../../src/integrations/supabase/update-session.ts) | S-01 |
@@ -664,6 +666,7 @@ These checklist items are specified in page specs / glossary with enough technic
 | Engagement levels: Champions / Loyal / Occasional / At risk / Dormant cutoffs | Covered **as current spec** | analytics-page L327–339. Exclusive vs overlap is **not** locked — `DG-15`. |
 | Revenue Impact tab: 6 cards + 2 charts + 1 table, all `"—"` / empty pending `orders` | Covered **as current spec** | analytics-page L365–401; G-06. Hide-vs-keep is `DG-03`. |
 | Admin **adds** `admin` or `staff` (temp password + first-login change) | Covered as **DECIDED, not shipped** | [11-authentication-migration.md](../frontend/11-authentication-migration.md#admin-adds-admin-or-staff-decided); G-34 |
+| **Credential recovery** (`admin`/`staff` = owner email reset + admin re-issue; `customer` = new OTP, no password) | Covered as **DECIDED, not shipped** | [credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided); G-33, G-34, S-03 |
 | Admin **activates/deactivates `staff` and `customer`** | Covered as **DECIDED, not shipped** | 11-auth account status; G-36 |
 | Loyalty **program types** `points` \| `visit` \| `tier` | Covered | [loyalty-page.md](../frontend/loyalty-page.md); [system-architecture.md](../frontend/system-architecture.md) L215 |
 | Referral **share** (personal link or QR on that program’s wallet card) + **both-party** rewards (points vs discount voucher; referrer gated on first paid invoice) | Covered as **DECIDED, not shipped** | loyalty-page [referral rewards](../frontend/loyalty-page.md#referral-rewards-decided); data-contract write rule 12. Remaining: default expiry **day counts** and portal **URL**. |

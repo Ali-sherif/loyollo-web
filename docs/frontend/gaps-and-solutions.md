@@ -390,7 +390,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | `/app/customers` Add Customer; public `/join/[programId]`; Dashboard / Analytics KPIs |
 | **Blocked by** | No shop-customer auth. Rows are owner-created or anonymous join. KPIs use denormalized / owner-typed fields |
-| **Solution** | Customer **register/login** (role **customer**, not `admin` / `staff` `/app`). Public new register uses **OTP** (SMS/WhatsApp) before the member row is finalized. Store customer-owned profile + activity. **Calculate KPIs** from that data. Owner manual add remains (no OTP). Wallet: **one card per program** (spendable points + expiry groups + `vouchers` + share link/QR); never a cross-program total. Routes not locked. [11-authentication-migration.md](11-authentication-migration.md#shop-customer-register-and-login-decided) · [loyalty-page.md](loyalty-page.md#customer-wallet-per-program-decided) · [OTP](loyalty-page.md#otp-verification-decided) |
+| **Solution** | Customer **register/login** (role **customer**, not `admin` / `staff` `/app`). **Passwordless:** register, login, and recovery never use a password. Public new register uses **OTP** (SMS/WhatsApp) before the member row is finalized. Lost access = **new OTP** (same channel), never `/auth/forgot-password` or the merchant `recovery` email. Store customer-owned profile + activity. **Calculate KPIs** from that data. Owner manual add remains (no OTP). Wallet: **one card per program** (spendable points + expiry groups + `vouchers` + share link/QR); never a cross-program total. Routes not locked. [11-authentication-migration.md](11-authentication-migration.md#shop-customer-register-and-login-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) · [loyalty-page.md](loyalty-page.md#customer-wallet-per-program-decided) · [OTP](loyalty-page.md#otp-verification-decided) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
 | **Owner** | Backend program |
 | **Phase** | Later (customer portal; not product Phase 1 merchant roles) |
@@ -401,7 +401,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Intended `/app` team form (route not locked; likely Settings). No UI today |
 | **Blocked by** | No create-teammate API; no random password + credential email |
-| **Solution** | `admin` form: profile + role `admin` \| `staff` → create `/app` user → random temp password → email (added + email + temp password) via messaging contracts. **First login must change that password** before `/app`. Do not treat current `invite` accept-link as this flow. [11-authentication-migration.md](11-authentication-migration.md#admin-adds-admin-or-staff-decided) |
+| **Solution** | `admin` form: profile + role `admin` \| `staff` → create `/app` user → random temp password → email (added + email + temp password) via messaging contracts. **First login must change that password** before `/app`. After the account exists, forgotten password is the **same owner recovery** (`/auth/forgot-password` → `RecoveryEmail` → `/auth/reset-password`). Admin may **re-issue a temp password** when locked out; do not treat current `invite` accept-link as reset. [11-authentication-migration.md](11-authentication-migration.md#admin-adds-admin-or-staff-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
 | **Owner** | Backend program |
 | **Phase** | Later (merchant team; after role names) |
@@ -423,7 +423,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Intended `/app` account page (route not locked) |
 | **Blocked by** | No account `active`/`inactive`; no list API with role/email/name/phone filters |
-| **Solution** | `admin` sets **`staff`** and **`customer`** account status `active` \| `inactive`. Page filters: **role**, **email**, **name**, **phone**. Distinct from `customers.status` (at_risk/churned) and program status. [11-authentication-migration.md](11-authentication-migration.md#account-active--inactive-decided) |
+| **Solution** | `admin` sets **`staff`** and **`customer`** account status `active` \| `inactive`. Page filters: **role**, **email**, **name**, **phone**. Distinct from `customers.status` (at_risk/churned) and program status. Inactive `staff` must not get `/app` after password reset; inactive `customer` must not get a session from a new OTP. [11-authentication-migration.md](11-authentication-migration.md#account-active--inactive-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
 | **Owner** | Backend program |
 | **Phase** | Later (merchant team + customer auth) |

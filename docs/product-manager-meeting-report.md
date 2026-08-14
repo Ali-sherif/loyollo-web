@@ -73,6 +73,8 @@ Shop customers get role **`customer`**. They register/login so we **store their 
 
 Customer-portal URLs and the exact KPI list are **not** locked. Implementation is backend-owned ([ADR-014](architecture/decisions/ADR-014-product-data-ownership.md)).
 
+**DECIDED:** `customer` register, login, and recovery are **passwordless** (OTP via SMS or WhatsApp). There is no customer forgot-password. Lost access = a new OTP. Staff use the owner `/auth/forgot-password` flow after their account exists. [Credential recovery](frontend/11-authentication-migration.md#credential-recovery-decided).
+
 ---
 
 ## 4. Admin form: add admin or staff + email credentials
@@ -88,6 +90,8 @@ An **`admin`** fills a form with the new person’s information and chooses **`a
 4. On **first login** they **must change** that temporary password before using `/app`.
 
 Not the shop-`customer` signup. Exact form fields beyond name / email / role and UI route are **not** locked. Send through messaging contracts; do not reuse the current invite-link email as if it already includes a password.
+
+After the teammate account exists, forgotten password is the **same** owner reset (`/auth/forgot-password`). An `admin` may re-issue a temp password if they are locked out. [Credential recovery](frontend/11-authentication-migration.md#credential-recovery-decided).
 
 ---
 

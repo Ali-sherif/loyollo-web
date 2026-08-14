@@ -258,7 +258,7 @@ sequenceDiagram
 
 No scan row is written on GET. No `branch_id`. Rate limit is an in-memory `Map` per instance (ADR-012: replace with Redis/Upstash).
 
-**Intended (DECIDED):** shop customers will register/login (role **customer**) so data is stored on an account and KPIs are calculated from activity — not only owner **Add Customer**. Join remains a public capture path; customer session is not `admin` / `staff` `/app` auth. New enroll requires OTP. [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows) · [OTP](loyalty-page.md#otp-verification-decided).
+**Intended (DECIDED):** shop customers will register/login (role **customer**) so data is stored on an account and KPIs are calculated from activity — not only owner **Add Customer**. Join remains a public capture path; customer session is not `admin` / `staff` `/app` auth. New enroll requires OTP. Register, login, and recovery are **passwordless** (new OTP; never merchant `/auth/forgot-password`). [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows) · [OTP](loyalty-page.md#otp-verification-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided).
 
 ---
 

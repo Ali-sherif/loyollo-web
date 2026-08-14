@@ -75,7 +75,7 @@ Exact copy, subject, and layout are **not** locked. The existing auth **`invite`
 
 ### First login (DECIDED)
 
-On **first login** with the temporary password, the new `admin` / `staff` **must change that password** before using `/app`. They cannot skip it. After they set their own password, later logins are normal.
+On **first login** with the temporary password, the new `admin` / `staff` **must change that password** before using `/app`. They cannot skip it. After they set their own password, later logins are normal. Later self-serve reset ([credential recovery](#credential-recovery-decided)) does **not** re-trigger this gate.
 
 ## Account active / inactive (DECIDED)
 
@@ -128,6 +128,8 @@ Purpose:
 
 **DECIDED:** public **new** register (join and shop-customer self-register) requires **OTP via SMS or WhatsApp** before the `customers` row is finalized. [OTP](loyalty-page.md#otp-verification-decided).
 
+**DECIDED:** `customer` register, login, and recovery are **passwordless**. They never set or reset a password. Login and lost-access use a new OTP (SMS or WhatsApp). [Credential recovery](#credential-recovery-decided).
+
 Customer auth must **not** grant `admin` / `staff` `/app` access. Rate-limit public signup/enrollment and OTP request ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)). Schema and APIs are backend-owned ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)). Gap: [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows).
 
 ### Customer wallet (DECIDED)
@@ -137,6 +139,45 @@ After login, the `customer` sees **one card per program** they belong to — nev
 Each card must show: program name, **spendable** points for **that** program, expiry (one date if lots share it; otherwise amount + date groups), vouchers with their dates, and that program’s share **link** + **QR**.
 
 Example: 100 points in program 1 (month window) and 200 in program 2 (week window) = two cards, not 300. [loyalty-page.md](loyalty-page.md#customer-wallet-per-program-decided). Portal URL still **not** locked.
+
+## Credential recovery (DECIDED)
+
+**Staff and customers do not share one recovery process.** `admin` / `staff` use the owner email-password reset. `customer` has no password — lost access is a new OTP. This is not shipped. Backend-owned ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)). Gaps: [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows), [G-34](gaps-and-solutions.md#g-34--admin-cannot-create-adminstaff-with-emailed-temp-password), [G-36](gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer). Audit: [S-03](../audit/2026-08-14-security-ui-product-audit.md#s-03--no-staff-or-customer-recovery-critical--g-33-g-34).
+
+Customer portal URLs stay **not** locked. Do not add recovery routes or APIs from this lock.
+
+### Admin and staff (same as owner)
+
+Once a teammate `/app` user exists ([G-34](gaps-and-solutions.md#g-34--admin-cannot-create-adminstaff-with-emailed-temp-password)), forgotten password is the **same Supabase recovery** as the shop owner:
+
+1. `/auth/forgot-password` → `resetPasswordForEmail`
+2. Recovery email (`RecoveryEmail`) with link to `/auth/reset-password`
+3. Set a new password → sign in → `/app`
+
+Reset is **per email**, not “the buyer’s account”. The audit warning that staff using that screen resets the buyer applies **today**, while staff have no auth user.
+
+Extra path (not a second forgot-password UI): an `admin` may **re-issue a temporary password** and email it (same teammate-created mail facts as [add admin/staff](#admin-adds-admin-or-staff-decided)). Use that when the person is locked out or email recovery fails. **Do not** treat the existing `invite` accept-link as staff reset.
+
+Gates after reset:
+
+| Gate | Effect |
+|------|--------|
+| `account_status = inactive` | No `/app` session ([G-36](gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer)) |
+| First-login force-change | Only the **initial** temp password. A later self-serve reset does not re-trigger it |
+
+Staff must **not** use a customer OTP screen to enter `/app`.
+
+### Customer (passwordless)
+
+Register, login, and recovery **never use a password**. There is no customer forgot-password screen.
+
+Lost access = request a **new OTP** via SMS or WhatsApp — the same channel as join/register ([OTP](loyalty-page.md#otp-verification-decided)). Rate-limit OTP request ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)).
+
+After OTP they land on the **customer portal** (URL still not locked), never `/app`, never `/auth/reset-password`.
+
+Do **not** send customers through `/auth/forgot-password` or the merchant `recovery` email template.
+
+Inactive `customer` must not get a session from a new OTP ([G-36](gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer)).
 
 ## Backend change required
 

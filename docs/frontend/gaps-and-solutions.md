@@ -423,7 +423,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Intended `/app` account page (route not locked) |
 | **Blocked by** | No account `active`/`inactive`; no list API with role/email/name/phone filters |
-| **Solution** | `admin` sets **`staff`** and **`customer`** account status `active` \| `inactive`. Page filters: **role**, **email**, **name**, **phone**. Distinct from `customers.status` (at_risk/churned) and program status. Inactive `staff` must not get `/app` after password reset; inactive `customer` must not get a session from a new OTP. [11-authentication-migration.md](11-authentication-migration.md#account-active--inactive-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) |
+| **Solution** | `admin` sets **`staff`** and **`customer`** account status `active` \| `inactive`. **One page, two tabs:** **Team** (`admin` + `staff`) and **Customers** (`customer`). Both tabs: active/inactive + filters **email**, **name**, **phone**. Team tab also filters **role** (`admin` \| `staff`). `admin` rows appear on Team; toggling another `admin` is still out. Distinct from `customers.status` (at_risk/churned) and program status. Inactive `staff` must not get `/app` after password reset; inactive `customer` must not get a session from a new OTP. [11-authentication-migration.md](11-authentication-migration.md#account-active--inactive-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
 | **Owner** | Backend program |
 | **Phase** | Later (merchant team + customer auth) |

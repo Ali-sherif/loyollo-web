@@ -270,7 +270,7 @@ Not a server export; no period param; no revenue column.
 
 So `at_risk` and `churned` are schema values with **no product writer**. Dashboard and Analytics compute “at risk” from recency instead.
 
-**Do not mix with account status (DECIDED):** an `admin` can set a `customer` **account** to `active` / `inactive` (login). That is separate from this member `status` column. See [account active/inactive](11-authentication-migration.md#account-active--inactive-decided).
+**Do not mix with account status (DECIDED):** an `admin` can set a `customer` **account** to `active` / `inactive` (login) on the **Customers** tab of the one accounts page (Team tab is `admin`/`staff`). That is separate from this member `status` column. See [account active/inactive](11-authentication-migration.md#account-active--inactive-decided).
 
 ---
 
@@ -343,7 +343,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 | [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Revenue column / sort** | `"—"`; sort uses points | No spend API | No `orders` | Orders per customer; until then hide |
 | [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **Tier column / filter** | Usually empty / Bronze-on-detail | Enroll/check-in never set `tier` | Free text, not FK | Write `tier` / `tier_id` on check-in |
 | [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **Churned / At-Risk tabs** | Always 0 | No writer | Enum unused | Job or drop tabs until written |
-| [G-36](gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer) | **Account active/inactive** | No login gate | No account status | Distinct from member `status` | Admin page: `active`/`inactive` + filters |
+| [G-36](gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer) | **Account active/inactive** | No login gate | No account status | Distinct from member `status` | One page, two tabs (Team / Customers); `active`/`inactive` + filters |
 | [G-11](gaps-and-solutions.md#g-11--customer-list-will-not-scale) | **Pagination** | Full table in browser | List is client `select *` | OK at small N | `GET /api/customers?cursor=` |
 | [G-17](gaps-and-solutions.md#g-17--join-only-customer-fields-hidden-from-owner) | **Manual add fields** | No gender/city/custom | Join API has them | Columns exist | Add to dialog or show on detail |
 | [G-13](gaps-and-solutions.md#g-13--detail-pages-are-shells) | **Detail rewards / LTV / referrals** | Hardcoded 0 | Detail never queries `customer_rewards` | No LTV/referral events | Query rewards; LTV from orders; `referrals` count + `referral_code` ([referral rewards](loyalty-page.md#referral-rewards-decided)) |

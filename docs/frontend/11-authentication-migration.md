@@ -94,20 +94,31 @@ This is **account** status (can they use the product?), not:
 | **`active`** | `staff` may use `/app`; `customer` may use customer login |
 | **`inactive`** | `staff` must not use `/app`; `customer` must not use customer login |
 
-Toggling **other `admin`** accounts is **not** in this decision (only `staff` and `customer`).
+Toggling **other `admin`** accounts is **not** in this decision (only `staff` and `customer`). `admin` rows **are listed** (Team tab) so the owner can see teammates; there is **no** deactivate control on another `admin`.
 
-### Management page filters (DECIDED)
+### Management page: one page, two tabs (DECIDED)
 
-The page lists accounts the `admin` manages and **must** filter by:
+**One** `/app` page. The `admin` switches **two tabs** — not two routes:
 
-| Filter | On |
-|--------|-----|
-| **Role** | `staff` / `customer` (and `admin` only if that row is shown — not locked) |
-| **Email** | Account email |
-| **Name** | Display / full name |
-| **Phone** | Phone number |
+| Tab | Rows | Role filter |
+|-----|------|-------------|
+| **Team** | `admin` and `staff` | `admin` \| `staff` |
+| **Customers** | `customer` | Not shown — every row is `customer` |
 
-Exact layout is **not** locked. Same page may host add-teammate (G-34); not locked.
+On **both** tabs: **active / inactive** plus filters **email**, **name**, **phone**. Team tab also filters **role** (`admin` \| `staff`).
+
+```mermaid
+flowchart LR
+  Page["One /app accounts page"] --> Team["Tab: Team"]
+  Page --> Cust["Tab: Customers"]
+  Team --> AdminRows["admin rows — listed, no deactivate"]
+  Team --> StaffRows["staff rows — active/inactive"]
+  Team --> Role["Filter: role, email, name, phone"]
+  Cust --> CustRows["customer rows — active/inactive"]
+  Cust --> Filt["Filter: email, name, phone"]
+```
+
+Exact pixel layout is **not** locked. Same page may host add-teammate (G-34); not locked. Route is **not** locked.
 
 ## Shop-customer register and login (DECIDED)
 

@@ -32,7 +32,7 @@ Locked stored names: **`admin`** · **`staff`** · **`customer`**. No other logg
 
 **Admin adds teammate:** an `admin` form creates `admin` or `staff`, generates a random temp password, emails added + email + password. **First login must change that password.** [11-authentication-migration.md](../../frontend/11-authentication-migration.md#admin-adds-admin-or-staff-decided).
 
-**Account active/inactive:** `admin` sets `staff` and `customer` to `active` \| `inactive`. Management page filters by role, email, name, phone. [11-authentication-migration.md](../../frontend/11-authentication-migration.md#account-active--inactive-decided).
+**Account active/inactive:** `admin` sets `staff` and `customer` to `active` \| `inactive`. **One page, two tabs:** Team (`admin` + `staff`) and Customers (`customer`). Filters: role (Team tab), email, name, phone; active/inactive on both. [11-authentication-migration.md](../../frontend/11-authentication-migration.md#account-active--inactive-decided).
 
 **Credential recovery:** `admin` / `staff` use the owner email reset (`/auth/forgot-password`); `admin` may re-issue a temp password. `customer` is passwordless — lost access is a new OTP (SMS/WhatsApp), never merchant recovery. [credential recovery](../../frontend/11-authentication-migration.md#credential-recovery-decided).
 

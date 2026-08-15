@@ -300,7 +300,7 @@ Operational end-to-end **for the owner session**, assuming Supabase is up:
 | Shop-customer register/login + portal | No `user_id`, no customer routes | `G-33` |
 | Admin creates admin/staff + temp password + first-login change | No team table/API | `G-34` |
 | Multiple loyalty programs + `draft`/`active`/`disabled` | Unique one program per owner | `G-35` |
-| Account list Active/Inactive + filters | No `account_status` | `G-36` |
+| Account list: one page, two tabs (Team / Customers) + Active/Inactive + filters | No `account_status` | `G-36` |
 | POS award / redeem | No ledger, no redeem endpoint | `G-20` |
 | Orders / GMV / ROI | No `orders` | `G-06` |
 | QR scan counts | No `visit_events` | `G-01` |
@@ -392,7 +392,7 @@ flowchart TD
 - Customer register/login (separate authz plane; must not authorize `/app` APIs) — `G-33`.
 - Link QR enroll row → customer account when they later register.
 - Admin add teammate: name, email, role; email includes temp password; first login **must** change it — `G-34`.
-- Account list with filters (role, email, name, phone) and Active/Inactive for staff and customers — `G-36`.
+- Account list: **one page, two tabs** (Team = `admin`+`staff`, Customers = `customer`); Active/Inactive + filters (role on Team, email, name, phone) — `G-36`.
 - Staff recovery via owner `/auth/forgot-password` (own email) plus admin re-issue; customer recovery = new OTP, never merchant `recovery` email — [credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided).
 - Session timeout UX: proxy redirects `/app` to sign-in; `redirectedFrom` is unused so the user lands on a generic sign-in, not the page they wanted.
 
@@ -667,7 +667,7 @@ These checklist items are specified in page specs / glossary with enough technic
 | Revenue Impact tab: 6 cards + 2 charts + 1 table, all `"—"` / empty pending `orders` | Covered **as current spec** | analytics-page L365–401; G-06. Hide-vs-keep is `DG-03`. |
 | Admin **adds** `admin` or `staff` (temp password + first-login change) | Covered as **DECIDED, not shipped** | [11-authentication-migration.md](../frontend/11-authentication-migration.md#admin-adds-admin-or-staff-decided); G-34 |
 | **Credential recovery** (`admin`/`staff` = owner email reset + admin re-issue; `customer` = new OTP, no password) | Covered as **DECIDED, not shipped** | [credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided); G-33, G-34, S-03 |
-| Admin **activates/deactivates `staff` and `customer`** | Covered as **DECIDED, not shipped** | 11-auth account status; G-36 |
+| Admin **activates/deactivates `staff` and `customer`** (one page, two tabs: Team / Customers) | Covered as **DECIDED, not shipped** | 11-auth account status; G-36 |
 | Loyalty **program types** `points` \| `visit` \| `tier` | Covered | [loyalty-page.md](../frontend/loyalty-page.md); [system-architecture.md](../frontend/system-architecture.md) L215 |
 | Referral **share** (personal link or QR on that program’s wallet card) + **both-party** rewards (points vs discount voucher; referrer gated on first paid invoice) | Covered as **DECIDED, not shipped** | loyalty-page [referral rewards](../frontend/loyalty-page.md#referral-rewards-decided); data-contract write rule 12. Remaining: default expiry **day counts** and portal **URL**. |
 
@@ -717,7 +717,7 @@ Covered: admin creates admin/staff; admin sets staff/customer active/inactive.
 - Toggling **another `admin`** is **explicitly out of the decision** (11-auth L97; meeting report L116).
 - `staff` has **the same permissions as `admin` for now** — there is **no** resource×action matrix (campaigns send, billing, delete account, add teammate).
 - Whether `staff` can use the add-teammate form is **not locked**.
-- Whether the account list shows `admin` rows is **not locked**.
+- Account list is **one page, two tabs** (Team / Customers). `admin` rows **are listed** on Team. Toggling another `admin` remains **out**.
 - Route for team UI is **not locked**.
 - Schema (`profiles.role`, `account_status`) is **not shipped** (this audit §2.1).
 

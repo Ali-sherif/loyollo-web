@@ -65,7 +65,7 @@ These surfaces are **DECIDED as product** (or clearly required) and **have no UI
 
 **Open (design + product)**
 
-- Route (docs say “likely Settings / team”; not locked). Same page as [UX-03](#ux-03--account-list--activeinactive)?
+- Route (docs say “likely Settings / team”; not locked). Natural home is the **Team** tab on [UX-03](#ux-03--account-list--activeinactive); not locked to that page.
 - Extra fields (phone, etc.).
 - Whether **`staff` can open this form** (not locked).
 - Empty / error / duplicate-email states.
@@ -98,17 +98,20 @@ These surfaces are **DECIDED as product** (or clearly required) and **have no UI
 
 **Locked**
 
-- `admin` sets **`staff`** and **`customer`** to **`active` (نشط)** or **`inactive` (غير نشط)**.
+- **One page, two tabs** (not two routes). The `admin` switches tabs:
+  - **Team** — `admin` and `staff` rows (`admin` rows **are listed**)
+  - **Customers** — `customer` rows
+- `admin` sets **`staff`** and **`customer`** to **`active` (نشط)** or **`inactive` (غير نشط)**. No deactivate control on another `admin`.
 - Inactive `staff` cannot use `/app`. Inactive `customer` cannot get a session from a new OTP.
 - **Not** the same as member `customers.status` (`at_risk` / `churned`) or program status (`draft` / `active` / `disabled`).
-- Filters **must** exist: **role**, **email**, **name**, **phone**.
+- **Both tabs:** active/inactive + filters **email**, **name**, **phone**.
+- **Team tab also:** filter **role** (`admin` \| `staff`). Customers tab does not show a role filter (every row is `customer`).
 
 **Open**
 
-- Route; whether this page also hosts [UX-01](#ux-01--add-teammate-form-admin-creates-admin-or-staff).
-- Whether **`admin` rows appear** in the list.
+- Route; whether this page also hosts [UX-01](#ux-01--add-teammate-form-admin-creates-admin-or-staff) (Team tab is the natural home).
 - Whether an `admin` can deactivate **another `admin`** (explicitly **out** of the current decision — do not design that control unless product reopens it).
-- Layout, table vs cards, Arabic labels vs English UI (product used Arabic in the lock; current app is English-only — [deferred i18n](../architecture/deferred-decisions.md)).
+- Layout, table vs cards, tab labels, Arabic labels vs English UI (product used Arabic in the lock; current app is English-only — [deferred i18n](../architecture/deferred-decisions.md)).
 - Confirm / undo for deactivate; what the inactive person sees on next login.
 
 #### UX-04 — Admin re-issue temporary password
@@ -636,7 +639,7 @@ From [meeting report “Not decided”](../product-manager-meeting-report.md) an
 
 1. Customer-portal **URL**
 2. Whether **more than one** loyalty program can be `active` at once
-3. Whether the account list shows **`admin` rows**; whether `staff` can add teammates
+3. Whether `staff` can add teammates (`admin` rows **are** on the Team tab — locked)
 4. **Staff subtypes** (manager / cashier / …) and a later permission split — `staff` = `admin` permissions until then
 5. Default referral expiry **day counts**
 6. OTP challenge **TTL** and attempt cap
@@ -655,7 +658,7 @@ From [meeting report “Not decided”](../product-manager-meeting-report.md) an
 |----|------|---|-------|
 | UX-01 | Design | P0 | Add teammate form |
 | UX-02 | Design | P0 | First-login force password change |
-| UX-03 | Design | P0 | Account list + active/inactive + filters |
+| UX-03 | Design | P0 | One page, two tabs (Team / Customers) + active/inactive + filters |
 | UX-04 | Design | P1 | Re-issue temp password |
 | UX-05 | Design | P0 | Customer register (OTP) |
 | UX-06 | Design | P0 | Customer login / lost access (OTP) |
@@ -762,7 +765,7 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 
 ### Meeting-report “not decided” → this file
 
-Portal URL → UX-08. Multiple `active` programs → UX-10. Account list shows `admin` / staff can add teammates → UX-01, UX-03. Staff subtypes → §5 (do not design a permission matrix). Referral default days → §5. OTP TTL/cap → UX-05 states only. Pending Review screen → UX-12. SMS vs WhatsApp provider → UX-24 / §5. Automations / opens / revenue → UX-14, UX-15, UX-20.
+Portal URL → UX-08. Multiple `active` programs → UX-10. Account page two tabs (Team / Customers); `admin` rows on Team → UX-03. Staff can add teammates → UX-01 (not locked). Staff subtypes → §5 (do not design a permission matrix). Referral default days → §5. OTP TTL/cap → UX-05 states only. Pending Review screen → UX-12. SMS vs WhatsApp provider → UX-24 / §5. Automations / opens / revenue → UX-14, UX-15, UX-20.
 
 ---
 

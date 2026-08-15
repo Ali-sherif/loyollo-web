@@ -115,9 +115,9 @@ An **`admin`** can set **`staff`** and **`customer`** accounts to **نشط (`act
 
 This is **not** loyalty member status (`at_risk` / `churned`) and **not** program status.
 
-The page **filters** by **role**, **email**, **name**, and **phone**.
+**One page, two tabs** (not two routes): **Team** (`admin` + `staff`) and **Customers** (`customer`). The `admin` switches tabs to move between those groups.
 
-Toggling another **`admin`** is not in this decision. Route is not locked.
+On both tabs: **active / inactive** plus filters **email**, **name**, **phone**. Team tab also filters **role** (`admin` \| `staff`). `admin` rows **are shown** on Team. Toggling another **`admin`** is not in this decision. Route is not locked.
 
 ---
 
@@ -171,5 +171,5 @@ Each program card: name, spendable points, expiry date(s) (split by lot if mixed
 
 ## Not decided in this discussion
 
-Open tracking, SMS delivery, automations, campaign revenue (G-09 / G-06 / G-20). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever. Whether `staff` can also use the add-teammate form. Customer-portal **URLs** (wallet **contents** are locked in §8). Whether more than one loyalty program can be `active` at the same time. Whether the account list also shows `admin` rows. Default referral expiry **day counts**. OTP challenge TTL and attempt cap. Merchant UI for **Pending Review** (status and backend review path are locked; the screen is not). Device-fingerprint algorithm (hashes and same-minute rule are locked). SMS vs WhatsApp **provider** (channel enum is locked; adapters stay stubs).
+Open tracking, SMS delivery, automations, campaign revenue (G-09 / G-06 / G-20). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever. Whether `staff` can also use the add-teammate form. Customer-portal **URLs** (wallet **contents** are locked in §8). Whether more than one loyalty program can be `active` at the same time. Default referral expiry **day counts**. OTP challenge TTL and attempt cap. Merchant UI for **Pending Review** (status and backend review path are locked; the screen is not). Device-fingerprint algorithm (hashes and same-minute rule are locked). SMS vs WhatsApp **provider** (channel enum is locked; adapters stay stubs).
 

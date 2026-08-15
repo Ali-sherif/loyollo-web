@@ -208,7 +208,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 4. Avatar signed URLs expire
 5. Field labels vs `profiles` columns are inconsistent
 6. Two password UIs; only one sends the email
-7. No team-members UI despite page subtitle mentioning “team members” — **DECIDED:** add admin/staff (G-34); **account `active`/`inactive` for staff and customer**; filters role / email / name / phone ([account status](11-authentication-migration.md#account-active--inactive-decided), [G-36](gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer))
+7. No team-members UI despite page subtitle mentioning “team members” — **DECIDED:** add admin/staff (G-34); **one account page, two tabs** (Team = `admin`+`staff`, Customers = `customer`); **`active`/`inactive`**; filters email / name / phone (role on Team tab) ([account status](11-authentication-migration.md#account-active--inactive-decided), [G-36](gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer))
 
 ---
 

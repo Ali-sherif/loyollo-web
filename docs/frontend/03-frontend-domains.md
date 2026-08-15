@@ -16,6 +16,7 @@ Route paths below match the **APPROVED** production map in [02-route-migration.m
 | Campaigns      | `/app/campaigns`, `/app/campaigns/[campaignId]`                                                                     | campaigns, recipients, email queue                | Customers, messaging contracts        |
 | Analytics      | `/app/analytics`                                                                                                    | customer/reward aggregates                        | Customers                             |
 | Settings       | `/app/settings`, `/app/settings/password`                                                                           | profile, MFA, uploads, integrations, password     | Auth, storage                         |
+| Accounts (DECIDED, not in approved map) | **One** `/app` page, **two tabs:** Team (`admin`+`staff`) and Customers (`customer`); active/inactive + filters. Route not locked (likely Settings / team). | `account_status`; not member `customers.status` | [G-36](gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer), [account status](11-authentication-migration.md#account-active--inactive-decided) |
 | Messaging      | `/api/email/*` BFF (was `/lovable/email/*`)                                                                         | `src/lib/server/messaging/` templates + contracts | adapter stubs (ACCEPTED RISK)         |
 
 ```mermaid

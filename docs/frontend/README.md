@@ -102,6 +102,7 @@ flowchart LR
 - [Analytics (`/app/analytics`)](analytics-page.md) — components, conditions, and edge cases
 - [System architecture](system-architecture.md) — how pages, BFF, API, and DB communicate
 - [Gaps and solutions](gaps-and-solutions.md) — UI vs API vs DB backlog (**G-01…G-36**)
+- PO + UI: [missing pages briefing](../product-missing-pages.md) — routes that do not exist yet vs hollow existing pages
 - Backend contracts (separate program, not migration): [../backend/README.md](../backend/README.md) · [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)
 
 **Next step:** slice 3 ΓÇö Server infrastructure (backend/Supabase factories, secret isolation, auth proof / D-28 cookie SSR, portable logging). Slice 2 assets **done** (`npm run scan:assets`). Keep [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md) open until PASSED. Multi-agent roles: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md).

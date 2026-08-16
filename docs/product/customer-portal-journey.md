@@ -4,7 +4,7 @@
 **Audience:** Product, UI/UX, QA  
 **Purpose:** One case map for every outcome when a **shop customer** opens the portal (direct, QR, or referral). This is the working journey for design. It does **not** authorize schema, APIs, or Next.js implementation ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
-**Sources:** customer-portal case diagram (2026-08-16) · [auth-login-register-ui-brief.md](./auth-login-register-ui-brief.md) · [ui-ux-team-requests.md](./ui-ux-team-requests.md) · [11-authentication-migration.md](../frontend/11-authentication-migration.md) · [loyalty-page.md](../frontend/loyalty-page.md) · [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md) · [customer-reward-progress.md](./customer-reward-progress.md) · [reward-redemption-flow.md](./reward-redemption-flow.md) · [G-33](../frontend/gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows) · [G-36](../frontend/gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer)
+**Sources:** customer-portal case diagram (2026-08-16) · [auth-login-register-ui-brief.md](./auth-login-register-ui-brief.md) · [ui-ux-team-requests.md](./ui-ux-team-requests.md) · [11-authentication-migration.md](../frontend/11-authentication-migration.md) · [loyalty-page.md](../frontend/loyalty-page.md) · [program-model.md](./program-model.md) · [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md) · [customer-reward-progress.md](./customer-reward-progress.md) · [reward-redemption-flow.md](./reward-redemption-flow.md) · [G-33](../frontend/gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows) · [G-36](../frontend/gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer)
 
 ---
 
@@ -52,7 +52,7 @@ Legend: **Covered** = on the 2026-08-16 diagram. **Add** = must still be designe
 | 14 | Program `draft` / `disabled` | **Missing** | DECIDED: no join | **Add** empty state (UX-09). Portal-only login with no program context may skip this |
 | 15 | `account_status = inactive` | “Disabled / Blocked” → Suspended, Contact Support | **`inactive`**. Generic message — do **not** help an attacker tell “real disabled account” from “unknown phone” ([QA §4.1](../audit/2026-08-15-customer-auth-qa-analysis.md)) | **Conflict:** keep generic copy. “Account suspended — contact support” enumerates |
 | 16 | Existing user, already a member of **this** program | Straight to wallet | Phone already in **this** program — check-in / wallet, **no** second membership | Happy path |
-| 17 | Existing user, **first time in this program** | Welcome + **Link Loyalty Program** | Create **this** program’s membership only; never auto-join sibling programs | **Add** [UX-76](./ui-ux-team-requests.md#ux-76--first-shop-welcome--link-program) |
+| 17 | Existing user, **first time in this program** | Welcome + **Link Loyalty Program** | Create **this** program’s membership only; never auto-join sibling programs. Welcome is **UX only** — it does **not** grant a bonus unless this Program’s **Signup Bonus** is configured ([Signup vs Referral](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided)) | **Add** [UX-76](./ui-ux-team-requests.md#ux-76--first-shop-welcome--link-program) |
 | 18 | New user (phone not an account) | Profile: **Name, Email, DOB** | Join fields exist and are **optional** today; enroll API accepts them | **Add** [UX-75](./ui-ux-team-requests.md#ux-75--customer-profile-setup-name-email-dob). Required vs optional is **PROPOSED** by the diagram |
 | 19 | Profile invalid | Highlight required fields | Missing | Required error state on UX-75 |
 | 20 | New user **with** valid `?ref=` | **Grant Referral Reward** then wallet | **Referred** grant after OTP in the enroll transaction. **Referrer** grant only on first **paid** invoice — **not** at enroll | Diagram step = **referred** party only. Do not show the referrer as paid at this moment |
@@ -64,7 +64,7 @@ Legend: **Covered** = on the 2026-08-16 diagram. **Add** = must still be designe
 | 26 | Customer reaches `/app` | Out of scope (forbidden) | DECIDED | Never a portal screen |
 | 27 | Owner **Add Customer** | Out of scope | Merchant tool, no OTP | Do not merge into this funnel |
 
-Happy-path terminal for 16, 17, 20, and 21: **Customer wallet** (one card per program — never a mixed total).
+Happy-path terminal for 16, 17, 20, and 21: **Customer wallet** (one card per program, any mix of types — never a mixed total). Welcome on case 17 does not grant a bonus unless Signup Bonus is configured.
 
 ---
 

@@ -147,9 +147,9 @@ Customer auth must **not** grant `admin` / `staff` `/app` access. Rate-limit pub
 
 ### Customer wallet (DECIDED)
 
-After login, the `customer` sees **one card per program** they belong to — never a single mixed points total.
+After login, the `customer` sees **one card per program** they belong to (any mix of Points / Visit / Tier) — never a single mixed points total.
 
-Each card must show: program name, **available** points for **that** program (`total − pending reserved`), expiry (one date if lots share it; otherwise amount + date groups), vouchers with their dates, that program’s share **link** + **QR**, and **reward progress for that program** (visit stamps toward completion, or available vs next live catalog reward). [customer-reward-progress.md](../product/customer-reward-progress.md) · [reward-redemption-flow.md](../product/reward-redemption-flow.md).
+Each card must show: program name; **by type** — Points: **available** balance (`total − pending reserved`) + progress to next reward; Visit: stamp-icon counter; Tier: current tier + progress to next; plus expiry (one date if lots share it; otherwise amount + date groups), vouchers with their dates, that program’s share **link** + **QR**. [program-model.md](../product/program-model.md#4-customer-wallet-summary) · [customer-reward-progress.md](../product/customer-reward-progress.md) · [reward-redemption-flow.md](../product/reward-redemption-flow.md).
 
 Example: 100 points in program 1 (month window) and 200 in program 2 (week window) = two cards, not 300. [loyalty-page.md](loyalty-page.md#customer-wallet-per-program-decided). Portal URL still **not** locked.
 

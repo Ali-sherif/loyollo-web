@@ -5,9 +5,9 @@
 **Audience:** Product, UI/UX, QA  
 **Does not authorize** schema, APIs, or Next.js implementation ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
-**Source of truth:** [loyalty-page.md — customer wallet](../frontend/loyalty-page.md#customer-wallet-per-program-decided) · [UX-07](./ui-ux-team-requests.md#ux-07--customer-wallet-per-program) · [reward-redemption-flow.md](./reward-redemption-flow.md)
+**Source of truth:** [program-model.md](./program-model.md) · [loyalty-page.md — customer wallet](../frontend/loyalty-page.md#customer-wallet-per-program-decided) · [UX-07](./ui-ux-team-requests.md#ux-07--customer-wallet-per-program) · [reward-redemption-flow.md](./reward-redemption-flow.md)
 
-Progress toward a reward lives on the **same per-program wallet card** as points, expiry, vouchers, and the personal share QR. It is **not** a shop-wide tracker.
+Progress toward a reward lives on the **same per-program wallet card** as points, expiry, vouchers, and the personal share QR. It is **not** a shop-wide tracker. A customer may hold **several** memberships at once (any mix of Points / Visit / Tier); each card is independent — never aggregate across Programs ([program-model.md](./program-model.md#4-customer-wallet-summary)).
 
 ---
 
@@ -25,9 +25,9 @@ Progress toward a reward lives on the **same per-program wallet card** as points
 
 | Program type | Progress on the card | Ready / claim |
 | ------------ | -------------------- | ------------- |
-| **Visit** | Stamp card: current stamps / `visits_required` toward that program’s completion reward (name from catalog when linked; until then the `reward_on_completion` label) | Card full → that reward is **earned** / ready to show at the counter |
-| **Points** | Bar to the **next live catalog reward** they have not earned: **available** points / `point_cost`, plus remaining | Enough **available** (unexpired, after pending reserved) points → reward is **available** to request, not auto-spent |
-| **Tier** | Current tier + amount remaining to the next tier | Tier change is status, not a catalog redeem |
+| **Visit** | Stamp card: filled / empty stamp icons — current stamps / `visits_required` toward that program’s completion reward (name from catalog when linked; until then the `reward_on_completion` label) | Card full → that reward is **earned** / ready to show at the counter (counter **resets** at target — [program types](./program-model.md#2-program-types-v1)) |
+| **Points** | Numeric **available** balance plus a bar to the **next live catalog reward** they have not earned: **available** points / `point_cost`, plus remaining | Enough **available** (unexpired, after pending reserved) points → reward is **available** to request, not auto-spent |
+| **Tier** | Current tier + progress toward the next tier threshold | Tier is **status** (standing perks), not a catalog redeem. Downgrade-if-inactive is **not decided** |
 
 If several catalog rewards exist on a **points** program, the card shows **one primary**: the cheapest `live` reward in that program the member has not earned yet. A “See all rewards” list for **that program only** may sit under it. Pixel layout of bar vs stamps vs list is **not** locked.
 

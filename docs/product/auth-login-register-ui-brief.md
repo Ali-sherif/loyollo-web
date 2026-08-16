@@ -34,10 +34,10 @@ There are **two separate levels**. Don't mix the screens.
 | [UX-05](./ui-ux-team-requests.md#ux-05--customer-register-passwordless-otp)                                                | Customer registration (OTP: SMS or WhatsApp)                        | Customer       | **No UI**                                                                               |
 | [UX-06](./ui-ux-team-requests.md#ux-06--customer-login--lost-access-new-otp)                                               | Customer login / lost access = new OTP (not forgot-password)        | Customer       | **No UI**                                                                               |
 | [UX-08](./ui-ux-team-requests.md#ux-08--customer-portal-shell)                                                             | Portal shell after OTP (nav, sign-out, not `/app`'s look)           | Customer       | **No UI** — the URL is still not locked: propose a path                                 |
-| [UX-07](./ui-ux-team-requests.md#ux-07--customer-wallet-per-program)                                                       | Wallet card **per program** (not one combined points total)         | Customer       | **No UI**                                                                               |
+| [UX-07](./ui-ux-team-requests.md#ux-07--customer-wallet-per-program)                                                       | Wallet card **per program** of any type mix (not one combined total) | Customer       | **No UI**                                                                               |
 | [UX-09](./ui-ux-team-requests.md#ux-09--join-page-otp--referral-context)                                                   | `/join/[programId]` page: OTP step + referral context `?ref=`       | Customer       | Page exists **without** OTP                                                             |
 | [UX-75](./ui-ux-team-requests.md#ux-75--customer-profile-setup-name-email-dob)                                              | After OTP: profile setup (name, email, DOB)                         | Customer       | **No UI** — from the portal case map                                                    |
-| [UX-76](./ui-ux-team-requests.md#ux-76--first-shop-welcome--link-program)                                                   | Existing customer, first time in this shop: welcome + link program  | Customer       | **No UI** — from the portal case map                                                    |
+| [UX-76](./ui-ux-team-requests.md#ux-76--first-shop-welcome--link-program)                                                   | Existing customer, first time in this program: welcome + link (UX only — no implied bonus) | Customer       | **No UI** — from the portal case map                                                    |
 | [UX-01](./ui-ux-team-requests.md#ux-01--add-teammate-form-admin-creates-admin-or-staff)                                    | Add-teammate form (name, email, role `admin`\|`staff`)              | Merchant       | **No UI**                                                                               |
 | [UX-02](./ui-ux-team-requests.md#ux-02--first-login-force-password-change)                                                 | First login: must change temporary password before `/app`           | Merchant/Staff | **No UI**                                                                               |
 | [UX-03](./ui-ux-team-requests.md#ux-03--account-list--activeinactive)                                                      | One page, two tabs (Team = admin/staff, Customers) + active/inactive + filters (role, email, name, phone) | Merchant       | **No UI**                                                                               |
@@ -232,7 +232,7 @@ Covers direct entry **and** scanned QR / referral link. Unknown phone is **not**
 8. Correct code → branch on account:
    - **`inactive`** → blocked state, **generic** message (do not use “account suspended — contact support”; that enumerates). **UX-06** / G-36
    - **Existing**, already in this shop/program → wallet **UX-07**
-   - **Existing**, first time in this shop → welcome + link program **UX-76**, then wallet
+   - **Existing**, first time in this shop → welcome + link program **UX-76**, then wallet. Welcome is **UX only** — no implied bonus unless that Program’s Signup Bonus is configured.
    - **New** → profile **name, email, DOB** **UX-75**. Invalid → highlight required fields. Valid + `?ref=` → **referred-party** reward only (referrer waits for first **paid** invoice), then wallet
 9. **Never** `/app` or `/auth/reset-password`.
 
@@ -311,7 +311,7 @@ Returning check-in does **not** replace portal login. That member still uses §5
 | Expiry            | Single date if batches share the same day; otherwise amount + date groups      |
 | Coupons           | `active` + their dates                                                         |
 | Sharing           | Personal link + QR `/join/{programId}?ref={code}` — this is not the shop **counter** QR |
-| **Reward progress** | This program only. Visit: `n / visits_required`. Points: spendable vs next unearned live catalog reward. Tier: current + remaining to next. Check-in success uses the same numbers. [customer-reward-progress.md](./customer-reward-progress.md) |
+| **Reward progress** | This program only. Visit: filled/empty stamp icons `n / visits_required`. Points: numeric available vs next unearned live catalog reward. Tier: current + remaining to next (status). Check-in success uses the same numbers. [program-model.md](./program-model.md#4-customer-wallet-summary) · [customer-reward-progress.md](./customer-reward-progress.md) |
 
 ```mermaid
 flowchart LR

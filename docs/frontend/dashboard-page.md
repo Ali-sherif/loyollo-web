@@ -13,7 +13,7 @@ Reference for all components, conditions, and edge cases on the Overview (Dashbo
 - Dashboard chrome: `src/components/dashboard/DashboardShell.tsx`
 - Owner notification insert: `src/lib/notify-client.ts` → `/api/notifications/owner`
 - Unique owner constraint: `supabase/migrations/20260713174353_034cd3b0-2acb-430d-b1d9-14efe9174840.sql`
-- Related: [customers-page.md](customers-page.md), [loyalty-page.md](loyalty-page.md), [campaigns-page.md](campaigns-page.md), [analytics-page.md](analytics-page.md), [system-architecture.md](system-architecture.md)
+- Related: [customers-page.md](customers-page.md), [loyalty-page.md](loyalty-page.md), [campaigns-page.md](campaigns-page.md), [analytics-page.md](analytics-page.md), [system-architecture.md](system-architecture.md), [program-model.md](../product/program-model.md)
 
 ---
 
@@ -104,7 +104,7 @@ flowchart TD
 ### Data loading sequence
 
 1. `profiles` — `full_name, business_name, onboarding_completed` where `id = user.id`
-2. `loyalty_programs` — `id` where `owner_id = user.id` (`maybeSingle` — **today** one program per owner). **DECIDED:** many programs; [loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided)
+2. `loyalty_programs` — `id` where `owner_id = user.id` (`maybeSingle` — **today** one program per owner). **DECIDED:** many programs, including same type (no 1-per-type); [loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided) · [program-model.md](../product/program-model.md). Program **creation** lives on Loyalty / [UX-10](../product/ui-ux-team-requests.md#ux-10--multi-program-list--switcher), not this Overview canvas — that create UI must surface the rule-vs-program helper (*Same goal, different rate? Add it as a rule instead of a new program.*).
 3. If a program exists, `Promise.all` of three `select("id").limit(1).maybeSingle()`:
    - `rewards` where `loyalty_program_id = program.id`
    - `customers` where `loyalty_program_id = program.id`

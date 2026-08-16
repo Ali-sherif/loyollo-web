@@ -4,7 +4,7 @@
 
 **Stack (DECIDED):** NestJS 11.x + Prisma 7.x + PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md), [README.md](README.md#target-stack-decided)). These paths are Nest HTTP contracts in Phase 2.
 
-**Related:** [data-contract.md](data-contract.md) · [remediation-roadmap.md](remediation-roadmap.md) · [gaps-and-solutions.md](../frontend/gaps-and-solutions.md)
+**Related:** [data-contract.md](data-contract.md) · [remediation-roadmap.md](remediation-roadmap.md) · [gaps-and-solutions.md](../frontend/gaps-and-solutions.md) · [program-model.md](../product/program-model.md)
 
 Authz unless noted: **owner session** = **`admin`** (buyer of Loyollo; [data-contract glossary](data-contract.md#unified-glossary)). **`staff`** uses the same `/app` APIs with **the same permissions as `admin` for now**. Scope to the caller’s `loyalty_program_id` / `owner_id`. Service-role only in workers and public enroll.
 
@@ -337,7 +337,7 @@ Response:
 }
 ```
 
-Rules: one object per program membership. **Do not** include a top-level summed points field. `points_spendable` is **available** (`points_total − points_reserved`) for that program. `lots` grouped by `expires_at` so mixed windows (month vs week) are visible. `progress` is **that program only** (visit stamps vs `visits_required`, or available vs next unearned live catalog reward). `state`: `in_progress` · `ready` (earned/available, not auto-redeemed) · `none` (no live reward). Pending catalog redemptions must be reconcilable from the server (include `qr_code` + `qr_expires_at` so every device can show the same single-use QR until scan or 10-minute expiry). [loyalty-page.md](../frontend/loyalty-page.md#customer-wallet-per-program-decided) · [customer-reward-progress.md](../product/customer-reward-progress.md) · [reward-redemption-flow.md](../product/reward-redemption-flow.md).
+Rules: one object per program membership (any mix of `points` / `visit` / `tier`). **Do not** include a top-level summed points field. `points_spendable` is **available** (`points_total − points_reserved`) for that program. `lots` grouped by `expires_at` so mixed windows (month vs week) are visible. `progress` is **that program only** (`kind`: visit stamp counter, points available vs next unearned live catalog reward, or current tier vs next threshold). `state`: `in_progress` · `ready` (earned/available, not auto-redeemed) · `none` (no live reward). Pending catalog redemptions must be reconcilable from the server (include `qr_code` + `qr_expires_at` so every device can show the same single-use QR until scan or 10-minute expiry). [program-model.md](../product/program-model.md#4-customer-wallet-summary) · [loyalty-page.md](../frontend/loyalty-page.md#customer-wallet-per-program-decided) · [customer-reward-progress.md](../product/customer-reward-progress.md) · [reward-redemption-flow.md](../product/reward-redemption-flow.md).
 
 ### Billing / integrations (backend-owned)
 

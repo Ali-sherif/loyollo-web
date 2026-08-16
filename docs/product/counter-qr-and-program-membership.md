@@ -5,48 +5,27 @@
 **Audience:** Product, UI/UX, QA, backend  
 **Does not authorize** schema, APIs, or Next.js implementation ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
-**Sources of truth to keep in sync:** [loyalty-page.md](../frontend/loyalty-page.md#counter-qr--program-membership-decided) · [G-35](../frontend/gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status) · [customer-portal-journey.md](./customer-portal-journey.md) (journey B) · [reward-redemption-flow.md](./reward-redemption-flow.md)
+**Sources of truth to keep in sync:** [program-model.md](./program-model.md) · [loyalty-page.md](../frontend/loyalty-page.md#counter-qr--program-membership-decided) · [G-35](../frontend/gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status) · [customer-portal-journey.md](./customer-portal-journey.md) (journey B) · [reward-redemption-flow.md](./reward-redemption-flow.md)
 
-The loyalty model is **program-scoped**, not shop-scoped.
+The loyalty model is **program-scoped**, not shop-scoped. Shop vs Program, v1 types, and same-type / rule-vs-program: [program-model.md](./program-model.md).
 
-**Pending Business Owner (item 15):** whether a Shop can have multiple **ACTIVE** Programs at once, and therefore Shop QR behavior. Do **not** finalize the Shop QR URL or resolution until that decision. See [§15](#15-shop-qr--multiple-active-programs-pending). Selecting one Program must **not** auto-join the others.
+**Pending Business Owner (item 15):** whether a Shop can have multiple **ACTIVE** Programs at once, and therefore Shop QR behavior. Do **not** finalize the Shop QR URL or resolution until that decision. See [§15](#15-shop-qr--multiple-active-programs-pending). Selecting one Program must **not** auto-join the others. Creating any number of Programs, including several of the **same type**, is already **DECIDED** — that is not this pending item.
 
 ---
 
 ## 1. Core architecture
 
-A shop can have multiple loyalty programs. Each program owns its own:
+Canonical lock: [program-model.md](./program-model.md). Summary for this QR / membership file:
 
-- Membership
-- Points
-- Stamps
-- Wallet card
-- Reward catalog
-- Reward eligibility
-- Redemptions
-
-All loyalty state stays scoped by `loyalty_program_id`.
+A Shop is a **container** (no shop-wide points). Each Program owns members, wallet, points/stamps/tier, rewards, signup bonus, and referral rules. All loyalty state stays scoped by `loyalty_program_id`. There is **no** shop-wide points balance, membership, wallet, or reward catalog.
 
 ```text
-Shop
-├── Program A
-│   ├── Membership
-│   ├── Points
-│   ├── Stamps
-│   ├── Wallet Card
-│   └── Rewards
-│
-└── Program B
-    ├── Membership
-    ├── Points
-    ├── Stamps
-    ├── Wallet Card
-    └── Rewards
+Shop  (container only)
+├── Program A → membership, wallet, points/stamps/tier, rewards
+└── Program B → membership, wallet, points/stamps/tier, rewards
 ```
 
-There is **no** shop-wide points balance, membership, wallet balance, or reward catalog.
-
-Joining Program A does **not** automatically join Program B, even when both belong to the same shop.
+Joining Program A does **not** automatically join Program B, even when both belong to the same shop. Same-type Programs are allowed (no 1-per-type). Happy Hour–style modifiers are **rules inside one Program**, not a second Program.
 
 ---
 

@@ -5,9 +5,9 @@
 **Audience:** Product, UI/UX, QA, backend  
 **Does not authorize** schema, APIs, or Next.js implementation ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
-**Sources of truth to keep in sync:** [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md) · [loyalty-page.md](../frontend/loyalty-page.md#reward-redemption-lifecycle-decided) · [customer-reward-progress.md](./customer-reward-progress.md) · [G-20](../frontend/gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) · [data-contract](../backend/data-contract.md) · [api-contract](../backend/api-contract.md)
+**Sources of truth to keep in sync:** [program-model.md](./program-model.md) · [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md) · [loyalty-page.md](../frontend/loyalty-page.md#reward-redemption-lifecycle-decided) · [customer-reward-progress.md](./customer-reward-progress.md) · [G-20](../frontend/gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) · [data-contract](../backend/data-contract.md) · [api-contract](../backend/api-contract.md)
 
-The customer redeems **only** rewards that belong to the program in which they have membership. Points, stamps, wallet, and catalog never mix across programs. Program-level wallet (`Total` / `Reserved` / `Available = Total − Reserved`), Signup Bonus, and Referral Bonus stay as documented on the [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-program-decided) and [referral rewards](../frontend/loyalty-page.md#referral-rewards-decided) — this file does not restate those grants.
+The customer redeems **only** rewards that belong to the program in which they have membership. Points, stamps, wallet, and catalog never mix across programs ([program-model.md](./program-model.md)). Program-level wallet (`Total` / `Reserved` / `Available = Total − Reserved`), Signup Bonus, and Referral Bonus stay as documented on the [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-program-decided) and [Signup vs Referral](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided) — this file does not restate those grants.
 
 ---
 

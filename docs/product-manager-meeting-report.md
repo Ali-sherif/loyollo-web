@@ -99,14 +99,14 @@ After the teammate account exists, forgotten password is the **same** owner rese
 
 ## 5. Multiple loyalty programs + status
 
-**Status:** DECIDED for many programs + `draft` \| `active` \| `disabled` (not shipped). **PENDING Business Owner:** multiple ACTIVE at once / Shop QR.  
-**Source of truth:** [loyalty-page.md](frontend/loyalty-page.md#multiple-programs-and-status-decided) · [G-35](frontend/gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status)
+**Status:** DECIDED for many programs (including **same type**) + `draft` \| `active` \| `disabled` (not shipped). **PENDING Business Owner:** multiple ACTIVE at once / Shop QR.  
+**Source of truth:** [program-model.md](product/program-model.md) · [loyalty-page.md](frontend/loyalty-page.md#multiple-programs-and-status-decided) · [G-35](frontend/gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status)
 
-A shop will have **more than one** loyalty program. Each program status is **`draft`**, **`active`**, or **`disabled`**.
+A shop will have **more than one** loyalty program, including **multiple of the same type** (no 1-per-type). Each program status is **`draft`**, **`active`**, or **`disabled`**. A Shop is a **container** — no shop-wide membership, points, wallet, or rewards catalog. Conditional earning modifiers that share one goal (e.g. Happy Hour 3x points) are **rules inside one Program**, not a second Program. Admin create UI should say so ([UX-10](product/ui-ux-team-requests.md#ux-10--multi-program-list--switcher)).
 
-Today the DB allows only one program per owner. Direct `/join/{programId}` remains for program QR and personal `?ref=` (valid while that program is `active`). There is no shop-wide membership, points, wallet, or rewards catalog. Selecting one Program never auto-joins sibling Programs.
+Today the DB allows only one program per owner. Direct `/join/{programId}` remains for program QR and personal `?ref=` (valid while that program is `active`). Selecting one Program never auto-joins sibling Programs.
 
-**Pending Business Owner:** whether more than one program may be `active` at once, and therefore Shop QR behavior. Do not finalize Shop QR until that decision.
+**Pending Business Owner:** whether more than one program may be `active` at once, and therefore Shop QR behavior. Creating any number (including same-type) is already decided. Do not finalize Shop QR until that decision.
 
 - If only one active Program is allowed: Shop QR → `/join/{programId}`.
 - If multiple active Programs are allowed: Shop QR → Shop / Program selection → customer chooses one → `/join/{programId}`.
@@ -157,7 +157,7 @@ The referrer is **not** granted at enroll. Points (or voucher) land only after a
 
 **Device / IP matching:** if the invite and the registration happen from the **same device** or the **same Wi-Fi / public IP** in the **same minute**, the backend marks the row **Pending Review** (`pending_review`). The referrer is not granted until a reviewer clears it.
 
-Returning check-in with `ref` does not create another referral.
+Returning check-in with `ref` does not create another referral. Signup Bonus is separate and **can stack** with the referred-party grant when both are configured ([Signup vs Referral](frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided)). Welcome / link-program screens do not imply a bonus.
 
 The share **link / QR** appears on **that program’s card** in the customer wallet ([§8](#8-customer-wallet-per-program)).
 
@@ -174,7 +174,7 @@ Points belong to the **program** they were earned in. They do **not** mix.
 |-----------|-----------|-------------------|
 | 100 points, that program’s expiry (e.g. 1 month per lot) | 200 points, that program’s expiry (e.g. 1 week per lot) | **Two** wallets: 100 and 200 — **not** 300 |
 
-Each program card: name, spendable / **available** points (`total − pending reserved`), expiry date(s) (split by lot if mixed), vouchers + their dates, personal share link + QR, and **reward progress for that program only** (stamps toward completion, or available vs next catalog reward). [customer-reward-progress.md](product/customer-reward-progress.md). Portal **URL** still not locked. Pixel layout not locked.
+Each program card: name, then by **type** — Points: spendable / **available** (`total − pending reserved`) + progress to next reward; Visit: stamp-icon counter; Tier: current tier + progress to next. Plus expiry date(s) (split by lot if mixed), vouchers + their dates, personal share link + QR. Never aggregate across Programs. [program-model.md](product/program-model.md#4-customer-wallet-summary) · [customer-reward-progress.md](product/customer-reward-progress.md). Portal **URL** still not locked. Pixel layout not locked.
 
 ---
 
@@ -187,11 +187,11 @@ The customer redeems only rewards in the program they belong to. Redeem → if A
 
 A redemption stays on the Program it was created under (`redemption.program_id = Program A`) even if the customer later uses Program B. Scan is one server transaction (`UPDATE … WHERE status = 'pending'`, affected rows = 1). Second scan → “already redeemed”; expired QR → “expired”. Create is Backend-idempotent (UI disable is UX only). Earn is idempotent per business event; concurrent earn and redeem share one consistency model. Reward eligibility is evaluated at create — later reward expiry does not auto-invalidate a pending row; QR TTL is independent. Staff authz is **Shop-level** (`staff.branch.shop_id === redemption.program.shop_id`); any Staff/Admin of that Shop in Phase 1. Refund / reversal is **not** Phase 1. **Gap:** previous notes described staff Approve/Reject — superseded; do not implement that.
 
-**Pending Product Owner — do not implement:** reward price change while PENDING; reward disabled/deleted while PENDING; program disabled while PENDING redemptions exist; point **lot** expiry while reserved. **Pending Business Owner:** multiple ACTIVE programs / Shop QR. [redemption §14](product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet).
+**Pending Product Owner — do not implement:** reward price change while PENDING; reward disabled/deleted while PENDING; program disabled while PENDING redemptions exist; point **lot** expiry while reserved. **Pending Business Owner:** multiple ACTIVE programs / Shop QR. [redemption §14](product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet). **Open:** tier downgrade if activity drops ([program-model.md](product/program-model.md#open--tier-downgrade)).
 
 ---
 
 ## Not decided in this discussion
 
-Open tracking, SMS delivery, automations, campaign revenue (G-09 / G-06). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever (Phase 1 Redemption: any existing Staff or Admin may **scan/verify**, Shop-scoped). Whether `staff` can also use the add-teammate form. Customer-portal **URLs** (wallet **contents** are locked in §8). Default referral expiry **day counts**. OTP challenge TTL and attempt cap. Merchant UI for **Pending Review** (status and backend review path are locked; the screen is not). Device-fingerprint algorithm (hashes and same-minute rule are locked). SMS vs WhatsApp **provider** (channel enum is locked; adapters stay stubs). **Pending Product Owner:** reward price change / reward disable-delete / program disable / reserved-point **lot** expiry while PENDING ([redemption §14](product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet)). **Pending Business Owner:** multiple ACTIVE programs / Shop QR ([counter QR §15](product/counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending)). Refund / reversal is deferred (not Phase 1).
+Open tracking, SMS delivery, automations, campaign revenue (G-09 / G-06). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever (Phase 1 Redemption: any existing Staff or Admin may **scan/verify**, Shop-scoped). Whether `staff` can also use the add-teammate form. Customer-portal **URLs** (wallet **contents** are locked in §8). Default referral expiry **day counts**. OTP challenge TTL and attempt cap. Merchant UI for **Pending Review** (status and backend review path are locked; the screen is not). Device-fingerprint algorithm (hashes and same-minute rule are locked). SMS vs WhatsApp **provider** (channel enum is locked; adapters stay stubs). **Pending Product Owner:** reward price change / reward disable-delete / program disable / reserved-point **lot** expiry while PENDING ([redemption §14](product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet)). **Pending Business Owner:** multiple ACTIVE programs / Shop QR ([counter QR §15](product/counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending)). **Open:** tier downgrade if activity drops ([program-model.md](product/program-model.md#open--tier-downgrade)). Refund / reversal is deferred (not Phase 1).
 

@@ -96,7 +96,7 @@ flowchart LR
 
 - [Overview / Dashboard (`/app/dashboard`)](dashboard-page.md) — checklist, setup-complete canvas, shell chrome
 - [Customers (`/app/customers`)](customers-page.md) — list, filters, CRUD, detail placeholders
-- [Loyalty Program (`/app/loyalty`)](loyalty-page.md) — program types, rewards, referrals, QR, join/check-in; **DECIDED:** many programs + `draft`/`active`/`disabled`; **DECIDED:** OTP then both-party grants + `Invoice.Paid` referrer + `vouchers` + link/QR; **DECIDED:** customer wallet per program (no mixed points)
+- [Loyalty Program (`/app/loyalty`)](loyalty-page.md) — program types, rewards, referrals, QR, join/check-in; **DECIDED:** many programs (including same type) + `draft`/`active`/`disabled`; rule-vs-program create guidance; **DECIDED:** OTP then both-party grants + `Invoice.Paid` referrer + `vouchers` + link/QR; Signup Bonus once per Program (can stack); **DECIDED:** customer wallet per program (no mixed points). Canonical model: [program-model.md](../product/program-model.md)
 - [Branches (`/app/branches`)](branches-page.md) — plan limits, cards, detail placeholders
 - [Settings (`/app/settings`)](settings-page.md) — general, notifications, integrations, billing, security
 - [Campaigns (`/app/campaigns`)](campaigns-page.md) — list, send, audience, automations, detail; [product meanings](campaigns-page.md#product-meanings-decided) (Draft → Active while sending → Completed)

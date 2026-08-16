@@ -188,22 +188,30 @@ Rewards configured within that Program
               Customer Redeem
                      │
                      ▼
-                  PENDING
-                     │
-              Reserve Points
-                     │
-             ┌───────┴───────┐
-             ▼               ▼
-          APPROVE           REJECT
+         Available ≥ cost?
+             │               │
+            No              Yes
              │               │
              ▼               ▼
-         Deduct Points    Release Reserve
-             │               │
-             ▼               ▼
-         COMPLETED        REJECTED
+      Error (no row)      PENDING
+                             │
+                      Reserve Points
+                      Issue single-use QR
+                      (10-minute expiry)
+                             │
+                    ┌────────┴────────┐
+                    ▼                 ▼
+               Staff scan         Job: past due
+               (verify)           qr_expires_at
+                    │                 │
+                    ▼                 ▼
+              Deduct from Total   Release Reserve
+                    │                 │
+                    ▼                 ▼
+                COMPLETED          EXPIRED
 ```
 
-Redemption lifecycle, reservation, idempotency, and staff approval: [reward-redemption-flow.md](./reward-redemption-flow.md).
+Redemption lifecycle, reservation, QR verification (not approval), atomic scan, and expiry job: [reward-redemption-flow.md](./reward-redemption-flow.md).
 
 ---
 

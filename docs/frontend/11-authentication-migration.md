@@ -26,7 +26,7 @@ This is **not** [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy
 | Role | Who | Surface | Permissions |
 |------|-----|---------|-------------|
 | **`admin`** | Buys Loyollo (the shop). Same as today’s **owner** (`owner_id`). | Merchant **`/app`** | Full merchant access. Product Phase 1: the software-purchase account is this role. |
-| **`staff`** | Works for that shop (team). | Merchant **`/app`** | **For now: same permissions as `admin`.** Phase 1 Redemption: any existing Staff or Admin may process redemptions for that **Shop** (`staff.branch.shop_id === redemption.program.shop_id`); do not add extra redemption role restrictions unless decided later. A later split (limited staff) is not locked. Subtypes (manager / cashier / …) are **not** locked. |
+| **`staff`** | Works for that shop (team). | Merchant **`/app`** | **For now: same permissions as `admin`.** Phase 1 Redemption: any existing Staff or Admin may **scan/verify** redemptions for that **Shop** (`staff.branch.shop_id === redemption.program.shop_id`); do not add extra redemption role restrictions unless decided later. Scan is verification, not discretionary approval. A later split (limited staff) is not locked. Subtypes (manager / cashier / …) are **not** locked. |
 | **`customer`** | Shops at that business (loyalty member). | Customer register/login — **not** `/app` | Customer data + calculated KPIs only. Never merchant `/app`. |
 
 **Today:** there is typically one `/app` login per shop; it is **`admin`**. When `staff` accounts exist, they may use `/app` with **the same permissions as `admin`** until a split is approved. `staff` is a **different role name**, not a different permission set yet.

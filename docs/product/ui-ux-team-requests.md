@@ -8,7 +8,7 @@
 
 **There is no standalone PRD** in `docs/`. Product locks live in [product-manager-meeting-report.md](../product-manager-meeting-report.md) and the page specs. This file does not add new product decisions; it extracts what design still owes.
 
-Customer portal **case map** (every outcome on the 2026-08-16 diagram, plus cases the diagram omitted): [customer-portal-journey.md](./customer-portal-journey.md). Counter QR vs program membership: [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md). Customer reward progress: [customer-reward-progress.md](./customer-reward-progress.md). Catalog redeem (pending / reserve / staff review): [reward-redemption-flow.md](./reward-redemption-flow.md).
+Customer portal **case map** (every outcome on the 2026-08-16 diagram, plus cases the diagram omitted): [customer-portal-journey.md](./customer-portal-journey.md). Counter QR vs program membership: [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md). Customer reward progress: [customer-reward-progress.md](./customer-reward-progress.md). Catalog redeem (pending / reserve / QR verification): [reward-redemption-flow.md](./reward-redemption-flow.md).
 
 **Jump to:** [How to use](#how-to-use-this-document) · [Locked constraints](#locked-constraints-do-not-redesign) · [1. New screens](#1-new-screens--flows-to-design) · [2. UX decisions](#2-ux-decisions-hide-vs-honest-placeholder-vs-wire) · [3. Copy](#3-copy--content) · [4. Assets](#4-assets--brand) · [5. Not UI/UX](#5-not-uiux--do-not-design-as-if-these-exist) · [Index](#request-index) · [Traceability](#traceability-docs--this-file)
 
@@ -195,14 +195,14 @@ Customer-portal **URLs are not locked** and are **not** on the approved route ma
 | Expiry | One date if lots share it; otherwise **amount + date groups**. Never one date that hides a sooner-expiring lot |
 | Vouchers | `active` vouchers + their dates. Used / expired are not spendable points |
 | Share | Personal **link** + **QR** for `/join/{programId}?ref={referral_code}` — this is **not** the shop **counter** QR |
-| **Reward progress** | **This program only.** Visit: `current / visits_required` toward that program’s completion reward. Points: **available** vs next unearned live catalog reward (cheapest). Tier: current + remaining to next. Ready-at-counter when earned/available; earn ≠ redeem. Catalog redeem is pending + staff review. No shop-wide bar. [customer-reward-progress.md](./customer-reward-progress.md) · [reward-redemption-flow.md](./reward-redemption-flow.md) |
+| **Reward progress** | **This program only.** Visit: `current / visits_required` toward that program’s completion reward. Points: **available** vs next unearned live catalog reward (cheapest). Tier: current + remaining to next. Ready-at-counter when earned/available; earn ≠ redeem. Catalog redeem is pending + single-use QR (staff scan verifies; 10-minute expiry). No shop-wide bar. [customer-reward-progress.md](./customer-reward-progress.md) · [reward-redemption-flow.md](./reward-redemption-flow.md) |
 
 **Open**
 
 - Pixel layout: cards vs list vs tabs; bar vs stamp row. Portal URL.
 - Empty wallet (member of zero programs), expired-lot treatment, copy/share/download QR.
 - “See all rewards” for this program (optional under the primary target).
-- Redeem control on the card / list: disable after submit; reconcile `pending` / `completed` / `rejected` from the server (multi-device). Pixel layout of pending vs available is free.
+- Redeem control on the card / list: disable after submit; show the **single-use QR** + remaining TTL; reconcile `pending` / `completed` / `expired` from the server (multi-device). Pixel layout of pending QR vs available is free. Insufficient Available → clear error, no QR.
 - Example that must stay true in mockups: 100 pts (month window) + 200 pts (week window) = **two cards, not 300**. Progress on each card is independent.
 
 #### UX-08 — Customer portal shell
@@ -317,21 +317,22 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 
 **Locked (when built)**
 
-- Identify member (QR / phone), award visit or spend (**idempotent** on a purchase/event key), **redeem** with insufficient-**available**-balance / zero-balance rejection. Earn ≠ redeem.
-- Catalog redeem: customer request → `pending` + reserve; staff **Approve** (atomic `PENDING → COMPLETED` + consume reserved) or **Reject** (release → `rejected`). Second Approve / network retry is a no-op (no second deduct). Create is idempotent (double-click / tabs / devices / retry). Viewing the same pending row on two devices is allowed.
-- Staff authz is **Shop-level**: any authorized Staff from any Branch of that Shop. `staff.branch.shop_id === redemption.program.shop_id`. Backend enforces independently; Frontend only lists authorized rows.
-- Phase 1: any existing Staff or Admin role may perform Redemption operations. Do not add extra role restrictions unless decided later.
-- Reward eligibility evaluated at create; later reward `expires_at` does not auto-invalidate a pending redemption.
+- Identify member (QR / phone), award visit or spend (**idempotent** on a purchase/event key). Earn ≠ redeem. Catalog **Redeem** from the customer wallet is not a staff “create redemption” click — the customer taps Redeem; staff **scans the redemption QR** at checkout.
+- Catalog redeem: customer request → if Available < cost, refuse (no row); else `pending` + reserve + **single-use QR** (10-minute `qr_expires_at`). Staff **scan verifies** (atomic `PENDING → COMPLETED` + consume reserved; `UPDATE … WHERE status = 'pending'`, affected rows = 1). Second scan / retry → **“already redeemed”** (no second deduct). Expired QR → **“expired”**. Create is idempotent (double-click / tabs / devices / retry). Viewing the same pending QR on two devices is allowed.
+- Staff scanning is **verification**, not discretionary approval. Staff **cannot** reject a valid, unexpired, un-redeemed QR. Do **not** design an Approve / Reject pending list for physical catalog rewards (previous spec — superseded).
+- Staff authz is **Shop-level**: any authorized Staff from any Branch of that Shop. `staff.branch.shop_id === redemption.program.shop_id`; redemption must belong to the correct program. Backend enforces independently.
+- Phase 1: any existing Staff or Admin role may perform Redemption scan/verify. Do not add extra role restrictions unless decided later.
+- Reward eligibility evaluated at create; later reward `expires_at` does not auto-invalidate a pending redemption. QR TTL is 10 minutes and independent.
 - A redemption stays on the Program it was created under even if the customer later uses another Program.
-- UI disable of Redeem / Approve is not the protection; reconcile from server.
+- UI disable of Redeem and QR countdown are not the protection; reconcile from server. A scheduled job expires unscanned `pending` rows and releases Reserved even if the customer never reopens the app.
 - Refund / reversal is **not** Phase 1.
 
 **Open**
 
-- In or out of product Phase 1 (checklist says POS deferred; Settings still shows Connect). **Do not ship a POS UI that looks live if Phase 1 excludes it.**
-- Device: `/app` page vs dedicated staff view.
-- Success / fail / already-redeemed / inactive-member / pending-list states.
-- **Pending Product Owner:** reward price change while PENDING; reward disabled/deleted while PENDING; program disabled while PENDING; point expiry while reserved. Do not design those outcomes until decided.
+- In or out of product Phase 1 (checklist says POS deferred; Settings still shows Connect). **Do not ship a POS UI that looks live if Phase 1 excludes it.** Scanner for catalog QR may still be required even if full POS award is deferred.
+- Device: `/app` page vs dedicated staff scanner view.
+- Success / fail / already-redeemed / expired / wrong-shop / inactive-member states. Do not add Approve / Reject copy for a valid QR.
+- **Pending Product Owner:** reward price change while PENDING; reward disabled/deleted while PENDING; program disabled while PENDING; point **lot** expiry while reserved. Do not design those outcomes until decided.
 
 #### UX-12 — Referral Pending Review (merchant)
 
@@ -729,7 +730,7 @@ From [meeting report “Not decided”](../product-manager-meeting-report.md) an
 | UX-75 | Design | P0 | Customer profile setup (name, email, DOB) |
 | UX-76 | Design | P0 | First-shop welcome + link program |
 | UX-10 | Design | P0 | Multi-program list / switcher + status + default program |
-| UX-11 | Design | P1 | Staff POS award / redeem review (pending → approve/reject) |
+| UX-11 | Design | P1 | Staff POS award / redeem QR scan (pending → verify, not approve/reject) |
 | UX-12 | Design | P1 | Referral Pending Review screen |
 | UX-13 | Design | P1 | Loyalty list vs create/edit |
 | UX-14 | Decision | P1 | Campaign Scheduled tab: design or hide |
@@ -828,7 +829,7 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 
 ### Meeting-report “not decided” → this file
 
-Portal URL → UX-08. **Pending Business Owner:** multiple `active` programs + Shop QR → UX-09 / UX-10 ([counter QR §15](./counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending)). Catalog redeem pending/reserve → UX-07 / UX-11 ([redemption](./reward-redemption-flow.md)). Account page two tabs (Team / Customers); `admin` rows on Team → UX-03. Staff can add teammates → UX-01 (not locked). Staff subtypes → §5 (do not design a permission matrix). Phase 1 Redemption: any Staff/Admin, Shop-scoped. Referral default days → §5. OTP TTL/cap → UX-05 states only. Pending Review screen → UX-12. SMS vs WhatsApp provider → UX-24 / §5. Automations / opens / revenue → UX-14, UX-15, UX-20.
+Portal URL → UX-08. **Pending Business Owner:** multiple `active` programs + Shop QR → UX-09 / UX-10 ([counter QR §15](./counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending)). Catalog redeem pending/reserve/QR → UX-07 / UX-11 ([redemption](./reward-redemption-flow.md)). Account page two tabs (Team / Customers); `admin` rows on Team → UX-03. Staff can add teammates → UX-01 (not locked). Staff subtypes → §5 (do not design a permission matrix). Phase 1 Redemption: any Staff/Admin may **scan/verify**, Shop-scoped; not Approve/Reject. Referral default days → §5. OTP TTL/cap → UX-05 states only. Pending Review screen → UX-12. SMS vs WhatsApp provider → UX-24 / §5. Automations / opens / revenue → UX-14, UX-15, UX-20.
 
 ---
 

@@ -1,6 +1,6 @@
 # Loyalty Program Page (`/app/loyalty`)
 
-Reference for all components, conditions, and edge cases on the Loyalty Program route (create + edit). **Today** this is the owner’s single program. **DECIDED:** a shop will have **many** programs, each `draft` \| `active` \| `disabled` ([multiple programs](#multiple-programs-and-status-decided)). **PENDING Business Owner:** whether more than one may be `active` at once, and therefore Shop QR behavior ([counter QR](#counter-qr--program-membership-decided)). **DECIDED:** catalog redeem is pending + reserved points + staff approve ([redemption](#reward-redemption-lifecycle-decided)); four redemption edge cases remain pending Product Owner and Shop QR remains pending Business Owner ([redemption §14](../product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet)). Covers the four tabs, program types, QR join URL, and a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
+Reference for all components, conditions, and edge cases on the Loyalty Program route (create + edit). **Today** this is the owner’s single program. **DECIDED:** a shop will have **many** programs, each `draft` \| `active` \| `disabled` ([multiple programs](#multiple-programs-and-status-decided)). **PENDING Business Owner:** whether more than one may be `active` at once, and therefore Shop QR behavior ([counter QR](#counter-qr--program-membership-decided)). **DECIDED:** catalog redeem is pending + reserved points + staff **QR verification** ([redemption](#reward-redemption-lifecycle-decided)); four redemption edge cases remain pending Product Owner and Shop QR remains pending Business Owner ([redemption §14](../product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet)). Covers the four tabs, program types, QR join URL, and a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
 
 **Jump to:** [route](#route-structure) · [page flow](#high-level-page-flow) · [multiple programs](#multiple-programs-and-status-decided) · [counter QR](#counter-qr--program-membership-decided) · [one program today](#one-owner--one-loyalty-program-today) · [tabs](#tabs) · [points](#points-system) · [visit](#visit-based) · [tier](#tier-based) · [save](#save--upsert) · [qr](#qr-on-the-programs-tab) · [rewards](#rewards-tab) · [referrals](#referrals-tab) · [referral rewards](#referral-rewards-decided) · [referral fraud](#referral-fraud-controls-decided) · [otp](#otp-verification-decided) · [customer wallet](#customer-wallet-per-program-decided) · [reward progress](#reward-progress-on-the-card-decided) · [redemption](#reward-redemption-lifecycle-decided) · [qr experience](#qr-experience-tab) · [join](#public-join--check-in) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
@@ -112,7 +112,7 @@ Scan a Shop QR → land on **one** program (direct `/join/{programId}` if only o
 
 First scan of a program the account is not in → create **that** membership only. Returning scan of the same program → check-in, no duplicate membership.
 
-Rewards on the Rewards tab stay **that program’s catalog**. Earning in Program A must not unlock Program B’s rewards. Catalog redeem is pending → staff approve/reject with point reservation ([redemption](#reward-redemption-lifecycle-decided)).
+Rewards on the Rewards tab stay **that program’s catalog**. Earning in Program A must not unlock Program B’s rewards. Catalog redeem is pending → staff QR scan (verification, not approval) with point reservation ([redemption](#reward-redemption-lifecycle-decided)).
 
 `/join/{programId}` remains for program QRs and personal `?ref=` shares (valid only while that program is `active`). Do not treat `/join/shop/{shopSlug}` or a default-program reprint rule as locked until item 15.
 
@@ -257,7 +257,7 @@ When `programId` exists: PNG, join URL, Download PNG, Print PDF (popup), Share (
 | Delete | `delete` |
 | Export PDF | Client `jspdf` of the catalog |
 
-Reward performance dialog: `redeemed_count` is real; **revenue and per-tier redemption counts are 0**. Check-in can insert `customer_rewards` and increment nothing on `rewards.redeemed_count` unless some other path does (join-service earn path does **not** bump `redeemed_count` — it inserts `status: "earned"`, not redeemed). **Intended:** catalog redeem is `pending` → `completed` / `rejected` ([redemption](#reward-redemption-lifecycle-decided)); only `completed` increments `redeemed_count`.
+Reward performance dialog: `redeemed_count` is real; **revenue and per-tier redemption counts are 0**. Check-in can insert `customer_rewards` and increment nothing on `rewards.redeemed_count` unless some other path does (join-service earn path does **not** bump `redeemed_count` — it inserts `status: "earned"`, not redeemed). **Intended:** catalog redeem is `pending` → `completed` (staff QR scan) / `expired` (10-minute job) ([redemption](#reward-redemption-lifecycle-decided)); only `completed` increments `redeemed_count`. **Gap:** no lifecycle shipped; previous spec was staff approve/reject — do not implement that.
 
 ---
 
@@ -406,22 +406,24 @@ No live reward configured → honest empty. Several catalog rewards → one prim
 
 **Status:** DECIDED for Phase 1 lifecycle and agreed edge cases (not shipped). Five items remain pending owner decision. **Full lock:** [reward-redemption-flow.md](../product/reward-redemption-flow.md). Schema/API are backend-owned ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)). Gap: [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn).
 
-Catalog redeem is **not** an immediate point burn. The customer requests a reward **in this program**; the row starts `pending` and **reserves** `points_cost`. Staff approve (consume reserved → `completed`) or reject (release → `rejected`). Earn ≠ redeem still holds.
+Catalog redeem is **not** an immediate point burn (physical / in-person handoff). The customer taps Redeem **in this program**; if `Available < cost` the request is refused with a clear error (no row). If valid, the row starts `pending`, **reserves** `points_cost`, and issues a **single-use QR** (10-minute expiry). Staff **scans** the QR at checkout (verification, not approval) → atomic `PENDING → COMPLETED` and reserved points are deducted from Total. Unscanned QRs expire via a **scheduled job** (`expired`, release Reserved). Earn ≠ redeem still holds. Purely digital catalog rewards may complete instantly ([§16](../product/reward-redemption-flow.md#16-digital-rewards-exception)).
 
 ```text
-Select this program’s reward → PENDING + reserve → Approve (COMPLETED) or Reject (REJECTED)
+Select this program’s reward → PENDING + reserve + QR → Staff scan (COMPLETED) or job (EXPIRED)
 ```
 
 Locked (Phase 1):
 
 - Redeem only rewards on the membership’s `loyalty_program_id`. The row stays on that program forever — joining Program B must not transfer it or spend Program B points.
-- `Available = Total − Reserved`. Combined pending cost cannot exceed available.
-- Create is idempotent (double-click / tabs / devices / retry return the same row; do not reserve twice). Viewing the same pending redemption on two devices is allowed.
-- Approve is one Backend transaction: `PENDING → COMPLETED` + consume reserved. Already `COMPLETED` → no-op / same result. Network retry must not deduct again. Frontend button disable is UX only.
+- `Available = Total − Reserved`. Combined pending cost cannot exceed available. Concurrent Redeems check Available, not Total. Reservation happens at Redeem time, not at staff-scan time.
+- Create is idempotent (double-click / tabs / devices / retry return the same row; do not reserve twice or issue a second QR). Viewing the same pending QR on two devices is allowed.
+- Scan is one Backend transaction: `UPDATE … WHERE status = 'pending'` (QR still valid) with affected rows = 1 → `COMPLETED` + consume reserved. Already `COMPLETED` → error **“already redeemed”**. `EXPIRED` / past `qr_expires_at` → error **“expired”**. Frontend button disable / countdown is UX only.
+- A scheduled job marks `pending` past 10 minutes as `expired` and releases Reserved. Do not rely on client-side / lazy expiry.
+- Staff cannot reject a valid, unexpired, un-redeemed QR. Do not implement staff Approve/Reject for physical catalog rewards (previous spec — superseded; [Gaps](../product/reward-redemption-flow.md#gaps-design-vs-implementation)).
 - Earn events (check-in / POS / `Invoice.Paid`) are idempotent on a unique business reference. Concurrent earn and redeem use the same consistency model (no negative balance, lost update, or double deduct).
-- Reward eligibility / expiry is evaluated **at create**. Later reward `expires_at` must not auto-invalidate an existing pending redemption. A future pending-redemption TTL, if any, is independent of reward `expires_at`.
-- Authz is **Shop-level**: `staff.branch.shop_id === redemption.program.shop_id`. Any authorized Staff from any Branch of that Shop may process. Staff from another Shop must not. Backend enforces independently of Frontend list filtering.
-- Phase 1: any existing Staff or Admin role may perform Redemption operations. Do not add extra role restrictions unless decided later.
+- Reward eligibility / expiry is evaluated **at create**. Later reward `expires_at` must not auto-invalidate an existing pending redemption. QR TTL (10 minutes) is independent of reward `expires_at`.
+- Authz is **Shop-level**: `staff.branch.shop_id === redemption.program.shop_id`. Scan must also confirm the correct program. Any authorized Staff from any Branch of that Shop may scan. Staff from another Shop must not. Backend enforces independently of Frontend.
+- Phase 1: any existing Staff or Admin role may perform Redemption scan/verify. Do not add extra role restrictions unless decided later.
 - Refund / reversal is **not** Phase 1.
 
 **Pending Product Owner — do not implement:** (1) reward price change while PENDING; (2) reward disabled/deleted while PENDING; (3) program disabled while PENDING redemptions exist; (14) point expiry while reserved. **Pending Business Owner:** (15) multiple ACTIVE programs / Shop QR. [§14](../product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet).
@@ -473,7 +475,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 | [G-10](gaps-and-solutions.md#g-10--check-in-ignores-most-loyalty-rules) | **Min spend, expiry, birthday, signup bonus** | Saved | Unused in join-service | Columns exist | Implement or hide until POS |
 | [G-10](gaps-and-solutions.md#g-10--check-in-ignores-most-loyalty-rules) | **Visit min spend / card expiry / notify 1 away** | Saved | Unused | Columns exist | Ticket amount + jobs |
 | — | **Reward on completion** | Not tied to `rewards.id` | Snapshot string only | `reward_id` null | FK to catalog reward |
-| [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **`redeemed_count` / catalog redeem** | Catalog shows it | Earn ≠ redeem; no pending/reserve | No redeem lifecycle | Pending + reserve + atomic approve; [redemption](#reward-redemption-lifecycle-decided) |
+| [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **`redeemed_count` / catalog redeem** | Catalog shows it | Earn ≠ redeem; no pending/reserve/QR | No redeem lifecycle | Pending + reserve + QR scan (atomic `WHERE status = pending`); expiry job; [redemption](#reward-redemption-lifecycle-decided) |
 | [G-14](gaps-and-solutions.md#g-14--referrals-settings-without-attribution) | **Referrals** | Settings only | Enroll has no OTP/`ref` | No `referrals` / `otp_verifications` / `vouchers` | OTP then atomic enroll; referred grant; referrer on `Invoice.Paid`; CHECK self-invite; UNIQUE `referred_id`; device/IP → `pending_review` |
 | [G-31](gaps-and-solutions.md#g-31--program-type-change-after-members-exist) | **Program type change** | Copy says anytime | No migration | One row | Lock or migrate |
 | [G-35](gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status) | **Multiple programs + status** | One upsert row; door QR is program UUID | Unique `owner_id` | No `status` | Many programs; `draft` \| `active` \| `disabled`; Shop QR pending BO ([§15](../product/counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending)) |
@@ -489,7 +491,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 4. Check-in ignores most saved rules
 5. `customers.tier` never assigned
 6. Referrals config without attribution — **DECIDED** product rules ([referral rewards](#referral-rewards-decided), [fraud controls](#referral-fraud-controls-decided)); not shipped
-7. Reward “redeemed” vs “earned” not distinguished in UI — **DECIDED:** catalog redeem is `pending` → `completed` / `rejected` with reservation ([redemption](#reward-redemption-lifecycle-decided)); not shipped
+7. Reward “redeemed” vs “earned” not distinguished in UI — **DECIDED:** catalog redeem is `pending` → `completed` (QR scan) / `expired` (job) with reservation ([redemption](#reward-redemption-lifecycle-decided)); not shipped. **Gap:** previous spec was staff approve/reject — do not implement that.
 8. Tab query parsed from `window.location.search` (not typed Next searchParams)
 
 ---

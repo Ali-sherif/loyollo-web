@@ -215,7 +215,7 @@ Membership, points, stamps, wallet, and rewards after this are **that program on
 
 Do not merge returning in-store check-in into the portal OTP boxes.
 
-Catalog redeem (pending + reserve + staff review) is **not** on this canvas — [reward-redemption-flow.md](./reward-redemption-flow.md).
+Catalog redeem (pending + reserve + QR verification) is **not** on this canvas — [reward-redemption-flow.md](./reward-redemption-flow.md).
 
 ### D. Leave unchanged
 

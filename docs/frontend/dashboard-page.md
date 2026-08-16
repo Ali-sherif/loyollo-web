@@ -307,7 +307,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 | — | **Stat deltas** | Always `"—"` | No previous-period totals | No daily snapshots | Store period aggregates (Phase 7) |
 | [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **At-risk** | 30-day recency here; `status` on Customers | Three different rules | `status` vs computed recency | One shared module ([data-contract glossary](../backend/data-contract.md#unified-glossary)) |
 | [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Total Revenue** | Shows campaign `revenue_cents` | No orders API | No `orders` table | Orders + attribution; don’t use campaign column as GMV |
-| [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **Points Redeemed** | `redeemed_count × point_cost` | No ledger / pending lifecycle | No `points_ledger` | Ledger on earn/redeem; donut uses `completed` only |
+| [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **Points Redeemed** | `redeemed_count × point_cost` | No ledger / pending lifecycle | No `points_ledger` | Ledger on earn/redeem; donut uses `completed` only (QR scan, not staff approve) |
 | [G-01](gaps-and-solutions.md#g-01--qr-scan-tracking-is-always-0) | **Live Activity** | Empty forever | No activity API | No event log | `visit_events` + reward events; feed last 24h |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Open rate** | `0%` after send | Opens unused | No `opened_at` on recipients | ESP webhook / pixel |
 | [G-02](gaps-and-solutions.md#g-02--visit--stamp-progress-is-always-empty) | **Returning customers** | Legend omitted | No | No return-visit stream | Derive from `visit_events` |

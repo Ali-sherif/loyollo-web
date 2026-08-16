@@ -20,31 +20,35 @@ Authz unless noted: **owner session** = **`admin`** (buyer of Loyollo; [data-con
 |--------|------|---------|---------|------------------|---------|
 | GET | `/api/customers` | Paginated list + server filters | Query: `cursor`, `q`, `status`, `tier`, `limit` | `{ items: CustomerSummary[], next_cursor? }` | G-11, G-12 scale |
 | GET | `/api/customers/:id` | Detail with rewards + activity | Path id (ownership check) | `{ customer, rewards[], visits_summary, ltv_cents?, referrals_count, referral_code }` | G-13, G-14 |
-| POST | `/api/customers/:id/redeem` | Staff-facing alias: create or complete a catalog redemption **in that customer’s program**. Prefer the lifecycle endpoints below | Body: `{ reward_id, branch_id?, order_id?, amount_cents?, idempotency_key }` | `{ customer_reward, redeemed_count, order? }` | G-20, ROI |
+| POST | `/api/customers/:id/redeem` | Staff-facing alias for **scan/verify** of a catalog redemption **in that customer’s program**. Prefer `POST /api/redemptions/scan` below. Not a discretionary approve/reject. | Body: `{ qr_code, branch_id?, order_id?, amount_cents?, idempotency_key }` | `{ customer_reward, redeemed_count, order? }` or specific error (`already_redeemed` / `expired`) | G-20, ROI |
 | GET | `/api/customers/export` | CSV export (optional BFF) | Same filters as list | `text/csv` stream | G-11 |
 
 **Redeem write rules** (see [data-contract](data-contract.md#binding-write-rules) · [reward-redemption-flow.md](../product/reward-redemption-flow.md)):
 
-1. Customer (or staff acting for them) creates a catalog redemption **in that program only** → status `pending`, **reserve** `points_cost`. Do **not** permanently deduct until approve. The row stays on that `loyalty_program_id` even if the customer later uses another program.
-2. `Available = Total − Reserved`. Refuse create when required cost > available, or when a disallowed duplicate `pending` already exists for customer+program+reward.
-3. Same `idempotency_key` / business operation returns the existing redemption; do not insert a second row and do not reserve points again (double-click, tabs, devices, network retry). Viewing the same pending row from multiple devices is allowed.
-4. Staff **approve** is one transaction: still `pending` → consume reserved → `completed`, set `redeemed_at`, increment `rewards.redeemed_count`, optional `branch_id` / `order_id`. Already `completed` → no-op / return the existing result (no second deduct). State transition and points consumption cannot partially succeed. Enforced on Backend/database; Frontend button disable is UX only.
-5. Staff **reject** releases the reservation → `rejected`.
-6. When a ticket exists on complete: create or attach `orders` and set `customer_rewards.order_id` in the **same** approve transaction. Rows without `order_id` are valid operationally but **excluded from ROI** until linked.
-7. Authz is **Shop-level**: `staff.branch.shop_id === redemption.program.shop_id`. Any authorized Staff from any Branch of that Shop may process. Staff from another Shop must not. Do not authorize on `redemption_id` alone. Frontend lists only authorized rows; Backend enforces independently. Phase 1: any existing Staff or Admin role may perform Redemption operations.
-8. Reward eligibility / expiry is evaluated **at create**. Later reward `expires_at` must not auto-invalidate a pending redemption. Refuse spend of a `points_ledger` lot when `expires_at` is set and `now() >= expires_at` (expired lots), subject to the still-pending reservation-vs-expiry policy ([§14 item 14](../product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet)).
+1. Customer creates a catalog redemption **in that program only**. If `Available < cost`: **refuse immediately** with a clear error — no row, no reservation. If valid: status `pending`, **reserve** `points_cost` (increment Reserved), issue a **single-use QR** tied to the row with `qr_expires_at = now + 10 minutes`. Do **not** permanently deduct until staff scan (physical) or instant complete (digital exception). The row stays on that `loyalty_program_id` even if the customer later uses another program.
+2. `Available = Total − Reserved`. Concurrent creates must check **Available**, not Total. Refuse create when required cost > available, or when a disallowed duplicate `pending` already exists for customer+program+reward.
+3. Same `idempotency_key` / business operation returns the existing redemption; do not insert a second row, do not reserve points again, and do not issue a second QR (double-click, tabs, devices, network retry). Viewing the same pending row (same QR) from multiple devices is allowed.
+4. Staff **scan / verify** is one transaction: still `pending` **and** `qr_expires_at > now()` → consume reserved from Total → `completed`, set `redeemed_at`, increment `rewards.redeemed_count`, optional `branch_id` / `order_id`. The write **must** be `UPDATE … WHERE status = 'pending'` (and QR still valid) with **affected row count = 1**. Already `completed` → reject with **“already redeemed”** (no second deduct). `expired` or past `qr_expires_at` → reject with **“expired”**. State transition and points consumption cannot partially succeed. Enforced on Backend/database; Frontend disable / countdown is UX only. Staff scanning is **verification**, not discretionary approval — do not ship `approve` / `reject` for a valid physical QR.
+5. A **scheduled job** (not client-side / lazy expiry) finds `pending` rows with `qr_expires_at <= now()`, marks them `expired` (same class of conditional update), and **releases** reserved points. Expired reservations must be released even if the customer never reopens the app.
+6. When a ticket exists on complete: create or attach `orders` and set `customer_rewards.order_id` in the **same** scan/complete transaction. Rows without `order_id` are valid operationally but **excluded from ROI** until linked.
+7. Authz is **Shop-level**: `staff.branch.shop_id === redemption.program.shop_id`. Scan must also confirm the redemption belongs to the **correct program**. Any authorized Staff from any Branch of that Shop may scan. Staff from another Shop must not. Do not authorize on `redemption_id` or `qr_code` alone. Frontend exposes a scanner; Backend enforces independently. Phase 1: any existing Staff or Admin role may perform Redemption scan/verify.
+8. Reward eligibility / expiry is evaluated **at create**. Later reward `expires_at` must not auto-invalidate a pending redemption. QR TTL (10 minutes) is independent. Refuse spend of a `points_ledger` lot when `expires_at` is set and `now() >= expires_at` (expired lots), subject to the still-pending reservation-vs-lot-expiry policy ([§14 item 14](../product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet)).
 9. Referral **discount** redeem is `POST /api/vouchers/:id/redeem` on `vouchers` (`active` only; refuse `used` / `expired` / `now() >= expires_at`). Do not auto-apply to a cart. Not this catalog state machine.
-10. **Not Phase 1:** refund / reverse. **Do not implement** pending Product Owner items: price change while PENDING; reward disabled/deleted while PENDING; program disabled while PENDING; reserved-lot expiry.
+10. **Digital exception:** a purely digital catalog reward may complete in the create transaction (no QR, no staff scan). Physical / in-person handoff uses the QR path. [§16](../product/reward-redemption-flow.md#16-digital-rewards-exception).
+11. **Not Phase 1:** refund / reverse. **Do not implement** pending Product Owner items: price change while PENDING; reward disabled/deleted while PENDING; program disabled while PENDING; reserved-lot expiry. **Do not implement** staff Approve/Reject for physical catalog rewards (previous spec — superseded; [Gaps](../product/reward-redemption-flow.md#gaps-design-vs-implementation)).
 
 ### Catalog redemption lifecycle (DECIDED, not shipped)
 
-Paths are illustrative (backend-owned). Shop-**`customer`** session for create; `admin` / `staff` for approve/reject, **Shop-scoped**. Phase 1: any existing Staff or Admin role may approve/reject.
+Paths are illustrative (backend-owned). Shop-**`customer`** session for create; `admin` / `staff` for **scan/verify**, **Shop-scoped**. Phase 1: any existing Staff or Admin role may scan. Staff cannot reject a valid, unexpired, un-redeemed QR.
 
 | Method | Path | Purpose | Request | Response |
 |--------|------|---------|---------|----------|
-| POST | `/api/me/programs/:programId/redemptions` | Customer request; `pending` + reserve | `{ reward_id, idempotency_key }` | `{ redemption }` (same row on retry; do not reserve again) |
-| POST | `/api/redemptions/:id/approve` | Atomic complete; idempotent | `{ idempotency_key }` | `{ redemption }` or no-op / same result if already `completed` |
-| POST | `/api/redemptions/:id/reject` | Release reserve | `{ idempotency_key }` | `{ redemption }` |
+| POST | `/api/me/programs/:programId/redemptions` | Customer Redeem; if Available ≥ cost: `pending` + reserve + single-use QR (`qr_expires_at` +10 min). If Available < cost: error, no row | `{ reward_id, idempotency_key }` | `{ redemption }` including `qr_code`, `qr_expires_at`, `status` (same row on retry; do not reserve or re-issue QR). `4xx` with a clear error when Available < cost |
+| GET | `/api/me/redemptions/:id` | Customer reconcile (QR + remaining TTL) | — | `{ redemption }` (`pending` / `completed` / `expired`) |
+| POST | `/api/redemptions/scan` | Staff verification; atomic `PENDING → COMPLETED` | `{ qr_code, branch_id?, order_id?, idempotency_key }` | `{ redemption }` on success. Specific errors: `already_redeemed`, `expired`, wrong shop/program, QR unknown |
+| — | (worker) `expire-pending-redemptions` | Find `pending` with `qr_expires_at <= now()`; mark `expired`; release Reserved | — | `{ expired_count }` |
+
+**Superseded (do not implement for physical catalog rewards):** `POST /api/redemptions/:id/approve` and `POST /api/redemptions/:id/reject` as discretionary staff actions. Scan verifies; expiry is the job. `rejected` is not a staff choice on a valid QR.
 
 **Not Phase 1:** do not ship `POST /api/redemptions/:id/reverse`. Refund / reversal is deferred.
 
@@ -321,11 +325,19 @@ Response:
     "remaining": 5,
     "reward_name": "string|null",
     "state": "in_progress|ready|none"
-  }
+  },
+  "pending_redemptions": [{
+    "id": "uuid",
+    "reward_id": "uuid",
+    "points_cost": 100,
+    "status": "pending",
+    "qr_code": "string",
+    "qr_expires_at": "timestamptz"
+  }]
 }
 ```
 
-Rules: one object per program membership. **Do not** include a top-level summed points field. `points_spendable` is **available** (`points_total − points_reserved`) for that program. `lots` grouped by `expires_at` so mixed windows (month vs week) are visible. `progress` is **that program only** (visit stamps vs `visits_required`, or available vs next unearned live catalog reward). `state`: `in_progress` · `ready` (earned/available, not auto-redeemed) · `none` (no live reward). Pending catalog redemptions must be reconcilable from the server. [loyalty-page.md](../frontend/loyalty-page.md#customer-wallet-per-program-decided) · [customer-reward-progress.md](../product/customer-reward-progress.md) · [reward-redemption-flow.md](../product/reward-redemption-flow.md).
+Rules: one object per program membership. **Do not** include a top-level summed points field. `points_spendable` is **available** (`points_total − points_reserved`) for that program. `lots` grouped by `expires_at` so mixed windows (month vs week) are visible. `progress` is **that program only** (visit stamps vs `visits_required`, or available vs next unearned live catalog reward). `state`: `in_progress` · `ready` (earned/available, not auto-redeemed) · `none` (no live reward). Pending catalog redemptions must be reconcilable from the server (include `qr_code` + `qr_expires_at` so every device can show the same single-use QR until scan or 10-minute expiry). [loyalty-page.md](../frontend/loyalty-page.md#customer-wallet-per-program-decided) · [customer-reward-progress.md](../product/customer-reward-progress.md) · [reward-redemption-flow.md](../product/reward-redemption-flow.md).
 
 ### Billing / integrations (backend-owned)
 

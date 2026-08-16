@@ -22,6 +22,7 @@ The pre-implementation checklist required RLS and storage policies to be indepen
 
 - Once the custom Backend and Database are deployed, **all** data and storage access transitions to **custom Backend APIs only**.
 - Direct client database / storage access is retired for application traffic; the frontend calls Backend APIs instead.
+- Phase 2 stack is **DECIDED:** NestJS 11.x, Prisma 7.x, PostgreSQL 18.x (latest stable patches at implementation). See [ADR-015](ADR-015-backend-stack.md).
 - RLS/storage on the legacy Supabase surface may then be tightened, replaced, or decommissioned under a **separate** backend program — not as a Next.js migration slice.
 
 ## Consequences

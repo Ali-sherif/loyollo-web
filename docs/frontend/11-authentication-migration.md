@@ -26,7 +26,7 @@ This is **not** [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy
 | Role | Who | Surface | Permissions |
 |------|-----|---------|-------------|
 | **`admin`** | Buys Loyollo (the shop). Same as today’s **owner** (`owner_id`). | Merchant **`/app`** | Full merchant access. Product Phase 1: the software-purchase account is this role. |
-| **`staff`** | Works for that shop (team). | Merchant **`/app`** | **For now: same permissions as `admin`.** A later split (limited staff) is not locked. Subtypes (manager / cashier / …) are **not** locked. |
+| **`staff`** | Works for that shop (team). | Merchant **`/app`** | **For now: same permissions as `admin`.** Phase 1 Redemption: any existing Staff or Admin may process redemptions for that **Shop** (`staff.branch.shop_id === redemption.program.shop_id`); do not add extra redemption role restrictions unless decided later. A later split (limited staff) is not locked. Subtypes (manager / cashier / …) are **not** locked. |
 | **`customer`** | Shops at that business (loyalty member). | Customer register/login — **not** `/app` | Customer data + calculated KPIs only. Never merchant `/app`. |
 
 **Today:** there is typically one `/app` login per shop; it is **`admin`**. When `staff` accounts exist, they may use `/app` with **the same permissions as `admin`** until a split is approved. `staff` is a **different role name**, not a different permission set yet.
@@ -143,7 +143,7 @@ Purpose:
 
 Customer auth must **not** grant `admin` / `staff` `/app` access. Rate-limit public signup/enrollment and OTP request ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)). Schema and APIs are backend-owned ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)). Gap: [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows).
 
-**Working journey for design (2026-08-16):** portal register, login, and lost access are **one OTP funnel**. After OTP: inactive → generic block; existing member of **this program** → wallet; existing customer **first time in this program** → link program then wallet (this membership only); new phone → profile then wallet. In-store returning check-in (shop QR `/join/shop/{shopSlug}` or `/join/{programId}`) stays **without** a new OTP once the **program** is known. Never auto-join every live program. Full case list: [customer-portal-journey.md](../product/customer-portal-journey.md). `G-33` / `G-36` are gap IDs, not screen names.
+**Working journey for design (2026-08-16):** portal register, login, and lost access are **one OTP funnel**. After OTP: inactive → generic block; existing member of **this program** → wallet; existing customer **first time in this program** → link program then wallet (this membership only); new phone → profile then wallet. In-store returning check-in (Shop QR — URL pending item 15 — or `/join/{programId}`) stays **without** a new OTP once the **program** is known. Never auto-join every live program. Full case list: [customer-portal-journey.md](../product/customer-portal-journey.md). `G-33` / `G-36` are gap IDs, not screen names.
 
 ### Customer wallet (DECIDED)
 

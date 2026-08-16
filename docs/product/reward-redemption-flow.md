@@ -1,11 +1,11 @@
 # Reward redemption flow (per program)
 
 **Date:** 2026-08-16  
-**Status:** DECIDED (not shipped)  
+**Status:** DECIDED for Phase 1 lifecycle and agreed edge cases (not shipped). Five items remain **pending owner decision** — see [§14](#14-pending-owner-decisions-do-not-implement-yet).  
 **Audience:** Product, UI/UX, QA, backend  
 **Does not authorize** schema, APIs, or Next.js implementation ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
-**Sources of truth to keep in sync:** [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md) · [loyalty-page.md](../frontend/loyalty-page.md#reward-redemption-lifecycle-decided) · [customer-reward-progress.md](./customer-reward-progress.md) · [G-20](../frontend/gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn)
+**Sources of truth to keep in sync:** [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md) · [loyalty-page.md](../frontend/loyalty-page.md#reward-redemption-lifecycle-decided) · [customer-reward-progress.md](./customer-reward-progress.md) · [G-20](../frontend/gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) · [data-contract](../backend/data-contract.md) · [api-contract](../backend/api-contract.md)
 
 The customer redeems **only** rewards that belong to the program in which they have membership. Points, stamps, wallet, and catalog never mix across programs.
 
@@ -58,7 +58,9 @@ Staff reviews
 
 The customer **cannot** redeem a reward that belongs to another program.
 
-Stored status names: `pending` · `completed` · `rejected`. Optional later: `cancelled` · `expired` · `reversed`. Do not use other spellings. UI may show APPROVED as the staff action; the resulting row is `completed`.
+Stored status names: `pending` · `completed` · `rejected`. Do not use other spellings. UI may show APPROVED as the staff action; the resulting row is `completed`.
+
+Optional later states (`cancelled` · `expired` · `reversed`) are **not** Phase 1. Refund / reversal is deferred ([§12](#12-refund--reversal-deferred--not-phase-1)). Do not add them to the Phase 1 flow.
 
 ---
 
@@ -89,11 +91,13 @@ A second reward costing 50 points must be **rejected** (50 > 30). Combined pendi
 
 **Spendable / available** on the wallet and on redeem eligibility is this **available** figure — not a stale client total, and not a raw `customers.points` counter that ignores reservations.
 
+How reserved points interact with lot expiry is **pending** ([§14 item 14](#14-pending-owner-decisions-do-not-implement-yet)).
+
 ---
 
 ## 4. State machine (server-enforced)
 
-Minimum lifecycle:
+Minimum Phase 1 lifecycle:
 
 ```text
 PENDING
@@ -103,25 +107,38 @@ PENDING
    └── REJECTED
 ```
 
-Optional states (`cancelled`, `expired`, `reversed`) may be added when business requires them. **Reversal of a completed redemption** is required if refunds are in scope (see §12).
-
 Rules:
 
-- Transitions are enforced **server-side**.
-- A `completed` redemption cannot be approved again.
-- Frontend may disable Redeem after submit; that is **not** the protection.
+- Transitions are enforced **server-side** (database transaction).
+- The transition `PENDING → COMPLETED` must be **atomic** and **idempotent**.
+- A `completed` redemption cannot be approved again (no-op; return the existing result).
+- Frontend may disable Redeem / Approve after submit; that is **UX only** and **must not** be relied upon for correctness.
 
 ---
 
 ## 5. Duplicate protection (backend)
 
-### Idempotency
+### Create must be idempotent
 
-Repeated submission of the same request returns the **same** redemption rather than creating another:
+Viewing the same existing redemption from multiple devices is allowed and is **not** a duplicate:
 
 ```text
-Request A → Create Redemption #123
-Request A retried → Return Redemption #123
+Mobile A → Redemption #123 → PENDING
+Mobile B → Redemption #123 → PENDING
+```
+
+The Backend must still prevent the **create** operation from inserting multiple redemptions because of double-click, multiple tabs, multiple devices, or network retry. Use an idempotency / business rule and/or a unique database constraint.
+
+```text
+First request
+→ Create Redemption #123
+→ Reserve points
+
+Duplicate request
+→ Detect existing operation
+→ Return / use Redemption #123
+→ Do not create another Redemption
+→ Do not reserve points again
 ```
 
 ### Pending duplicate
@@ -138,172 +155,258 @@ Database-level uniqueness (or an equivalent transactional lock) must handle race
 
 ---
 
-## 6. Atomic staff approval
+## 6. Atomic staff approval (Backend + Frontend)
+
+The Redemption state transition must be atomic and idempotent: `PENDING → COMPLETED`.
+
+The first approval:
 
 ```text
-BEGIN TRANSACTION
-
-1. Verify redemption is still PENDING
-2. Verify customer / program relationship
-3. Verify redemption is valid
-4. Verify sufficient points / reservation
-5. Consume / deduct reserved points
-6. Mark redemption COMPLETED
-
-COMMIT
+PENDING
+→ COMPLETED
+→ consume / deduct the reserved points
 ```
+
+Any subsequent approval attempt must not deduct the points again:
+
+```text
+COMPLETED
+→ no-op / return existing result
+```
+
+The Backend transaction must ensure that the state transition and points consumption cannot partially succeed.
 
 Two staff members approving at once must never double-deduct or double-fulfil:
 
 ```text
 Staff A → PENDING → COMPLETED
-Staff B → already COMPLETED → reject / no-op
+Staff B → already COMPLETED → no-op / return existing result
 ```
 
-Network timeout after a successful approve, then a second Approve press, must no-op the same way (idempotent; server state is source of truth).
+### Network retry during approval
 
----
-
-## 7. Concurrent earn and redeem
-
-Earn and redeem may run at the same time. Example: balance 50, earn +100, redeem 100.
-
-Both operations must be **atomic** and produce a consistent final balance. No operation may trust a stale client-side balance.
-
----
-
-## 8. Immutable snapshot on create
-
-A redemption stores the reward terms that existed **when it was created**.
-
-Example: cost 100 → customer PENDING → admin changes catalog cost to 150. The existing row stays `points_cost = 100`. Catalog edits must not retroactively change a pending (or completed) redemption.
-
-Store whatever immutable snapshot is required for fulfilment (at least point cost; other fields as the backend needs).
-
----
-
-## 9. Earn must also be idempotent
-
-The same purchase or event processed twice (retry) must not credit twice:
+The Approve Redemption endpoint must be idempotent. Enforced by the Backend / database, not the Frontend.
 
 ```text
-Purchase #123 → +100 points
-Retry of Purchase #123 → still +100, not +200
+Request #1
+→ PENDING → COMPLETED
+→ consume reserved points
+→ success
+
+Network timeout
+
+Request #2 / retry
+→ Redemption already COMPLETED
+→ no additional points consumption
+→ return the same logical result
 ```
 
-Each earning event needs its own idempotency / reference key. `Invoice.Paid` is already idempotent on `order_id` ([api-contract](../backend/api-contract.md)). Check-in / POS earn needs the same class of protection.
+A network retry must never create another points transaction or perform another deduction.
 
 ---
 
-## 10. Program isolation
+## 7. Concurrent earn and redeem (Backend)
 
-All redemption operations stay on the original program. The row always references `loyalty_program_id`.
+Earn and Redemption operations must use the **same** concurrency / transaction consistency model for points.
+
+The Backend must prevent race conditions that could cause:
+
+- Negative balances
+- Lost updates
+- Double deductions
+- Lost / created points due to concurrent requests
+- Incorrect points reservations
+
+Balance validation and points reservation / consumption must be performed **atomically**. No operation may trust a stale client-side balance.
+
+Example: initial available balance = 50. Concurrent `Earn +100` and `Redeem 100` must still result in a transactionally consistent final state.
+
+---
+
+## 8. Reward eligibility at create (agreed)
+
+Reward eligibility / expiry is evaluated **when the Redemption is created**.
+
+```text
+10:59 → Reward is valid
+       → Customer creates Redemption
+       → PENDING
+
+11:00 → Reward expires
+
+11:05 → Staff approves
+```
+
+The Reward expiring after the Redemption was created **must not** automatically invalidate the existing Redemption.
+
+If the system later introduces a separate expiration for `PENDING` Redemptions, that expiration must be **independent** from the Reward’s `expires_at`. Do not invent a pending-redemption TTL until product asks for one.
+
+Whether a later **catalog price change** updates a `PENDING` row’s reserved `points_cost` is **not** decided ([§14 item 1](#14-pending-owner-decisions-do-not-implement-yet)). Do not treat cost snapshot-on-create as locked.
+
+---
+
+## 9. Earn must also be idempotent (Backend)
+
+Every Earn operation must have an **idempotency key** or unique business reference representing the underlying business event. The same business event must only award points once. Enforce a suitable unique constraint / business reference at the Backend / database level.
+
+```text
+Purchase #123
+First request → +100 points
+Retry         → no-op
+```
+
+Different legitimate business events must both be processed:
+
+```text
+Purchase #123 → +100
+Purchase #124 → +100
+```
+
+Idempotency prevents duplicate processing of the **same** event; it must not prevent legitimate separate earning events. `Invoice.Paid` is already idempotent on `order_id` ([api-contract](../backend/api-contract.md)). Check-in / POS earn needs the same class of protection.
+
+---
+
+## 10. Program isolation (agreed)
+
+A Redemption remains **permanently** associated with the Program under which it was created:
+
+```text
+redemption.program_id = Program A
+```
+
+If the customer later joins or uses Program B, the existing Redemption must remain associated with Program A.
+
+- The Redemption must not be transferred to Program B.
+- The Redemption must not be covered using Program B’s points.
+- The points reservation must remain associated with the customer’s balance / wallet for Program A.
 
 ```text
 Customer
-├── Program A → 100 points
-└── Program B → 50 points
+├── Program A → 100 points  (Redemption #123 stays here)
+└── Program B → 50 points   (must not pay for #123)
 ```
 
-A Program A redemption cannot consume Program B points. No cross-program balance aggregation.
+No cross-program balance aggregation.
 
 ---
 
-## 11. Staff authorization
+## 11. Staff authorization (Shop-level)
 
-Staff access is scoped to the shop / program they are authorized to operate.
+A Shop can have multiple Branches. Staff members are associated with a Branch.
 
-Knowing a `redemption_id` must not let Shop A staff approve a Shop B redemption.
-
-Validate through the ownership chain:
+Any authorized Staff member from **any Branch belonging to the same Shop** can process Redemptions for that Shop’s Programs.
 
 ```text
-Staff → Shop → Program → Redemption
+Shop A
+├── Branch 1
+│   ├── Staff A
+│   └── Staff B
+│
+└── Branch 2
+    ├── Staff C
+    └── Staff D
+
+All of these Staff members can process Redemptions belonging to Shop A.
+Staff from Shop B must not access or process Shop A’s Redemptions.
 ```
 
-Do not authorize on the redemption ID alone.
-
-Who may view / approve / reject / cancel / reverse is a **role-permission** question. Today `staff` has the same `/app` permissions as `admin` ([locked roles](../frontend/11-authentication-migration.md#locked-role-matrix)); a later split is not locked. The **ownership-chain check is locked now**.
-
----
-
-## 12. Refund / reversal
-
-Do not manually edit the customer’s balance.
+The authorization boundary is **Shop**, not Branch:
 
 ```text
-COMPLETED → REVERSED → restore reserved/deducted points
+staff.branch.shop_id
+    ===
+redemption.program.shop_id
 ```
 
-The reversal must be **auditable** and **idempotent**. Required if refunds are in product scope.
+Knowing a `redemption_id` must not let Shop A staff approve a Shop B redemption. Do not authorize on the redemption ID alone.
+
+The Frontend should only expose Redemptions the Staff is authorized to access. The Backend must enforce the same authorization independently.
+
+### Phase 1 role permissions (agreed)
+
+Any existing **Staff** or **Admin** role can perform Redemption operations.
+
+Do **not** introduce additional role-based restrictions for Redemption in Phase 1 unless explicitly decided later.
+
+Existing authentication and authorization / security rules still apply (including the Shop boundary above).
 
 ---
 
-## 13. Multiple devices
+## 12. Refund / reversal (deferred — not Phase 1)
+
+Refund / Reversal is **not** part of the Phase 1 Redemption flow.
+
+Do **not** implement it. Do **not** make it part of Phase 1 APIs, UI, or state machine.
+
+A future phase may introduce a proper reversal mechanism rather than manually modifying the points balance. Until then, do not document a Phase 1 `COMPLETED → REVERSED` path as required.
+
+---
+
+## 13. Multiple devices (agreed)
 
 The customer may have the same account open on several devices. Local UI state must not be what prevents a duplicate redeem. Server-side state (`pending` / `completed` / `rejected`) is authoritative. The UI refreshes / reconciles against the server.
 
----
-
-## 14. Policies that are not locked yet
-
-These must be explicit **before** the corresponding implementation. Recommended defaults are not product locks.
-
-### Reward disabled or deleted while a redemption is pending
-
-| Option | Behavior |
-| ------ | -------- |
-| **Recommended** | Existing `pending` remains valid and fulfillable |
-| Alternative | Cancel the redemption and release reserved points |
-
-Do **not** silently invalidate an already-created redemption because the live catalog changed.
-
-### Program disabled while redemptions are pending
-
-| Option | Behavior |
-| ------ | -------- |
-| **Recommended** | Existing `pending` remain fulfillable; **new** redemptions are blocked |
-| Alternative | Cancel pending and release reserved points |
-
-An admin status change must not unexpectedly void an in-flight customer transaction unless product chooses that alternative.
-
-### Reward vs pending-redemption vs point expiration
-
-Distinguish:
-
-- Reward catalog expiration
-- Pending redemption expiration
-- Point-lot expiration
-
-Example: reward expires at 11:00; customer redeems at 10:59; staff approves at 11:05. Policy is **not locked**. Recommended:
-
-- Validate eligibility **when the redemption is created**
-- Store the redemption’s terms (snapshot)
-- Give pending redemptions their **own** expiry if required
-- Do not silently invalidate a valid redemption because the catalog changed later
-
-### Point-lot expiry vs reservation
-
-Points expiry is already a product lock on issued lots ([points ledger](../backend/data-contract.md#points_ledger)). How a **pending reservation** interacts with lot expiry is **not locked**:
-
-- Reservation protects the points until the redemption resolves, **or**
-- Reservation expires with the underlying lots, **or**
-- Pending redemption is cancelled and points are released
-
-Decide this before implementing reservation against expiring lots.
+Viewing the same record on two devices is allowed ([§5](#5-duplicate-protection-backend)). Creating two records for the same operation is not.
 
 ---
 
-## 15. Core constraints
+## 14. Pending owner decisions (do not implement yet)
+
+Do **not** finalize implementation for these items. Do **not** invent a product default.
+
+### 1. Reward price changes while Redemption is PENDING
+
+**Status:** Pending Product Owner decision.
+
+Whether a pending Redemption should keep the original `points_cost` from the time it was created if the Reward price later changes is **not** decided.
+
+### 2. Reward is disabled or deleted while Redemption is PENDING
+
+**Status:** Pending Product Owner decision.
+
+Whether an existing valid pending Redemption can still be completed after the Reward is disabled / deleted, or whether it should be cancelled with the reserved points returned, is **not** decided.
+
+### 3. Program is disabled while it has PENDING Redemptions
+
+**Status:** Pending Product Owner decision.
+
+Whether existing pending Redemptions can still be completed after the Program is disabled, or whether they should be cancelled and the reserved points released, is **not** decided.
+
+### 14. Point expiry while points are reserved
+
+**Status:** Pending Product Owner decision.
+
+What happens when points are reserved for a PENDING Redemption and those points reach their expiration date is **not** decided. Decide this before implementing reservation against expiring lots.
+
+### 15. Shop QR with multiple active Programs
+
+**Status:** Pending Business Owner decision.
+
+Whether a Shop can have multiple **ACTIVE** Programs simultaneously is **not** decided. Shop QR behavior must **not** be finalized until that decision.
+
+| If | Then |
+| -- | ---- |
+| Only one active Program is allowed | Shop QR → `/join/{programId}` |
+| Multiple active Programs are allowed | Shop QR → Shop / Program selection → customer chooses one Program → `/join/{programId}` |
+
+Selecting one Program must **not** automatically create a membership in the other Programs.
+
+Canonical tracking for QR / membership: [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending).
+
+---
+
+## 15. Core constraints (Phase 1)
 
 1. Membership, points, stamps, wallet, and rewards are always **program-scoped**.
 2. A customer joins a **program**, never a reward.
 3. Pending redemptions **reserve** points; reserved points reduce **available** balance.
-4. Approval is **atomic**; duplicate approval is impossible.
-5. Earn and redeem are **idempotent**.
-6. Cross-program points / rewards are never allowed.
-7. Staff authorization is enforced **server-side** via the ownership chain.
-8. Completed redemptions support an auditable **reversal** if refunds are required.
-9. Program / reward config changes must not **silently mutate** existing redemption transactions.
+4. Approval is **atomic** and **idempotent**; duplicate approval never deducts twice.
+5. Create-redemption and Approve are **idempotent** at the Backend / database (UI disable is UX only).
+6. Earn is **idempotent** per business event; concurrent earn and redeem share one consistency model.
+7. Cross-program points / rewards are never allowed. A redemption never moves to another program.
+8. Staff authorization is **Shop-level**, enforced **server-side**. Phase 1: any existing Staff or Admin role may process redemptions for that Shop.
+9. Reward eligibility / expiry is evaluated **at create**. Later reward `expires_at` does not auto-invalidate an existing pending redemption.
+10. Refund / reversal is **not** Phase 1.
+11. Do not implement the five pending owner items in [§14](#14-pending-owner-decisions-do-not-implement-yet).
 
-Canonical shop → program → redeem diagram: [counter QR](./counter-qr-and-program-membership.md#canonical-flow).
+Canonical shop → program → redeem diagram (QR resolution still pending item 15): [counter QR](./counter-qr-and-program-membership.md#canonical-flow).

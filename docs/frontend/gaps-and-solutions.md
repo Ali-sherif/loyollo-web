@@ -2,7 +2,7 @@
 
 Prioritized backlog of what the **current UI promises** versus what **API + Postgres** actually support. Page-level detail lives in each route doc; this file is the cross-cutting index.
 
-**Ownership:** schema/API closure is the **backend program** ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)). Presentational honesty fixes are Frontend.
+**Ownership:** schema/API closure is the **backend program** ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)) on NestJS 11.x + Prisma 7.x + PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md)). Presentational honesty fixes are Frontend.
 
 **Contracts (moved out of this file):** [data-contract.md](../backend/data-contract.md) · [api-contract.md](../backend/api-contract.md) · [remediation-roadmap.md](../backend/remediation-roadmap.md)
 
@@ -243,8 +243,8 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Dashboard redemption donut; Loyalty catalog; customer wallet redeem |
 | **Blocked by** | Check-in inserts `earned`; no redeem lifecycle (pending / reserve / approve) |
-| **Solution** | Customer request → `pending` + reserve points; staff approve/reject atomically; `Available = Total − Reserved`; idempotent earn and redeem; snapshot cost at create; authz via Staff → Shop → Program → Redemption. Donut uses `completed` events. [reward-redemption-flow.md](../product/reward-redemption-flow.md) · [loyalty-page.md](loyalty-page.md#reward-redemption-lifecycle-decided) |
-| **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-16) |
+| **Solution** | Customer request → `pending` + reserve points; staff approve/reject atomically; `Available = Total − Reserved`; idempotent create/approve and earn (unique business reference); concurrent earn+redeem same consistency model; Shop-level authz; Phase 1 any Staff/Admin; eligibility at create. Donut uses `completed` events. Do not implement pending PO items or Phase 1 reverse. [reward-redemption-flow.md](../product/reward-redemption-flow.md) · [loyalty-page.md](loyalty-page.md#reward-redemption-lifecycle-decided) |
+| **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-16 for Phase 1 lifecycle; pending PO items in [redemption §14](../product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet)) |
 | **Owner** | Backend program |
 | **Phase** | 4 |
 
@@ -411,9 +411,9 @@ These widgets are visible in production UI and systematically show **zero, even 
 | Field | Value |
 |-------|--------|
 | **Where** | `/app/loyalty` upsert; Dashboard / Customers / Campaigns / Analytics `maybeSingle` |
-| **Blocked by** | `UNIQUE (owner_id)` on `loyalty_programs`; no `status` column; no shop slug / default-program for counter QR |
-| **Solution** | Many programs per shop. Status **`draft` \| `active` \| `disabled`**. Drop unique-on-owner; stop overwrite-upsert. Join/check-in only for **`active`**. **Counter QR** `/join/shop/{shopSlug}` identifies the shop then **one** program (default, only live, or picker — never every live program). Membership/points/stamps/wallet/rewards/redemptions stay `loyalty_program_id`. [loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided) · [counter QR](../product/counter-qr-and-program-membership.md) |
-| **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
+| **Blocked by** | `UNIQUE (owner_id)` on `loyalty_programs`; no `status` column |
+| **Solution** | Many programs per shop. Status **`draft` \| `active` \| `disabled`**. Drop unique-on-owner; stop overwrite-upsert. Join/check-in only for **`active`**. Membership/points/stamps/wallet/rewards/redemptions stay `loyalty_program_id`. Selecting one Program never auto-joins siblings. **Pending Business Owner:** whether more than one may be `active` at once, and therefore Shop QR (one-active → `/join/{programId}`; multiple-active → selection then `/join/{programId}`). Do not finalize Shop QR until that decision. [loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided) · [counter QR §15](../product/counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending) |
+| **Status** | `DEFERRED-BACKEND` (many programs + status **DECIDED** 2026-08-14; Shop QR / multiple ACTIVE **pending Business Owner**) |
 | **Owner** | Backend program |
 | **Phase** | Later (multi-program) |
 

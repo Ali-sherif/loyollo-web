@@ -2,6 +2,8 @@
 
 **Status:** SPEC-READY (docs-only). Paths below are the **backend program** surface (or BFF that only forwards). Next.js must not become the system of record ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md), [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
+**Stack (DECIDED):** NestJS 11.x + Prisma 7.x + PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md), [README.md](README.md#target-stack-decided)). These paths are Nest HTTP contracts in Phase 2.
+
 **Related:** [data-contract.md](data-contract.md) · [remediation-roadmap.md](remediation-roadmap.md) · [gaps-and-solutions.md](../frontend/gaps-and-solutions.md)
 
 Authz unless noted: **owner session** = **`admin`** (buyer of Loyollo; [data-contract glossary](data-contract.md#unified-glossary)). **`staff`** uses the same `/app` APIs with **the same permissions as `admin` for now**. Scope to the caller’s `loyalty_program_id` / `owner_id`. Service-role only in workers and public enroll.
@@ -23,26 +25,28 @@ Authz unless noted: **owner session** = **`admin`** (buyer of Loyollo; [data-con
 
 **Redeem write rules** (see [data-contract](data-contract.md#binding-write-rules) · [reward-redemption-flow.md](../product/reward-redemption-flow.md)):
 
-1. Customer (or staff acting for them) creates a catalog redemption **in that program only** → status `pending`, **reserve** `points_cost`, snapshot terms. Do **not** permanently deduct until approve.
+1. Customer (or staff acting for them) creates a catalog redemption **in that program only** → status `pending`, **reserve** `points_cost`. Do **not** permanently deduct until approve. The row stays on that `loyalty_program_id` even if the customer later uses another program.
 2. `Available = Total − Reserved`. Refuse create when required cost > available, or when a disallowed duplicate `pending` already exists for customer+program+reward.
-3. Same `idempotency_key` returns the existing redemption; do not insert a second row.
-4. Staff **approve** is one transaction: still `pending` → consume reserved → `completed`, set `redeemed_at`, increment `rewards.redeemed_count`, optional `branch_id` / `order_id`. Already `completed` → no-op (no second deduct).
+3. Same `idempotency_key` / business operation returns the existing redemption; do not insert a second row and do not reserve points again (double-click, tabs, devices, network retry). Viewing the same pending row from multiple devices is allowed.
+4. Staff **approve** is one transaction: still `pending` → consume reserved → `completed`, set `redeemed_at`, increment `rewards.redeemed_count`, optional `branch_id` / `order_id`. Already `completed` → no-op / return the existing result (no second deduct). State transition and points consumption cannot partially succeed. Enforced on Backend/database; Frontend button disable is UX only.
 5. Staff **reject** releases the reservation → `rejected`.
 6. When a ticket exists on complete: create or attach `orders` and set `customer_rewards.order_id` in the **same** approve transaction. Rows without `order_id` are valid operationally but **excluded from ROI** until linked.
-7. Authz: Staff → Shop → Program → Redemption. Do not authorize on `redemption_id` alone.
-8. Refuse spend of a `points_ledger` lot when `expires_at` is set and `now() >= expires_at` (expired lots), subject to the still-open reservation-vs-expiry policy.
+7. Authz is **Shop-level**: `staff.branch.shop_id === redemption.program.shop_id`. Any authorized Staff from any Branch of that Shop may process. Staff from another Shop must not. Do not authorize on `redemption_id` alone. Frontend lists only authorized rows; Backend enforces independently. Phase 1: any existing Staff or Admin role may perform Redemption operations.
+8. Reward eligibility / expiry is evaluated **at create**. Later reward `expires_at` must not auto-invalidate a pending redemption. Refuse spend of a `points_ledger` lot when `expires_at` is set and `now() >= expires_at` (expired lots), subject to the still-pending reservation-vs-expiry policy ([§14 item 14](../product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet)).
 9. Referral **discount** redeem is `POST /api/vouchers/:id/redeem` on `vouchers` (`active` only; refuse `used` / `expired` / `now() >= expires_at`). Do not auto-apply to a cart. Not this catalog state machine.
+10. **Not Phase 1:** refund / reverse. **Do not implement** pending Product Owner items: price change while PENDING; reward disabled/deleted while PENDING; program disabled while PENDING; reserved-lot expiry.
 
 ### Catalog redemption lifecycle (DECIDED, not shipped)
 
-Paths are illustrative (backend-owned). Shop-**`customer`** session for create; `admin` / `staff` for approve/reject, scoped by ownership chain.
+Paths are illustrative (backend-owned). Shop-**`customer`** session for create; `admin` / `staff` for approve/reject, **Shop-scoped**. Phase 1: any existing Staff or Admin role may approve/reject.
 
 | Method | Path | Purpose | Request | Response |
 |--------|------|---------|---------|----------|
-| POST | `/api/me/programs/:programId/redemptions` | Customer request; `pending` + reserve | `{ reward_id, idempotency_key }` | `{ redemption }` (same row on retry) |
-| POST | `/api/redemptions/:id/approve` | Atomic complete | `{ idempotency_key }` | `{ redemption }` or no-op if already `completed` |
+| POST | `/api/me/programs/:programId/redemptions` | Customer request; `pending` + reserve | `{ reward_id, idempotency_key }` | `{ redemption }` (same row on retry; do not reserve again) |
+| POST | `/api/redemptions/:id/approve` | Atomic complete; idempotent | `{ idempotency_key }` | `{ redemption }` or no-op / same result if already `completed` |
 | POST | `/api/redemptions/:id/reject` | Release reserve | `{ idempotency_key }` | `{ redemption }` |
-| POST | `/api/redemptions/:id/reverse` | Auditable undo of `completed` (if refunds in scope) | `{ idempotency_key }` | `{ redemption }` |
+
+**Not Phase 1:** do not ship `POST /api/redemptions/:id/reverse`. Refund / reversal is deferred.
 
 ### Branches
 
@@ -154,7 +158,7 @@ Public, unauthenticated. Rate-limit OTP request **and** enroll (ADR-012). New me
 
 | Method | Path | Change | Unlocks |
 |--------|------|--------|---------|
-| GET | `/api/join/shop/:shopSlug` | Resolve shop slug → one `active` program (only live, default, or list for picker). Never auto-join every live program. No `active` → empty / unavailable | G-35 |
+| GET | `/api/join/shop/:shopSlug` | **Pending Business Owner (item 15).** Do not treat this path or picker resolution as locked. If later chosen: resolve shop → one `active` program or picker list. Never auto-join every live program. No `active` → empty / unavailable | G-35 |
 | GET | `/api/join/program` | Log `visit_events` (`source=qr_view`); accept `branch` query; if `ref` present, persist invite telemetry (hashed IP + device, `invite_at`) for enroll matching. 404 if program not `active` | G-01, G-14 |
 | POST | `/api/join/otp/request` | Start SMS or WhatsApp OTP. Insert `otp_verifications` only — **no** `customers` / `referrals` / ledger / vouchers | G-14, G-33, G-18 |
 | POST | `/api/join/enroll` | Verify OTP then atomically create **this program’s** membership (and referral grant). Existing account, first time in this program → one new membership. Returning phone in program = check-in only (no new OTP, no second membership, no second referral) | G-01, G-02, G-03, G-14, G-18, G-35 |
@@ -162,7 +166,11 @@ Public, unauthenticated. Rate-limit OTP request **and** enroll (ADR-012). New me
 
 #### `GET /api/join/shop/:shopSlug`
 
-Resolve the printed counter QR. Response is **one** program, a picker list, or unavailable — never a bulk enroll. Path vs query encoding of the slug is backend-owned; the **public** URL is `/join/shop/{shopSlug}`.
+**Pending Business Owner (item 15).** Do not implement this as a locked product URL. Shop QR behavior is not finalized ([counter QR §15](../product/counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending)).
+
+If the Business Owner later allows multiple ACTIVE programs, a shop-level resolve endpoint may return **one** program, a picker list, or unavailable — never a bulk enroll. If only one ACTIVE program is allowed, Shop QR → `/join/{programId}` and this resolve path may not be needed.
+
+Illustrative shape **only if** a shop-level resolve is chosen later:
 
 ```json
 {
@@ -173,7 +181,7 @@ Resolve the printed counter QR. Response is **one** program, a picker list, or u
 }
 ```
 
-`program` is set when `resolution = one`. `programs` is the picker list when `resolution = picker`. Both empty when `resolution = none` (Program unavailable). Product URL: `/join/shop/{shopSlug}` ([counter QR](../product/counter-qr-and-program-membership.md)).
+`program` is set when `resolution = one`. `programs` is the picker list when `resolution = picker`. Both empty when `resolution = none` (Program unavailable). Selecting one Program must not auto-join the others.
 
 #### `POST /api/join/otp/request`
 
@@ -335,7 +343,7 @@ Exact provider paths are product choices; this row is the contract intent.
 
 | Stay client → Supabase (RLS) for now | Move to backend APIs |
 |--------------------------------------|----------------------|
-| Simple owner CRUD that already works under RLS (e.g. draft campaign fields, branch list reads until POST cap exists) | Paginated customers, analytics aggregates (incl. visit metrics + ROI), search, **catalog redemption lifecycle**, branch create with plan cap, campaign send enqueue, insight actions, billing, POS/orders ingest, **customer wallet** (`GET /api/me/wallet`), shop-QR resolve |
+| Simple owner CRUD that already works under RLS (e.g. draft campaign fields, branch list reads until POST cap exists) | Paginated customers, analytics aggregates (incl. visit metrics + ROI), search, **catalog redemption lifecycle**, branch create with plan cap, campaign send enqueue, insight actions, billing, POS/orders ingest, **customer wallet** (`GET /api/me/wallet`), Shop QR resolve **only after BO item 15** |
 | Profile fields the owner edits directly | Anything needing service-role, multi-table transactions (visit + tier + ledger), or secrets |
 
 When Phase 2 cutover lands (ADR-011), **all** application traffic moves to backend APIs; this table is the transitional map.

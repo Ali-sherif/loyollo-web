@@ -1,6 +1,6 @@
 # System architecture — how the app communicates
 
-How authenticated product pages, public join, Next.js BFF routes, Supabase (Auth + Postgres + Storage + RPCs), and the email queue talk to each other **today**. Page-level UI is in the per-route docs. Gaps and the recommended data model are in [gaps-and-solutions.md](gaps-and-solutions.md); target schema/API for backend remediation: [../backend/README.md](../backend/README.md) ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
+How authenticated product pages, public join, Next.js BFF routes, Supabase (Auth + Postgres + Storage + RPCs), and the email queue talk to each other **today**. Page-level UI is in the per-route docs. Gaps and the recommended data model are in [gaps-and-solutions.md](gaps-and-solutions.md); target schema/API for backend remediation: [../backend/README.md](../backend/README.md) ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)). Phase 2 stack: NestJS 11.x + Prisma 7.x + PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md)).
 
 **Jump to:** [layers](#layers) · [auth](#auth-flow) · [who-talks-to-what](#who-talks-to-what) · [api inventory](#api-route-inventory) · [direct supabase](#client-side-supabase-inventory) · [er](#database-relationships) · [join](#public-join-and-check-in) · [referral lifecycle](#referral-lifecycle-intended) · [email](#email-pipeline) · [notifications](#notifications) · [plans](#plans-and-limits)
 
@@ -211,13 +211,13 @@ erDiagram
 
 ### Unique / enum
 
-- One `loyalty_programs` row per `owner_id` **today**. **DECIDED:** many programs per shop; status `draft` \| `active` \| `disabled`; counter QR is shop-stable then **one** program ([loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided), [counter QR](../product/counter-qr-and-program-membership.md)). Catalog redeem is pending + reserve + atomic approve ([redemption](../product/reward-redemption-flow.md)).
+- One `loyalty_programs` row per `owner_id` **today**. **DECIDED:** many programs per shop; status `draft` \| `active` \| `disabled`. **PENDING BO:** whether more than one may be `active` at once / Shop QR ([loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided), [counter QR](../product/counter-qr-and-program-membership.md)). Catalog redeem is pending + reserve + atomic approve ([redemption](../product/reward-redemption-flow.md)).
 - `loyalty_program_type`: `points` \| `visit` \| `tier`
 - `customers.tier` is **text**, not FK to `loyalty_program_tiers`
 
 ### Tables with no product writer (or unused by UI)
 
-Target schema for these gaps: [data-contract.md](../backend/data-contract.md). Ownership: [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md).
+Target schema for these gaps: [data-contract.md](../backend/data-contract.md). Ownership: [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md). Stack: [ADR-015](../architecture/decisions/ADR-015-backend-stack.md).
 
 | Table / column | Notes | G-ID |
 |----------------|--------|------|

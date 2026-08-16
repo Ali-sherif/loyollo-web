@@ -9,6 +9,7 @@
 - Initial hosting is Vercel on Node 24 LTS; email/SMS providers are **ACCEPTED RISK** behind messaging adapter stubs.
 - Target lines: Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x.
 - Existing backend remains the primary API; Next.js is not a backend replacement.
+- Phase 2 backend stack (separate program): NestJS 11.x, Prisma 7.x, PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md)). Not a migration slice.
 
 ## Before coding
 
@@ -52,4 +53,4 @@ Remove TanStack and Lovable code only after all route/API contracts pass product
 
 ## Out of scope for this plan
 
-Product UI/API/DB gaps (**G-01…G-32**: orders, visit events, tiers, branch attribution, referrals, redeem, billing, etc.) are **not** migration slices. They are owned by the backend program under [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md) and [docs/backend/](../backend/README.md). Closing them does **not** gate TanStack/Lovable retirement. Presentational honesty fixes (Phase 0) may land in the frontend without schema changes.
+Product UI/API/DB gaps (**G-01…G-32**: orders, visit events, tiers, branch attribution, referrals, redeem, billing, etc.) are **not** migration slices. They are owned by the backend program under [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md) and [docs/backend/](../backend/README.md) (stack: [ADR-015](../architecture/decisions/ADR-015-backend-stack.md)). Closing them does **not** gate TanStack/Lovable retirement. Presentational honesty fixes (Phase 0) may land in the frontend without schema changes.

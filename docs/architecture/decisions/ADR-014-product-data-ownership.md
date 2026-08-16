@@ -20,6 +20,7 @@ Shipping new product tables from this frontend repo (or writing them from Next B
 - Any **new column** on existing tables required for the same gaps — including but not limited to `branch_id` on customers/events/redemptions/orders, `customers.tier_id`, `rewards.cost_cents`, `customer_rewards.order_id` — is owned by that same program.
 - Agents and engineers **must not** add Supabase migrations for these gaps in this frontend repo, and **must not** introduce Next Route Handlers or Server Actions whose primary job is to own that persistence.
 - Authoritative contracts live under [`docs/backend/`](../../backend/README.md): [data-contract.md](../../backend/data-contract.md), [api-contract.md](../../backend/api-contract.md), [remediation-roadmap.md](../../backend/remediation-roadmap.md).
+- Phase 2 implements those contracts on **NestJS 11.x + Prisma 7.x + PostgreSQL 18.x** ([ADR-015](ADR-015-backend-stack.md)). Prisma migrations belong to the backend program, not this frontend repo.
 
 ### UI honesty policy
 
@@ -40,7 +41,7 @@ Until the backend program delivers the fact behind a widget:
 
 - Frontend migration and TanStack/Lovable retirement gates are **unaffected** by this ADR.
 - Gap backlog IDs **G-01…G-32** stay stable; Status/Owner/Phase live in [gaps-and-solutions.md](../../frontend/gaps-and-solutions.md).
-- Decision matrix rows **D-33** (data model ownership) and **D-34** (UI honesty) track this ADR.
+- Decision matrix rows **D-33** (data model ownership) and **D-34** (UI honesty) track this ADR. **D-35** tracks the Phase 2 stack ([ADR-015](ADR-015-backend-stack.md)).
 
 ## Verification
 

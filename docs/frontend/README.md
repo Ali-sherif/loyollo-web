@@ -61,6 +61,7 @@ flowchart LR
 - RLS/storage Phase 1 retain existing policies; Phase 2 Backend-only access **DECIDED** ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md)).
 - Public enrollment rate limits **DECIDED** ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)).
 - Campaign/messaging background runtime **DECIDED** ΓÇö outside Next.js ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)).
+- Phase 2 backend stack **DECIDED** — NestJS 11.x, Prisma 7.x, PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md)); not a migration slice.
 
 **ACCEPTED RISK (remain open in docs)**
 
@@ -102,7 +103,7 @@ flowchart LR
 - [Analytics (`/app/analytics`)](analytics-page.md) — components, conditions, and edge cases
 - [System architecture](system-architecture.md) — how pages, BFF, API, and DB communicate
 - [Gaps and solutions](gaps-and-solutions.md) — UI vs API vs DB backlog (**G-01…G-36**)
-- Backend contracts (separate program, not migration): [../backend/README.md](../backend/README.md) · [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)
+- Backend contracts (separate program, not migration): [../backend/README.md](../backend/README.md) · [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md) · [ADR-015](../architecture/decisions/ADR-015-backend-stack.md)
 
 **Next step:** slice 3 ΓÇö Server infrastructure (backend/Supabase factories, secret isolation, auth proof / D-28 cookie SSR, portable logging). Slice 2 assets **done** (`npm run scan:assets`). Keep [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md) open until PASSED. Multi-agent roles: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md).
 

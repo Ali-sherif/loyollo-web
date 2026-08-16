@@ -66,4 +66,4 @@ Visit completion should eventually set `customer_rewards.reward_id` to a catalog
 - Hardcoded stamp fills or `"0"` that look measured
 - Showing another program’s rewards on this card
 - Treating earned-at-check-in as redeemed (earn ≠ redeem). Catalog redeem is a **pending** request that reserves points until staff approve or reject ([reward-redemption-flow.md](./reward-redemption-flow.md))
-- Redeeming a reward that belongs to another program, or spending Program B points on a Program A redemption
+- Redeeming a reward that belongs to another program, or spending Program B points on a Program A redemption. A redemption created under Program A stays on Program A even if the customer later uses Program B.

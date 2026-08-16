@@ -28,8 +28,9 @@ Campaign send and email/SMS queue workers today involve TanStack server function
 
 ### Queue technology
 
-- The **specific queue product** (e.g. Supabase-backed jobs, cloud queue, worker platform) is **not locked** in this ADR.
+- The **specific queue product** (e.g. Postgres-backed jobs, cloud queue, worker platform) is **not locked** in this ADR.
 - Selection is based on **actual workload and operational requirements** (volume, latency, retries, ops ownership).
+- Workers may run as **NestJS 11.x** processes in the backend program ([ADR-015](ADR-015-backend-stack.md)); that does not lock the queue vendor.
 - Until a product is chosen, preserve enqueue/log contracts where useful and keep messaging **provider-agnostic** stubs ([ADR-010](ADR-010-style-and-template-parity.md), D-26/D-27).
 
 ## Consequences

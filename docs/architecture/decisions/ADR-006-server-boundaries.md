@@ -9,6 +9,8 @@ DECIDED
 ### API boundary
 
 - Keep the existing backend as the primary business/API backend.
+- Phase 1 (frontend migration): that backend is the current Supabase / established API layer.
+- Phase 2: the primary business API is **NestJS 11.x** over **PostgreSQL 18.x** via **Prisma 7.x** ([ADR-015](ADR-015-backend-stack.md)). Next.js still must not become a second backend.
 - Next.js should not become a replacement for the existing backend.
 - Server Components may communicate with the backend directly when appropriate.
 - Client Components may communicate with the backend through the established API layer.

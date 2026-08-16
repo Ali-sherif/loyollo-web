@@ -212,7 +212,7 @@ There are still **two journeys**. Do not draw them as one screen sequence:
 | Journey | OTP |
 | ------- | --- |
 | **A. Opens portal** (direct, personal QR, `?ref=`) | Always |
-| **B. In-store shop QR** `/join/shop/{shopSlug}` (then one program) | New phone: OTP. Returning phone **in that program**: check-in, **no** new OTP |
+| **B. In-store shop QR** (URL **pending item 15**; then one program) | New phone: OTP. Returning phone **in that program**: check-in, **no** new OTP |
 
 `G-33` / `G-36` on the case diagram are **gap IDs**, not Figma frame names. Wallet = UX-07. Inactive account = UX-06 blocked state (`inactive`, generic copy).
 
@@ -264,12 +264,12 @@ flowchart TD
 
 ### 5.2 In-store join / check-in (journey B) — not the portal diagram
 
-The `/join/[programId]` page exists (QR Experience branding is wired up). **Intended counter QR** is shop-stable `/join/shop/{shopSlug}` then one program ([counter QR](./counter-qr-and-program-membership.md)). Missing: shop resolver, optional program picker, and OTP before a **new** member is created.
+The `/join/[programId]` page exists (QR Experience branding is wired up). **Shop QR URL and whether multiple ACTIVE programs are allowed are pending Business Owner** ([counter QR §15](./counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending)). Do not finalize a shop resolver or program picker until that decision. Missing today: OTP before a **new** member is created.
 
 **Steps**
 
-1. Scans the **shop** QR (`/join/shop/{shopSlug}`) **or** opens `/join/{programId}` (possibly with a personal invite `?ref=`).
-2. Shop QR: resolve to one `active` program (only live, configured default, or customer choice). **Never** auto-join every live program. No `active` program → **no join**. Direct program URL: if `draft` or `disabled` → **no join**. Program QR stays valid only while `active`.
+1. Scans the **shop** QR (URL pending item 15) **or** opens `/join/{programId}` (possibly with a personal invite `?ref=`).
+2. Land on **one** `active` program. If only one active is allowed: Shop QR → `/join/{programId}`. If multiple active are allowed: Shop / Program selection → `/join/{programId}`. **Never** auto-join every live program. No `active` program → **no join**. Direct program URL: if `draft` or `disabled` → **no join**. Program QR stays valid only while `active`.
 3. New phone: same OTP rules as §5.1 (channel, 429, no password). Existing account, first time in **this** program → create this membership only.
 4. Correct code **before** a `customers` row, referral, or reward is created **in that program**.
 5. If `?ref=` is valid: **referred** reward in the same transaction **for that program**. Referral never changes program scope. **Referrer** still waits for first paid invoice.
@@ -277,10 +277,10 @@ The `/join/[programId]` page exists (QR Experience branding is wired up). **Inte
 
 ```mermaid
 flowchart TD
-  QR["Scan shop QR\n/join/shop/slug"] --> Resolve{Shop → program}
+  QR["Scan shop QR\nURL pending BO item 15"] --> Resolve{Land on one program}
   Resolve -->|None active| Empty["Empty state: program unavailable"]
-  Resolve -->|Several, no default| Pick["Choose one program"]
-  Resolve -->|One active or default| Prog{Program active?}
+  Resolve -->|Only one active allowed| Prog{Program active?}
+  Resolve -->|Multiple active allowed| Pick["Choose one program"]
   Pick --> Prog
   Direct["Or /join/programId"] --> Prog
   Prog -->|No| Empty

@@ -61,7 +61,7 @@
 
 `(marketing)` and `app/(shell)` are **route groups** (no extra URL segment). The `/app` URL segment comes from the `app/` folder that is not parenthesized.
 
-**Product lock (not yet on this approved map):** counter QR is `/join/shop/{shopSlug}` then **one** program ([counter-qr-and-program-membership.md](../product/counter-qr-and-program-membership.md)). Do not treat that as authorized Next implementation until this table and [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md) backend contracts are updated. `/join/[programId]` stays valid for program QR and `?ref=` while that program is `active`.
+**Product note (not yet on this approved map):** Shop QR URL is **pending Business Owner** item 15 ([counter-qr-and-program-membership.md](../product/counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending)). Do not treat `/join/shop/{shopSlug}` as authorized Next implementation. `/join/[programId]` stays valid for program QR and `?ref=` while that program is `active`.
 
 ## Approved server API routes
 
@@ -118,7 +118,7 @@ flowchart TD
   Root --> Auth["/auth"]
   Root --> Onboarding["/onboarding + layout"]
   Root --> AppShell["/app + shell layout"]
-  Root --> Join["/join/programId\n(+ intended /join/shop/slug)"]
+  Root --> Join["/join/programId\n(Shop QR URL pending BO item 15)"]
   Root --> Api["/api/email BFF"]
   AppShell --> Customers["customers/customerId"]
   AppShell --> Branches["branches/branchId"]

@@ -4,7 +4,7 @@ This is the consolidated reference; detailed inventories and decisions remain au
 
 ## Architecture
 
-Next.js App Router owns URL composition, layouts, metadata, loading/errors, and thin page composition. Features own domain UI and logic. The existing backend remains the primary business/API backend—Next.js does not replace it.
+Next.js App Router owns URL composition, layouts, metadata, loading/errors, and thin page composition. Features own domain UI and logic. The existing backend remains the primary business/API backend—Next.js does not replace it. Phase 2 that backend is NestJS 11.x over PostgreSQL 18.x via Prisma 7.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md)); Phase 1 continues on current Supabase contracts.
 
 Server Components perform safe initial reads against the backend when appropriate. Client Components use the established API layer and small interactive islands. `lib/server` holds privileged orchestration. Messaging templates and infrastructure live under `src/lib/server/messaging/` with provider-agnostic contracts.
 

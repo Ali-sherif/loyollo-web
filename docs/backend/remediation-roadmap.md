@@ -2,6 +2,8 @@
 
 **Status:** SPEC-READY. Execution owned by the backend program except Phase 0 (and presentational pieces marked Frontend). See [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md).
 
+**Stack (DECIDED):** NestJS 11.x, Prisma 7.x, PostgreSQL 18.x — latest stable patches at implementation ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md)). Not a Next.js migration slice.
+
 **Contracts:** [data-contract.md](data-contract.md) · [api-contract.md](api-contract.md) · backlog [gaps-and-solutions.md](../frontend/gaps-and-solutions.md)
 
 ```mermaid
@@ -62,8 +64,8 @@ flowchart TD
 | **Owner** | Backend |
 | **G-IDs** | G-04, G-13 (branch detail), G-20, G-28 |
 | **Depends on** | Schema columns; redeem endpoint |
-| **Deliverables** | `customer_rewards.branch_id`; catalog redeem lifecycle (`pending` reserve → atomic `completed` / `rejected`); snapshot `points_cost`; idempotency keys; `redeemed_count` only on `completed`; prefers attaching `order_id` when ticket known (full ROI in Phase 5) |
-| **Acceptance** | Per-branch cards use `GROUP BY branch_id` (or `"—"` if null). Redeem path is explicit (earn ≠ redeem). Combined pending cannot exceed available. Duplicate approve / retry does not double-deduct. Dashboard redemption donut uses `completed` events, not earn. Main branch uniqueness enforced server-side. |
+| **Deliverables** | `customer_rewards.branch_id`; catalog redeem lifecycle (`pending` reserve → atomic `completed` / `rejected`); idempotency keys on create and approve; `redeemed_count` only on `completed`; Shop-level staff authz; prefers attaching `order_id` when ticket known (full ROI in Phase 5). **Not Phase 1:** reverse/refund; pending PO items (price change / reward or program disable / reserved-lot expiry while PENDING) |
+| **Acceptance** | Per-branch cards use `GROUP BY branch_id` (or `"—"` if null). Redeem path is explicit (earn ≠ redeem). Combined pending cannot exceed available. Duplicate approve / retry does not double-deduct. Duplicate create does not insert a second row or reserve twice. Earn retry does not double-credit. Concurrent earn+redeem is consistent. Dashboard redemption donut uses `completed` events, not earn. Main branch uniqueness enforced server-side. |
 
 ## Phase 5 — Orders + billing + POS + ROI columns
 

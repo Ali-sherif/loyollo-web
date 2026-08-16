@@ -24,7 +24,7 @@
 | Journey | When | OTP? |
 | ------- | ---- | ---- |
 | **A. Customer opens portal** (this file) | Direct URL, personal referral link/QR, or “log in” | **Always** — this *is* register + login + lost access |
-| **B. In-store shop QR** | Shop counter `/join/shop/{shopSlug}` → one **program**, then check-in | **New** phone: OTP then enroll **in that program**. **Returning** phone **in that program**: check-in, **no** new OTP, **no** second referral. Direct `/join/{programId}` still valid for program/referral QRs ([counter QR](./counter-qr-and-program-membership.md) · [loyalty-page](../frontend/loyalty-page.md#public-join--check-in)) |
+| **B. In-store shop QR** | Shop counter QR (URL **pending item 15**) → one **program**, then check-in | **New** phone: OTP then enroll **in that program**. **Returning** phone **in that program**: check-in, **no** new OTP, **no** second referral. Direct `/join/{programId}` still valid for program/referral QRs ([counter QR](./counter-qr-and-program-membership.md) · [loyalty-page](../frontend/loyalty-page.md#public-join--check-in)) |
 
 Journey B is **not** drawn on the portal diagram. Keep it as a sibling flow (UX-09). A returning member who later opens the **portal** still does OTP (journey A).
 
@@ -145,7 +145,7 @@ Program-unavailable sits **before** phone on journey B: shop QR with **no** `act
 | Reward progress on wallet / check-in success | UX-07 / UX-09 | **Add** (same numbers; that program only) |
 | Portal shell | UX-08 | After wallet land |
 | Program unavailable | UX-09 | **Add** (shop QR with no live program, or `/join/{programId}` `draft`/`disabled`) |
-| Program picker (several `active`, no default) | UX-09 | **Add** (journey B only) |
+| Program picker (several `active`, no default) | UX-09 | **Add only if** Business Owner allows multiple ACTIVE programs (item 15 pending) |
 | OTP already used | auth brief §6 | **Add** |
 
 ---
@@ -198,12 +198,12 @@ Wire these without moving the happy path.
 
 ### C. Do **not** put on this canvas (sibling flow)
 
-Draw a **second** small chart, or a right-hand swimlane titled **Journey B — in-store shop QR** (`/join/shop/{shopSlug}`):
+Draw a **second** small chart, or a right-hand swimlane titled **Journey B — in-store shop QR** (Shop QR URL **pending Business Owner** item 15):
 
-1. Yellow: `Resolve shop → program`  
+1. Yellow: `Resolve shop → one program` (do not finalize URL until item 15)  
    - No `active` program → red: `Program unavailable` — **stop**  
-   - One `active`, or a default among `active` → that program  
-   - Several `active` and no default → customer **chooses one** program  
+   - If BO allows only one `active` → Shop QR → `/join/{programId}`  
+   - If BO allows several `active` → Shop / Program selection → customer **chooses one** → `/join/{programId}`  
 2. Yellow: `Program active?` (direct `/join/{programId}` still used for program/referral QRs)  
    - No → red: `Program unavailable` (`draft` / `disabled`) — **stop**  
    - Yes → phone + OTP **only if new phone**

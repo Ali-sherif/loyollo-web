@@ -1,13 +1,15 @@
 # Counter QR and program-level membership
 
 **Date:** 2026-08-16  
-**Status:** DECIDED (not shipped)  
+**Status:** DECIDED for program-scoped membership (not shipped). Shop QR / multiple **ACTIVE** programs is **pending Business Owner** ([§15](#15-shop-qr--multiple-active-programs-pending)).  
 **Audience:** Product, UI/UX, QA, backend  
 **Does not authorize** schema, APIs, or Next.js implementation ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
 **Sources of truth to keep in sync:** [loyalty-page.md](../frontend/loyalty-page.md#counter-qr--program-membership-decided) · [G-35](../frontend/gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status) · [customer-portal-journey.md](./customer-portal-journey.md) (journey B) · [reward-redemption-flow.md](./reward-redemption-flow.md)
 
 The loyalty model is **program-scoped**, not shop-scoped.
+
+**Pending Business Owner (item 15):** whether a Shop can have multiple **ACTIVE** Programs at once, and therefore Shop QR behavior. Do **not** finalize the Shop QR URL or resolution until that decision. See [§15](#15-shop-qr--multiple-active-programs-pending). Selecting one Program must **not** auto-join the others.
 
 ---
 
@@ -50,45 +52,15 @@ Joining Program A does **not** automatically join Program B, even when both belo
 
 ## 2. QR architecture
 
-### Counter / shop QR
-
-The printed counter QR is a **shop-level stable entry point**.
-
-```text
-/join/shop/{shopSlug}
-```
-
-Exact slug source is **not locked** (backend-owned). The URL family is locked: shop QR ≠ program UUID.
-
-The QR is printed once. It does **not** contain a `programId`. It remains stable when the shop changes, disables, or creates programs.
-
-When scanned:
-
-```text
-Counter QR
-    ↓
-Shop
-    ↓
-Resolve current default / live program
-    ↓
-Customer joins / checks in to ONE program
-```
-
-The QR itself does **not** create a shop-wide membership.
-
-### Program QR
-
-Program-specific QR remains available for campaigns or other program-specific use:
+### Program QR (agreed)
 
 ```text
 /join/{programId}
 ```
 
-It always targets exactly one program. Valid only while that program is `active`.
+Always targets exactly one program. Valid only while that program is `active`. Today the app prints `{origin}/join/{programId}`.
 
-### Personal referral QR
-
-Referral remains program-specific:
+### Personal referral QR (agreed)
 
 ```text
 /join/{programId}?ref={code}
@@ -96,47 +68,45 @@ Referral remains program-specific:
 
 The referral code must **never** change the program scope.
 
+### Counter / shop QR — not finalized
+
+Shop QR behavior is **pending Business Owner** ([§15](#15-shop-qr--multiple-active-programs-pending)). Do not treat `/join/shop/{shopSlug}` as locked.
+
+| If the Business Owner decides | Shop QR behavior |
+| ----------------------------- | ---------------- |
+| Only one active Program is allowed | Shop QR → `/join/{programId}` |
+| Multiple active Programs are allowed | Shop QR → Shop / Program selection → customer chooses one Program → `/join/{programId}` |
+
+The QR itself does **not** create a shop-wide membership. Selecting one Program must **not** automatically create a membership in the other Programs.
+
 | QR | URL | Role |
 | --- | --- | --- |
-| **Counter / door** | `/join/shop/{shopSlug}` | Stable shop entry; resolves to one program, then enrolls / checks in |
+| **Counter / door** | **Pending item 15** | Shop entry; must still land on **one** program. URL not locked |
 | **Program QR** | `/join/{programId}` | Direct join / check-in for that program (campaign / table tent). Only if `active` |
-| **Personal referral** | `/join/{programId}?ref={referral_code}` | Same program + referral attribution. Not the counter sticker |
-
-Today the app only prints `{origin}/join/{programId}`. Intended: merchant print for the **door** is the shop QR.
+| **Personal referral** | `/join/{programId}?ref={referral_code}` | Same program + referral attribution |
 
 ---
 
-## 3. Counter QR resolution
+## 3. Counter QR resolution — pending item 15
 
-### Case A — One active / default program
+Do **not** implement Shop QR resolution until the Business Owner decides whether multiple ACTIVE Programs are allowed.
 
-```text
-Shop QR → one active / default program → join or check-in
-```
+Agreed regardless of that decision:
 
-No additional program-selection screen.
+- Join / check-in targets **one** Program.
+- Selecting one Program must **not** auto-join sibling Programs.
+- No `active` program → Program unavailable; no membership, no check-in.
+- Direct `/join/{programId}` (program / referral QR) remains valid **only** while that program is `active`.
 
-### Case B — No active program
-
-```text
-Shop QR → no active program → Program unavailable
-```
-
-No membership is created and no check-in occurs.
-
-### Case C — Multiple active programs with no default
+Possible behaviors after the Business Owner decides (not locked now):
 
 ```text
-Shop QR → multiple active programs → program picker → customer selects ONE program → join / check-in that program only
+Only one active allowed:
+Shop QR → /join/{programId}
+
+Multiple active allowed:
+Shop QR → Shop / Program selection → customer chooses one → /join/{programId}
 ```
-
-The system must **never** automatically join the customer to every active program.
-
-### Default program
-
-The owner can change the shop’s default program from `/app`. Changing the default does **not** require reprinting the counter QR.
-
-Old program-specific QR codes remain valid **only** while their target program is `active`.
 
 ---
 
@@ -174,14 +144,12 @@ OTP, referral, and portal vs in-store rules after a program is chosen: [public j
 
 ## Core rule
 
-**The QR belongs to the shop as an entry point; the customer’s loyalty relationship belongs to a program.**
+**The customer’s loyalty relationship belongs to a program.** A Shop QR (whatever URL the Business Owner later locks) is only an entry point — it must not create a shop-wide wallet.
 
 ```text
-Shop Counter QR
+Shop QR (URL pending item 15)
       ↓
-Shop
-      ↓
-Current Default / Live Program
+ONE Program
       ↓
 Customer Membership
       ↓
@@ -190,7 +158,7 @@ Points / Stamps / Wallet
 Rewards configured within that Program
 ```
 
-**Multiple `active` programs:** allowed. The shop QR still lands on **one** program (default, the only live one, or customer choice). Wallet remains **one card per program**.
+**Multiple `active` programs:** **pending Business Owner** ([§15](#15-shop-qr--multiple-active-programs-pending)). Wallet remains **one card per program**. Selecting one Program never auto-joins the others.
 
 ---
 
@@ -199,26 +167,13 @@ Rewards configured within that Program
 ```text
                     SHOP
                      │
-              Stable Counter QR
+              Shop QR (URL / resolve PENDING item 15)
                      │
-                     ▼
-             /join/shop/{slug}
-                     │
-                     ▼
-              Resolve Program
-                     │
-          ┌──────────┼──────────┐
-          │          │          │
-       One live   Multiple    None live
-          │        live / no     │
-          │        default       │
-          │          │           │
-          │       Program        │
-          │        Picker        │
-          │          │           │
-          └──────────┼───────────┘
                      ▼
               ONE Program
+              (direct /join/{programId},
+               or picker then /join/{programId}
+               — not locked until BO decides)
                      │
                      ▼
              Customer Membership
@@ -257,10 +212,22 @@ Redemption lifecycle, reservation, idempotency, and staff approval: [reward-rede
 1. Membership, points, stamps, and wallet cards are always **program-scoped**.
 2. Rewards belong to a specific program.
 3. A customer never joins a reward; they join a **program**.
-4. Counter QR is **shop-scoped** and stable.
-5. Counter QR resolves to the current / default **live** program.
-6. Program QR and referral QR remain **program-specific**.
-7. A customer can join only **one** selected program per join flow.
+4. Program QR and referral QR remain **program-specific** (`/join/{programId}`).
+5. A customer can join only **one** selected program per join flow. Selecting one Program must **not** auto-join the others.
+6. Shop QR URL and whether multiple Programs may be `active` at once are **pending Business Owner** ([§15](#15-shop-qr--multiple-active-programs-pending)).
+
+---
+
+## 15. Shop QR / multiple active Programs (pending)
+
+**Status:** Pending Business Owner decision. Do **not** finalize Shop QR behavior or implement a picker vs direct-program QR until this is decided.
+
+The Business Owner needs to decide whether a Shop can have multiple ACTIVE Programs simultaneously.
+
+- If only one active Program is allowed: Shop QR → `/join/{programId}`.
+- If multiple active Programs are allowed: Shop QR → Shop / Program selection → customer chooses one Program → `/join/{programId}`.
+
+Selecting one Program must not automatically create a membership in the other Programs.
 
 ---
 
@@ -268,8 +235,9 @@ Redemption lifecycle, reservation, idempotency, and staff approval: [reward-rede
 
 | Item | Note |
 | ---- | ---- |
-| How `shopSlug` is stored / generated | Backend-owned |
-| How “default program” is stored | Backend-owned; required for shops with more than one `active` program if they want no picker |
-| Pixel layout of the program picker | UX-09 |
-| Whether `/join/shop/{shopSlug}` is on the **approved** production route map yet | Product URL is locked; [02-route-migration.md](../frontend/02-route-migration.md) still lists `/join/[programId]` only |
-| QR Experience branding on the shop landing | Today 1:1 with a program; which branding the shop QR uses is not locked |
+| Multiple ACTIVE Programs per Shop / Shop QR URL and resolution | **Pending Business Owner** ([§15](#15-shop-qr--multiple-active-programs-pending)) |
+| How `shopSlug` is stored / generated | Backend-owned; only relevant if a shop-level URL is chosen |
+| How “default program” is stored | Backend-owned; only relevant if multiple `active` programs are allowed |
+| Pixel layout of a program picker | UX-09 — only if multiple `active` programs are allowed |
+| Whether a shop-level join URL is on the **approved** production route map | Not a product lock until item 15; [02-route-migration.md](../frontend/02-route-migration.md) lists `/join/[programId]` only |
+| QR Experience branding on a shop landing | Today 1:1 with a program; not locked until Shop QR is decided |

@@ -4,6 +4,8 @@
 **Audience:** QA, security, product, engineering  
 **Purpose:** Production-ready breakdown of test cases, edge cases, security considerations, and system improvements for Customer Authentication (Registration & Login), grounded in `docs/` rather than a generic auth checklist.
 
+**See also (2026-08-16):** portal case map with every UI branch — [customer-portal-journey.md](../product/customer-portal-journey.md). Use that file for functional coverage of the customer funnel; this audit stays the security/QA analysis.
+
 **Scope sources:** [ADR-005](../architecture/decisions/ADR-005-authentication.md), [11-authentication-migration.md](../frontend/11-authentication-migration.md), [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md), [ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md), [api-contract.md](../backend/api-contract.md), [data-contract.md](../backend/data-contract.md), [settings-page.md](../frontend/settings-page.md), [17-messaging-templates.md](../frontend/17-messaging-templates.md), and the [2026-08-14 security/UI/product audit](./2026-08-14-security-ui-product-audit.md).
 
 **Important framing — there are two separate, non-overlapping auth systems, at very different maturity levels:**

@@ -8,6 +8,8 @@
 
 **There is no standalone PRD** in `docs/`. Product locks live in [product-manager-meeting-report.md](../product-manager-meeting-report.md) and the page specs. This file does not add new product decisions; it extracts what design still owes.
 
+Customer portal **case map** (every outcome on the 2026-08-16 diagram, plus cases the diagram omitted): [customer-portal-journey.md](./customer-portal-journey.md). Counter QR vs program membership: [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md). Customer reward progress: [customer-reward-progress.md](./customer-reward-progress.md). Catalog redeem (pending / reserve / staff review): [reward-redemption-flow.md](./reward-redemption-flow.md).
+
 **Jump to:** [How to use](#how-to-use-this-document) · [Locked constraints](#locked-constraints-do-not-redesign) · [1. New screens](#1-new-screens--flows-to-design) · [2. UX decisions](#2-ux-decisions-hide-vs-honest-placeholder-vs-wire) · [3. Copy](#3-copy--content) · [4. Assets](#4-assets--brand) · [5. Not UI/UX](#5-not-uiux--do-not-design-as-if-these-exist) · [Index](#request-index) · [Traceability](#traceability-docs--this-file)
 
 ---
@@ -38,7 +40,8 @@ These are already decided. Design new surfaces **inside** them.
 | Roles are **`admin`** (buyer), **`staff`** (same `/app` permissions as admin **for now**), **`customer`** (never `/app`). Never `purchaser`. | [locked role matrix](../frontend/11-authentication-migration.md#locked-role-matrix) |
 | `customer` register / login / recovery are **passwordless OTP** (SMS or WhatsApp). No customer password, no `/auth/forgot-password` for customers. | [credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided) |
 | Campaigns: **Draft → Active (sending) → Completed / Failed**. Completed is a status, not a score. Performance is `% Open` / `% Redeemed`. | [campaigns-page.md](../frontend/campaigns-page.md#product-meanings-decided) |
-| Wallet: **one card per program**. Never show a mixed points total (100 + 200 ≠ 300). | [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-program-decided) |
+| Wallet: **one card per program**. Never show a mixed points total (100 + 200 ≠ 300). **No shop-wide** points, membership, rewards catalog, or progress bar. Reward progress is on that program’s card. **Available = total − pending reserved.** | [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-program-decided) · [counter QR](./counter-qr-and-program-membership.md) · [reward progress](./customer-reward-progress.md) · [redemption](./reward-redemption-flow.md) |
+| **Counter QR** is shop-stable `/join/shop/{shopSlug}`; membership after scan is **one program**. Never auto-join every live program. | [counter QR](./counter-qr-and-program-membership.md) |
 | Honesty: do not invent percentages, even-split donuts, or proxy metrics under misleading labels. Prefer `"—"` or hide. | [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md) · audit §3.6 |
 | Approved merchant URLs are frozen in [02-route-migration.md](../frontend/02-route-migration.md). Customer-portal and team-management **routes are not in that map** — proposing them is part of the work below. | 02-route-migration · 03-frontend-domains |
 
@@ -151,9 +154,10 @@ Customer-portal **URLs are not locked** and are **not** on the approved route ma
 
 **Open**
 
-- URL; relationship to public `/join/[programId]` (same funnel vs separate “create account”).
-- Phone input, country code, resend timer, attempt-cap messaging (TTL/cap **not locked** — design states, not numbers).
-- How `?ref=` referral context is shown during register (see [UX-09](#ux-09--join-page-otp--referral-context)).
+- URL. TTL/cap **not locked** — design states, not numbers (diagram 60s / 5 min are placeholders).
+- Whether name / email / DOB on [UX-75](#ux-75--customer-profile-setup-name-email-dob) are all required.
+
+**Working journey (not a new ADR):** register and login are **one OTP funnel**. Direct vs QR/`?ref=` share the phone step; referral uses a banner ([customer-portal-journey.md](./customer-portal-journey.md)). In-store returning check-in stays [UX-09](#ux-09--join-page-otp--referral-context) (no new OTP).
 
 #### UX-06 — Customer login + lost access (new OTP)
 
@@ -166,35 +170,40 @@ Customer-portal **URLs are not locked** and are **not** on the approved route ma
 
 - Login = new OTP on the same channel. **No** forgot-password screen. **No** merchant `RecoveryEmail`.
 - After OTP → **customer portal**, never `/app`, never `/auth/reset-password`.
-- Inactive `customer` must not get a session — design the blocked/inactive state.
+- Inactive `customer` must not get a session. Copy must stay **generic** (no “account suspended — contact support” that proves the phone exists).
 
 **Open**
 
-- Same screen as register vs distinct “log in” vs “lost access” (product treats them as the same OTP).
-- Returning-user empty states (unknown phone, wrong channel).
+- Exact blocked-state copy (must stay **generic** — not “account suspended / contact support”, which enumerates).
+- Wrong-channel empty state.
+
+**Working journey:** same screens as [UX-05](#ux-05--customer-register-passwordless-otp). Unknown phone is **not** shown before OTP; after OTP a new phone goes to [UX-75](#ux-75--customer-profile-setup-name-email-dob).
 
 #### UX-07 — Customer wallet (per program)
 
 | | |
 |--|--|
 | **Need / priority** | Design · **P0** |
-| **Source** | [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-program-decided) · meeting report §8 · G-33 |
+| **Source** | [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-program-decided) · [customer-reward-progress.md](./customer-reward-progress.md) · meeting report §8 · G-33 |
 
 **Locked facts on each program card**
 
 | Fact | Rule |
 |------|------|
 | Program name | From that program |
-| Spendable points | That program only. **Forbidden:** a single mixed total across programs |
+| Spendable points | That program only. **Available = total − pending reserved.** **Forbidden:** a single mixed total across programs |
 | Expiry | One date if lots share it; otherwise **amount + date groups**. Never one date that hides a sooner-expiring lot |
 | Vouchers | `active` vouchers + their dates. Used / expired are not spendable points |
-| Share | Personal **link** + **QR** for `/join/{programId}?ref={referral_code}` — this is **not** the shop’s program join QR |
+| Share | Personal **link** + **QR** for `/join/{programId}?ref={referral_code}` — this is **not** the shop **counter** QR |
+| **Reward progress** | **This program only.** Visit: `current / visits_required` toward that program’s completion reward. Points: **available** vs next unearned live catalog reward (cheapest). Tier: current + remaining to next. Ready-at-counter when earned/available; earn ≠ redeem. Catalog redeem is pending + staff review. No shop-wide bar. [customer-reward-progress.md](./customer-reward-progress.md) · [reward-redemption-flow.md](./reward-redemption-flow.md) |
 
 **Open**
 
-- Pixel layout: cards vs list vs tabs. Portal URL.
+- Pixel layout: cards vs list vs tabs; bar vs stamp row. Portal URL.
 - Empty wallet (member of zero programs), expired-lot treatment, copy/share/download QR.
-- Example that must stay true in mockups: 100 pts (month window) + 200 pts (week window) = **two cards, not 300**.
+- “See all rewards” for this program (optional under the primary target).
+- Redeem control on the card / list: disable after submit; reconcile `pending` / `completed` / `rejected` from the server (multi-device). Pixel layout of pending vs available is free.
+- Example that must stay true in mockups: 100 pts (month window) + 200 pts (week window) = **two cards, not 300**. Progress on each card is independent.
 
 #### UX-08 — Customer portal shell
 
@@ -218,19 +227,60 @@ Customer-portal **URLs are not locked** and are **not** on the approved route ma
 | | |
 |--|--|
 | **Need / priority** | Design · **P0** |
-| **Source** | [join / OTP](../frontend/loyalty-page.md#public-join--check-in) · [referral rewards](../frontend/loyalty-page.md#referral-rewards-decided) · G-18 |
+| **Source** | [join / OTP](../frontend/loyalty-page.md#public-join--check-in) · [counter QR](./counter-qr-and-program-membership.md) · [referral rewards](../frontend/loyalty-page.md#referral-rewards-decided) · G-18 |
 
 **Locked**
 
-- Today `/join/[programId]` enrolls without login. Intended: OTP before new enroll; returning scan = check-in (no new OTP).
-- `?ref=` is a personal invite. Returning check-in with `ref` does **not** create another referral.
+- Today `/join/[programId]` enrolls without login. Intended: shop **counter** QR is `/join/shop/{shopSlug}` then one program ([counter QR](./counter-qr-and-program-membership.md)); OTP before new enroll; returning scan **in that program** = check-in (no new OTP). Existing account, first time in this program → create **this** membership only.
+- `?ref=` is a personal invite. Returning check-in with `ref` does **not** create another referral. Referral never changes program scope.
+- Several `active` programs and no default → customer **chooses one**. No `active` → Program unavailable. **Never** auto-join every live program.
+- Check-in / enroll **success** shows **this program’s** reward progress (same numbers as the wallet card), plus this-visit delta when there was one. [customer-reward-progress.md](./customer-reward-progress.md)
 
 **Open**
 
-- Step sequence on the existing join page (branding from QR Experience tab **is** wired — keep it).
-- How referred reward is previewed before OTP.
-- 429 / invalid OTP / expired OTP / inactive program (`draft`/`disabled` must not accept join) empty states.
+- Step sequence on the existing join page (branding from QR Experience tab **is** wired — keep it for program URLs).
+- Shop landing + program **picker** pixel layout (UX-09 owns this).
+- How referred reward is previewed before OTP (working: **referral banner** on the entry screen).
+- 429 / invalid OTP / expired OTP / already-used OTP / inactive program (`draft`/`disabled` must not accept join) empty states.
 - Marketing consent: today disclaimer is **copy-only**, no stored opt-in ([DG-08](#ux-24--communication-policy--sms-in-phase-1)). Design a real consent control if product includes it in Phase 1.
+
+Do **not** fold returning in-store check-in into the portal OTP diagram. Portal login is always OTP ([customer-portal-journey.md](./customer-portal-journey.md)).
+
+#### UX-75 — Customer profile setup (name, email, DOB)
+
+| | |
+|--|--|
+| **Need / priority** | Design · **P0** |
+| **Source** | Portal case map 2026-08-16 · enroll body in [api-contract join](../backend/api-contract.md#join--otp--enroll) · [G-33](../frontend/gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows) |
+
+**Locked**
+
+- Shown only after a **successful OTP** for a **new** phone (no `customers` row yet). Failed OTP → no profile write.
+- Fields on the diagram: **name, email, date of birth**. Invalid → highlight required fields, stay on this screen.
+- After valid save: wallet ([UX-07](#ux-07--customer-wallet-per-program)). If `?ref=` was valid, **referred-party** grant only — referrer still waits for first paid invoice.
+
+**Open**
+
+- All three fields required vs optional (join stores them as optional today). Diagram treats them as required — product should confirm.
+- Gender / city / custom (G-17) on this screen or later.
+
+#### UX-76 — First-shop welcome + link program
+
+| | |
+|--|--|
+| **Need / priority** | Design · **P0** |
+| **Source** | Portal case map 2026-08-16 · 11-auth “enroll should link to the customer account” · [G-33](../frontend/gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows) |
+
+**Locked**
+
+- Existing **active** customer (phone already has an account) who is **not** yet a member of **this** program.
+- After OTP: welcome + **link** this loyalty program, then wallet with a **new** card for that program (never merge points with other programs; never auto-join sibling programs).
+- Distinct from in-store returning check-in (already a member of **this** program — no OTP, UX-09).
+
+**Open**
+
+- Copy and whether this is a full screen vs a banner on the wallet.
+- Behavior when the target program is not `active`.
 
 ### 1.3 Loyalty operations (merchant)
 
@@ -239,19 +289,21 @@ Customer-portal **URLs are not locked** and are **not** on the approved route ma
 | | |
 |--|--|
 | **Need / priority** | Design · **P0** |
-| **Source** | [G-35](../frontend/gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status) · [multiple programs](../frontend/loyalty-page.md#multiple-programs-and-status-decided) |
+| **Source** | [G-35](../frontend/gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status) · [multiple programs](../frontend/loyalty-page.md#multiple-programs-and-status-decided) · [counter QR](./counter-qr-and-program-membership.md) |
 
 **Locked**
 
 - Many programs per shop. Status **`draft` \| `active` \| `disabled`** (no other spellings).
-- Join stays `/join/{programId}`. Only **`active`** programs accept join/check-in.
+- **Counter QR** is `/join/shop/{shopSlug}` (shop entry). Enroll/check-in after resolve is still one program. Direct `/join/{programId}` remains for program QR + `?ref=` (valid while that program is `active`). Only **`active`** programs accept join/check-in.
+- More than one program **may** be `active` at once. Shop QR lands on the only live program, a configured **default**, or a **picker**. Never auto-join all.
+- Owner can change the shop **default** program from `/app` without reprinting the counter QR.
 - Today `/app/loyalty` is create+edit of **one** row (no overview). That page cannot stay the only surface.
 
 **Open**
 
 - List vs switcher in the shell vs tabs on Loyalty.
 - Default status on create.
-- Whether **two programs can be `active` at once** (not locked — design must not assume exclusivity).
+- Merchant UI to **print the shop QR** (not the program UUID) for the counter (setting default is locked as an `/app` capability; pixel layout is free).
 - Empty state: zero programs vs all disabled.
 - How Dashboard / Customers / Campaigns / Analytics pick “which program” (today `maybeSingle`).
 
@@ -260,17 +312,21 @@ Customer-portal **URLs are not locked** and are **not** on the approved route ma
 | | |
 |--|--|
 | **Need / priority** | Design · **P1** (product Phase 1 **may exclude POS** — see [UX-19](#ux-19--phase-1-exclusions-social-auth-2fa-pos-wallet)) |
-| **Source** | [G-20](../frontend/gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) · audit §4.1 · **DG-01** |
+| **Source** | [G-20](../frontend/gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) · [reward-redemption-flow.md](./reward-redemption-flow.md) · audit §4.1 · **DG-01** |
 
 **Locked (when built)**
 
-- Identify member (QR / phone), award visit or spend, **redeem** with insufficient-balance / zero-balance rejection. Earn ≠ redeem.
+- Identify member (QR / phone), award visit or spend (**idempotent** on a purchase/event key), **redeem** with insufficient-**available**-balance / zero-balance rejection. Earn ≠ redeem.
+- Catalog redeem: customer request → `pending` + reserve; staff **Approve** (atomic → `completed`) or **Reject** (release → `rejected`). Second Approve after success/timeout is a no-op.
+- Staff may only act on redemptions in shops/programs they are authorized for (ownership chain, not ID alone).
+- UI disable of Redeem is not the protection; reconcile from server (multi-device).
 
 **Open**
 
 - In or out of product Phase 1 (checklist says POS deferred; Settings still shows Connect). **Do not ship a POS UI that looks live if Phase 1 excludes it.**
 - Device: `/app` page vs dedicated staff view.
-- Success / fail / already-redeemed / inactive-member states.
+- Success / fail / already-redeemed / inactive-member / pending-list states.
+- Who among `staff` may approve vs reject vs reverse (today `staff` = `admin` permissions).
 
 #### UX-12 — Referral Pending Review (merchant)
 
@@ -599,7 +655,7 @@ ADR-010: **no new visual language**. New screens reuse Figtree, navy/yellow, exi
 
 | ID | Asset | Notes | Priority |
 |----|-------|-------|----------|
-| **UX-66** | Customer **wallet card** | Facts locked; pixel layout free. Share QR is **personal**, not the shop program QR | P0 |
+| **UX-66** | Customer **wallet card** | Facts locked (incl. per-program reward progress); pixel layout free. Share QR is **personal**, not the shop counter QR | P0 |
 | **UX-67** | Customer portal chrome | Distinct from merchant sidebar; same tokens | P0 |
 | **UX-68** | OTP / channel picker (SMS vs WhatsApp) | Icons, selected states, 429 toast | P0 |
 | **UX-69** | Program **status pills** | `draft` / `active` / `disabled` — do not collide with campaign pills (Active = sending) or member status | P0 |
@@ -637,7 +693,7 @@ Designing pixel-perfect charts against missing data produces unbuildable screens
 
 From [meeting report “Not decided”](../product-manager-meeting-report.md) and deferred-decisions:
 
-1. Customer-portal **URL**
+1. Customer-portal **URL** (case map: [customer-portal-journey.md](./customer-portal-journey.md); register+login = one OTP funnel is the working answer)
 2. Whether **more than one** loyalty program can be `active` at once
 3. Whether `staff` can add teammates (`admin` rows **are** on the Team tab — locked)
 4. **Staff subtypes** (manager / cashier / …) and a later permission split — `staff` = `admin` permissions until then
@@ -662,11 +718,13 @@ From [meeting report “Not decided”](../product-manager-meeting-report.md) an
 | UX-04 | Design | P1 | Re-issue temp password |
 | UX-05 | Design | P0 | Customer register (OTP) |
 | UX-06 | Design | P0 | Customer login / lost access (OTP) |
-| UX-07 | Design | P0 | Customer wallet per program |
+| UX-07 | Design | P0 | Customer wallet per program (incl. reward progress + available vs reserved) |
 | UX-08 | Design | P0 | Customer portal shell + routes proposal |
-| UX-09 | Design | P0 | Join page OTP + referral context + consent |
-| UX-10 | Design | P0 | Multi-program list / switcher + status |
-| UX-11 | Design | P1 | Staff POS award / redeem (if in Phase 1) |
+| UX-09 | Design | P0 | Join page: shop QR resolve + optional picker + OTP + referral context + consent |
+| UX-75 | Design | P0 | Customer profile setup (name, email, DOB) |
+| UX-76 | Design | P0 | First-shop welcome + link program |
+| UX-10 | Design | P0 | Multi-program list / switcher + status + default program |
+| UX-11 | Design | P1 | Staff POS award / redeem review (pending → approve/reject) |
 | UX-12 | Design | P1 | Referral Pending Review screen |
 | UX-13 | Design | P1 | Loyalty list vs create/edit |
 | UX-14 | Decision | P1 | Campaign Scheduled tab: design or hide |
@@ -691,7 +749,7 @@ From [meeting report “Not decided”](../product-manager-meeting-report.md) an
 ### Suggested design order
 
 1. Close **UX-19, UX-20, UX-24, UX-25** (Phase 1 scope) so the rest of the file does not produce out-of-scope screens.
-2. Design **P0 new flows:** UX-01…03, UX-05…10, UX-61, UX-62, UX-66…70, UX-73.
+2. Design **P0 new flows:** UX-01…03, UX-05…10, UX-75, UX-76, UX-61, UX-62, UX-66…70, UX-73. Case list: [customer-portal-journey.md](./customer-portal-journey.md).
 3. Honesty pass on existing merchant UI: UX-27…41, UX-53.
 4. Remaining P1/P2 after backend keystones (ledger, orders, events) have dates.
 
@@ -706,7 +764,7 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 | Gap | UI/UX request |
 |-----|----------------|
 | G-01 QR scans always 0 | UX-37, UX-60b · else §5 |
-| G-02 Visit/stamp empty | UX-60g · else §5 |
+| G-02 Visit/stamp empty | UX-07 (customer card) · UX-60g · else §5 |
 | G-03 Tier never assigned | UX-41a, UX-50, UX-60b · else §5 |
 | G-04 Branch even-split | UX-29, UX-30, UX-51 |
 | G-05 Header search | UX-33 |
@@ -724,7 +782,7 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 | G-17 Join-only fields hidden | UX-48 |
 | G-18 Rate limit | UX-05, UX-09 (429 toast) |
 | G-19 Integrations never connect | UX-19, UX-22 |
-| G-20 Redeem vs earn | UX-11, UX-60e |
+| G-20 Redeem vs earn | UX-07 (available / pending), UX-11, UX-60e |
 | G-21 Birthday unused | UX-15 |
 | G-22 Avatar → dashboard | UX-42 |
 | G-23 Tabs / onboarding gate | UX-43, UX-44 |
@@ -737,10 +795,10 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 | G-30 Suppression list | UX-57 |
 | G-31 Program type change | UX-47 |
 | G-32 Plan contact/admin caps | UX-01, UX-17 |
-| G-33 Customer register/login | UX-05, UX-06, UX-07, UX-08, UX-09 |
+| G-33 Customer register/login | UX-05, UX-06, UX-07, UX-08, UX-09, UX-75, UX-76 |
 | G-34 Add admin/staff | UX-01, UX-02, UX-04, UX-61, UX-73 |
 | G-35 Multiple programs | UX-10, UX-13, UX-69 |
-| G-36 Account active/inactive | UX-03, UX-65, UX-70 |
+| G-36 Account active/inactive | UX-03, UX-06 (customer blocked state), UX-65, UX-70 |
 
 ### DG-01 … DG-15 · A-01
 
@@ -765,7 +823,7 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 
 ### Meeting-report “not decided” → this file
 
-Portal URL → UX-08. Multiple `active` programs → UX-10. Account page two tabs (Team / Customers); `admin` rows on Team → UX-03. Staff can add teammates → UX-01 (not locked). Staff subtypes → §5 (do not design a permission matrix). Referral default days → §5. OTP TTL/cap → UX-05 states only. Pending Review screen → UX-12. SMS vs WhatsApp provider → UX-24 / §5. Automations / opens / revenue → UX-14, UX-15, UX-20.
+Portal URL → UX-08. Multiple `active` programs + shop counter QR → UX-09 / UX-10 ([counter QR](./counter-qr-and-program-membership.md)). Catalog redeem pending/reserve → UX-07 / UX-11 ([redemption](./reward-redemption-flow.md)). Account page two tabs (Team / Customers); `admin` rows on Team → UX-03. Staff can add teammates → UX-01 (not locked). Staff subtypes → §5 (do not design a permission matrix). Referral default days → §5. OTP TTL/cap → UX-05 states only. Pending Review screen → UX-12. SMS vs WhatsApp provider → UX-24 / §5. Automations / opens / revenue → UX-14, UX-15, UX-20.
 
 ---
 

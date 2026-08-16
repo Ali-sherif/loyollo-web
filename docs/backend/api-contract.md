@@ -18,18 +18,31 @@ Authz unless noted: **owner session** = **`admin`** (buyer of Loyollo; [data-con
 |--------|------|---------|---------|------------------|---------|
 | GET | `/api/customers` | Paginated list + server filters | Query: `cursor`, `q`, `status`, `tier`, `limit` | `{ items: CustomerSummary[], next_cursor? }` | G-11, G-12 scale |
 | GET | `/api/customers/:id` | Detail with rewards + activity | Path id (ownership check) | `{ customer, rewards[], visits_summary, ltv_cents?, referrals_count, referral_code }` | G-13, G-14 |
-| POST | `/api/customers/:id/redeem` | Explicit redeem | Body: `{ reward_id, branch_id?, order_id?, amount_cents? }` | `{ customer_reward, redeemed_count, order? }` | G-20, ROI |
+| POST | `/api/customers/:id/redeem` | Staff-facing alias: create or complete a catalog redemption **in that customer’s program**. Prefer the lifecycle endpoints below | Body: `{ reward_id, branch_id?, order_id?, amount_cents?, idempotency_key }` | `{ customer_reward, redeemed_count, order? }` | G-20, ROI |
 | GET | `/api/customers/export` | CSV export (optional BFF) | Same filters as list | `text/csv` stream | G-11 |
 
-**Redeem write rules** (see [data-contract](data-contract.md#binding-write-rules)):
+**Redeem write rules** (see [data-contract](data-contract.md#binding-write-rules) · [reward-redemption-flow.md](../product/reward-redemption-flow.md)):
 
-1. Set `customer_rewards.redeemed_at`, `status = redeemed`, optional `branch_id`.
-2. When a ticket exists: create or attach `orders` (`amount_cents`, channel/branch as known) and set `customer_rewards.order_id` in the **same transaction**.
-3. Decrement points / insert `points_ledger`; increment `rewards.redeemed_count`.
-4. Redemptions without `order_id` are valid operationally but **excluded from ROI** until linked.
-5. Refuse redeem when `customer_rewards.expires_at` is set and `now() >= expires_at` (expired catalog reward if that column is used).
-6. Refuse spend of a `points_ledger` lot when `expires_at` is set and `now() >= expires_at` (expired referral points). FIFO remaining unexpired lots.
-7. Referral **discount** redeem is `POST /api/vouchers/:id/redeem` on `vouchers` (`active` only; refuse `used` / `expired` / `now() >= expires_at`). Do not auto-apply to a cart.
+1. Customer (or staff acting for them) creates a catalog redemption **in that program only** → status `pending`, **reserve** `points_cost`, snapshot terms. Do **not** permanently deduct until approve.
+2. `Available = Total − Reserved`. Refuse create when required cost > available, or when a disallowed duplicate `pending` already exists for customer+program+reward.
+3. Same `idempotency_key` returns the existing redemption; do not insert a second row.
+4. Staff **approve** is one transaction: still `pending` → consume reserved → `completed`, set `redeemed_at`, increment `rewards.redeemed_count`, optional `branch_id` / `order_id`. Already `completed` → no-op (no second deduct).
+5. Staff **reject** releases the reservation → `rejected`.
+6. When a ticket exists on complete: create or attach `orders` and set `customer_rewards.order_id` in the **same** approve transaction. Rows without `order_id` are valid operationally but **excluded from ROI** until linked.
+7. Authz: Staff → Shop → Program → Redemption. Do not authorize on `redemption_id` alone.
+8. Refuse spend of a `points_ledger` lot when `expires_at` is set and `now() >= expires_at` (expired lots), subject to the still-open reservation-vs-expiry policy.
+9. Referral **discount** redeem is `POST /api/vouchers/:id/redeem` on `vouchers` (`active` only; refuse `used` / `expired` / `now() >= expires_at`). Do not auto-apply to a cart. Not this catalog state machine.
+
+### Catalog redemption lifecycle (DECIDED, not shipped)
+
+Paths are illustrative (backend-owned). Shop-**`customer`** session for create; `admin` / `staff` for approve/reject, scoped by ownership chain.
+
+| Method | Path | Purpose | Request | Response |
+|--------|------|---------|---------|----------|
+| POST | `/api/me/programs/:programId/redemptions` | Customer request; `pending` + reserve | `{ reward_id, idempotency_key }` | `{ redemption }` (same row on retry) |
+| POST | `/api/redemptions/:id/approve` | Atomic complete | `{ idempotency_key }` | `{ redemption }` or no-op if already `completed` |
+| POST | `/api/redemptions/:id/reject` | Release reserve | `{ idempotency_key }` | `{ redemption }` |
+| POST | `/api/redemptions/:id/reverse` | Auditable undo of `completed` (if refunds in scope) | `{ idempotency_key }` | `{ redemption }` |
 
 ### Branches
 
@@ -141,10 +154,26 @@ Public, unauthenticated. Rate-limit OTP request **and** enroll (ADR-012). New me
 
 | Method | Path | Change | Unlocks |
 |--------|------|--------|---------|
-| GET | `/api/join/program` | Log `visit_events` (`source=qr_view`); accept `branch` query; if `ref` present, persist invite telemetry (hashed IP + device, `invite_at`) for enroll matching | G-01, G-14 |
+| GET | `/api/join/shop/:shopSlug` | Resolve shop slug → one `active` program (only live, default, or list for picker). Never auto-join every live program. No `active` → empty / unavailable | G-35 |
+| GET | `/api/join/program` | Log `visit_events` (`source=qr_view`); accept `branch` query; if `ref` present, persist invite telemetry (hashed IP + device, `invite_at`) for enroll matching. 404 if program not `active` | G-01, G-14 |
 | POST | `/api/join/otp/request` | Start SMS or WhatsApp OTP. Insert `otp_verifications` only — **no** `customers` / `referrals` / ledger / vouchers | G-14, G-33, G-18 |
-| POST | `/api/join/enroll` | Verify OTP then atomically create the member (and referral grant). Returning phone in program = check-in only (no new OTP, no second referral) | G-01, G-02, G-03, G-14, G-18 |
+| POST | `/api/join/enroll` | Verify OTP then atomically create **this program’s** membership (and referral grant). Existing account, first time in this program → one new membership. Returning phone in program = check-in only (no new OTP, no second membership, no second referral) | G-01, G-02, G-03, G-14, G-18, G-35 |
 | POST | `/api/vouchers/:id/redeem` | Mark voucher `used`; attach `order_id`. Shop-customer or staff/admin POS. Never auto-apply at issue | G-14, G-20 |
+
+#### `GET /api/join/shop/:shopSlug`
+
+Resolve the printed counter QR. Response is **one** program, a picker list, or unavailable — never a bulk enroll. Path vs query encoding of the slug is backend-owned; the **public** URL is `/join/shop/{shopSlug}`.
+
+```json
+{
+  "shop_slug": "string",
+  "resolution": "one|picker|none",
+  "program": { "id": "uuid", "name": "string" },
+  "programs": [{ "id": "uuid", "name": "string" }]
+}
+```
+
+`program` is set when `resolution = one`. `programs` is the picker list when `resolution = picker`. Both empty when `resolution = none` (Program unavailable). Product URL: `/join/shop/{shopSlug}` ([counter QR](../product/counter-qr-and-program-membership.md)).
 
 #### `POST /api/join/otp/request`
 
@@ -238,7 +267,7 @@ Request (shape — provider envelope may wrap this):
 }
 ```
 
-Idempotent on `order_id`: a second `Invoice.Paid` must not double-grant. Unpaid order create **must not** call this path.
+Idempotent on `order_id`: a second `Invoice.Paid` must not double-grant. Unpaid order create **must not** call this path. Same earn-idempotency class as write rule 16 ([data-contract](data-contract.md#binding-write-rules)).
 
 Response:
 
@@ -270,15 +299,25 @@ Response:
 {
   "program_id": "uuid",
   "name": "string",
+  "points_total": 100,
+  "points_reserved": 0,
   "points_spendable": 100,
   "lots": [{ "amount": 100, "expires_at": "timestamptz|null" }],
   "vouchers": [{ "voucher_id": "uuid", "discount_pct": 15, "status": "active", "expires_at": "timestamptz" }],
   "referral_code": "string",
-  "share_url": "/join/{programId}?ref={referral_code}"
+  "share_url": "/join/{programId}?ref={referral_code}",
+  "progress": {
+    "kind": "visit|points|tier",
+    "current": 3,
+    "target": 8,
+    "remaining": 5,
+    "reward_name": "string|null",
+    "state": "in_progress|ready|none"
+  }
 }
 ```
 
-Rules: one object per program membership. **Do not** include a top-level summed points field. `lots` grouped by `expires_at` so mixed windows (month vs week) are visible. [loyalty-page.md](../frontend/loyalty-page.md#customer-wallet-per-program-decided).
+Rules: one object per program membership. **Do not** include a top-level summed points field. `points_spendable` is **available** (`points_total − points_reserved`) for that program. `lots` grouped by `expires_at` so mixed windows (month vs week) are visible. `progress` is **that program only** (visit stamps vs `visits_required`, or available vs next unearned live catalog reward). `state`: `in_progress` · `ready` (earned/available, not auto-redeemed) · `none` (no live reward). Pending catalog redemptions must be reconcilable from the server. [loyalty-page.md](../frontend/loyalty-page.md#customer-wallet-per-program-decided) · [customer-reward-progress.md](../product/customer-reward-progress.md) · [reward-redemption-flow.md](../product/reward-redemption-flow.md).
 
 ### Billing / integrations (backend-owned)
 
@@ -296,7 +335,7 @@ Exact provider paths are product choices; this row is the contract intent.
 
 | Stay client → Supabase (RLS) for now | Move to backend APIs |
 |--------------------------------------|----------------------|
-| Simple owner CRUD that already works under RLS (e.g. draft campaign fields, branch list reads until POST cap exists) | Paginated customers, analytics aggregates (incl. visit metrics + ROI), search, redeem, branch create with plan cap, campaign send enqueue, insight actions, billing, POS/orders ingest, **customer wallet** (`GET /api/me/wallet`) |
+| Simple owner CRUD that already works under RLS (e.g. draft campaign fields, branch list reads until POST cap exists) | Paginated customers, analytics aggregates (incl. visit metrics + ROI), search, **catalog redemption lifecycle**, branch create with plan cap, campaign send enqueue, insight actions, billing, POS/orders ingest, **customer wallet** (`GET /api/me/wallet`), shop-QR resolve |
 | Profile fields the owner edits directly | Anything needing service-role, multi-table transactions (visit + tier + ledger), or secrets |
 
 When Phase 2 cutover lands (ADR-011), **all** application traffic moves to backend APIs; this table is the transitional map.

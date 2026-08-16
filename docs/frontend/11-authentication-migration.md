@@ -143,11 +143,13 @@ Purpose:
 
 Customer auth must **not** grant `admin` / `staff` `/app` access. Rate-limit public signup/enrollment and OTP request ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)). Schema and APIs are backend-owned ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)). Gap: [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows).
 
+**Working journey for design (2026-08-16):** portal register, login, and lost access are **one OTP funnel**. After OTP: inactive → generic block; existing member of **this program** → wallet; existing customer **first time in this program** → link program then wallet (this membership only); new phone → profile then wallet. In-store returning check-in (shop QR `/join/shop/{shopSlug}` or `/join/{programId}`) stays **without** a new OTP once the **program** is known. Never auto-join every live program. Full case list: [customer-portal-journey.md](../product/customer-portal-journey.md). `G-33` / `G-36` are gap IDs, not screen names.
+
 ### Customer wallet (DECIDED)
 
 After login, the `customer` sees **one card per program** they belong to — never a single mixed points total.
 
-Each card must show: program name, **spendable** points for **that** program, expiry (one date if lots share it; otherwise amount + date groups), vouchers with their dates, and that program’s share **link** + **QR**.
+Each card must show: program name, **available** points for **that** program (`total − pending reserved`), expiry (one date if lots share it; otherwise amount + date groups), vouchers with their dates, that program’s share **link** + **QR**, and **reward progress for that program** (visit stamps toward completion, or available vs next live catalog reward). [customer-reward-progress.md](../product/customer-reward-progress.md) · [reward-redemption-flow.md](../product/reward-redemption-flow.md).
 
 Example: 100 points in program 1 (month window) and 200 in program 2 (week window) = two cards, not 300. [loyalty-page.md](loyalty-page.md#customer-wallet-per-program-decided). Portal URL still **not** locked.
 

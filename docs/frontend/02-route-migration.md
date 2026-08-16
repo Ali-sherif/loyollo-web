@@ -61,6 +61,8 @@
 
 `(marketing)` and `app/(shell)` are **route groups** (no extra URL segment). The `/app` URL segment comes from the `app/` folder that is not parenthesized.
 
+**Product lock (not yet on this approved map):** counter QR is `/join/shop/{shopSlug}` then **one** program ([counter-qr-and-program-membership.md](../product/counter-qr-and-program-membership.md)). Do not treat that as authorized Next implementation until this table and [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md) backend contracts are updated. `/join/[programId]` stays valid for program QR and `?ref=` while that program is `active`.
+
 ## Approved server API routes
 
 Lovable withdrawal is decided. Do **not** preserve `/lovable/*` paths. Keep behavior and templates under `src/lib/server/messaging/`; move to first-party APIs only where a BFF/frontend-specific server requirement exists ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)).
@@ -116,7 +118,7 @@ flowchart TD
   Root --> Auth["/auth"]
   Root --> Onboarding["/onboarding + layout"]
   Root --> AppShell["/app + shell layout"]
-  Root --> Join["/join/programId"]
+  Root --> Join["/join/programId\n(+ intended /join/shop/slug)"]
   Root --> Api["/api/email BFF"]
   AppShell --> Customers["customers/customerId"]
   AppShell --> Branches["branches/branchId"]

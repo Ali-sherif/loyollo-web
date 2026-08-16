@@ -757,7 +757,7 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 | — | **This month / Export** | Buttons do nothing | No period query / export | All-time counters | Period query + export BFF; hide until then (Phase 0) |
 | — | **Stat deltas (↑/↓)** | Always `"—"` | No previous-period totals | No snapshots | Period aggregates (Phase 7) |
 | [G-11](gaps-and-solutions.md#g-11--customer-list-will-not-scale) | **Active members / repeat rate** | Works | Client loads **all** customers | OK | Move aggregation to backend |
-| [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **Redemption rate / points chart** | Redeemed series always 0 | No points ledger API | No per-transaction log | `points_ledger` |
+| [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **Redemption rate / points chart** | Redeemed series always 0 | No points ledger / pending lifecycle | No per-transaction log | `points_ledger`; donut uses `completed` only |
 | [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **Members by tier / Most engaged Tier** | Usually Untiered | Check-in never sets `tier` | Free text, ladder unused | Write `tier` / `tier_id` |
 | [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **Customer segments vs Engagement levels** | Two cutoffs; overlap | Logic only in React | Nothing stored | Shared rules module + glossary |
 | [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **“At risk” / Champion labels** | Four meanings across pages | Campaigns use `status` | `status` vs recency | One source of truth |

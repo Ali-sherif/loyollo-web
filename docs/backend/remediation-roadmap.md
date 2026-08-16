@@ -62,8 +62,8 @@ flowchart TD
 | **Owner** | Backend |
 | **G-IDs** | G-04, G-13 (branch detail), G-20, G-28 |
 | **Depends on** | Schema columns; redeem endpoint |
-| **Deliverables** | `customer_rewards.branch_id`; redeem sets `redeemed_at`, increments `redeemed_count`; prefers attaching `order_id` when ticket known (full ROI in Phase 5) |
-| **Acceptance** | Per-branch cards use `GROUP BY branch_id` (or `"—"` if null). Redeem path is explicit (earn ≠ redeem). Dashboard redemption donut uses redeem events, not earn. Main branch uniqueness enforced server-side. |
+| **Deliverables** | `customer_rewards.branch_id`; catalog redeem lifecycle (`pending` reserve → atomic `completed` / `rejected`); snapshot `points_cost`; idempotency keys; `redeemed_count` only on `completed`; prefers attaching `order_id` when ticket known (full ROI in Phase 5) |
+| **Acceptance** | Per-branch cards use `GROUP BY branch_id` (or `"—"` if null). Redeem path is explicit (earn ≠ redeem). Combined pending cannot exceed available. Duplicate approve / retry does not double-deduct. Dashboard redemption donut uses `completed` events, not earn. Main branch uniqueness enforced server-side. |
 
 ## Phase 5 — Orders + billing + POS + ROI columns
 

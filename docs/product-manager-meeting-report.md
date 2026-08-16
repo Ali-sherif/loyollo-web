@@ -61,7 +61,7 @@ This “Phase 1” is the **product** first ship — not Next.js migration Phase
 
 ## 3. Shop-customer register / login (feature that will exist)
 
-**Source of truth:** [11-authentication-migration.md](frontend/11-authentication-migration.md#shop-customer-register-and-login-decided) · [customers-page.md](frontend/customers-page.md) · [G-33](frontend/gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows)
+**Source of truth:** [11-authentication-migration.md](frontend/11-authentication-migration.md#shop-customer-register-and-login-decided) · [customers-page.md](frontend/customers-page.md) · [G-33](frontend/gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows) · case map [customer-portal-journey.md](product/customer-portal-journey.md)
 
 Shop customers get role **`customer`**. They register/login so we **store their data** and **calculate KPIs**. This is not merchant `/app` sign-up.
 
@@ -74,6 +74,8 @@ Shop customers get role **`customer`**. They register/login so we **store their 
 Customer-portal URLs and the exact KPI list are **not** locked. Implementation is backend-owned ([ADR-014](architecture/decisions/ADR-014-product-data-ownership.md)).
 
 **DECIDED:** `customer` register, login, and recovery are **passwordless** (OTP via SMS or WhatsApp). There is no customer forgot-password. Lost access = a new OTP. Staff use the owner `/auth/forgot-password` flow after their account exists. [Credential recovery](frontend/11-authentication-migration.md#credential-recovery-decided).
+
+Working design journey (2026-08-16, not a new ADR): one OTP funnel for portal register/login; first-shop link and profile setup as extra screens; in-store returning check-in still without OTP. [customer-portal-journey.md](product/customer-portal-journey.md).
 
 ---
 
@@ -102,7 +104,7 @@ After the teammate account exists, forgotten password is the **same** owner rese
 
 A shop will have **more than one** loyalty program. Each program status is **`draft`**, **`active`**, or **`disabled`**.
 
-Today the DB allows only one program per owner. Join stays `/join/{programId}`. Whether two programs can be `active` at once is **not** locked.
+Today the DB allows only one program per owner. **Counter QR** is shop-stable `/join/shop/{shopSlug}` and then resolves to **one** program. Direct `/join/{programId}` remains for program QR and personal `?ref=` (valid while that program is `active`). More than one program **may** be `active` at once; the shop QR still enrolls into a single program (only live, default, or customer choice) — **never** every live program. The owner can change the default from `/app` without reprinting. There is no shop-wide membership, points, wallet, or rewards catalog. [counter-qr-and-program-membership.md](product/counter-qr-and-program-membership.md).
 
 ---
 
@@ -165,11 +167,24 @@ Points belong to the **program** they were earned in. They do **not** mix.
 |-----------|-----------|-------------------|
 | 100 points, that program’s expiry (e.g. 1 month per lot) | 200 points, that program’s expiry (e.g. 1 week per lot) | **Two** wallets: 100 and 200 — **not** 300 |
 
-Each program card: name, spendable points, expiry date(s) (split by lot if mixed), vouchers + their dates, personal share link + QR. Portal **URL** still not locked. Pixel layout not locked.
+Each program card: name, spendable / **available** points (`total − pending reserved`), expiry date(s) (split by lot if mixed), vouchers + their dates, personal share link + QR, and **reward progress for that program only** (stamps toward completion, or available vs next catalog reward). [customer-reward-progress.md](product/customer-reward-progress.md). Portal **URL** still not locked. Pixel layout not locked.
+
+---
+
+## 9. Catalog redemption (pending + reserve)
+
+**Status:** DECIDED (not shipped)  
+**Source of truth:** [reward-redemption-flow.md](product/reward-redemption-flow.md) · [G-20](frontend/gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn)
+
+The customer redeems only rewards in the program they belong to. Request → `pending` (reserves points) → staff **Approve** (`completed`, consume reserved) or **Reject** (`rejected`, release). `Available = Total − Reserved`. Combined pending cost cannot exceed available.
+
+Approval is one server transaction (second approve / network retry is a no-op). Earn and redeem are idempotent. The redemption stores a snapshot of cost/terms at create. Staff authz follows Staff → Shop → Program → Redemption.
+
+**Not locked:** pending vs later reward/program disable; reservation vs point-lot expiry; pending TTL. Reversal of `completed` is required if refunds are in scope.
 
 ---
 
 ## Not decided in this discussion
 
-Open tracking, SMS delivery, automations, campaign revenue (G-09 / G-06 / G-20). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever. Whether `staff` can also use the add-teammate form. Customer-portal **URLs** (wallet **contents** are locked in §8). Whether more than one loyalty program can be `active` at the same time. Default referral expiry **day counts**. OTP challenge TTL and attempt cap. Merchant UI for **Pending Review** (status and backend review path are locked; the screen is not). Device-fingerprint algorithm (hashes and same-minute rule are locked). SMS vs WhatsApp **provider** (channel enum is locked; adapters stay stubs).
+Open tracking, SMS delivery, automations, campaign revenue (G-09 / G-06). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever. Whether `staff` can also use the add-teammate form. Customer-portal **URLs** (wallet **contents** are locked in §8). Default referral expiry **day counts**. OTP challenge TTL and attempt cap. Merchant UI for **Pending Review** (status and backend review path are locked; the screen is not). Device-fingerprint algorithm (hashes and same-minute rule are locked). SMS vs WhatsApp **provider** (channel enum is locked; adapters stay stubs). How `shopSlug` and default-program are stored (product rule locked in [counter QR](product/counter-qr-and-program-membership.md); schema is backend-owned). Pending redemption vs reward/program disable; reservation vs point-lot expiry; pending-redemption TTL ([redemption](product/reward-redemption-flow.md#14-policies-that-are-not-locked-yet)).
 

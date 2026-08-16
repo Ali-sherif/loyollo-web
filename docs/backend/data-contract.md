@@ -199,7 +199,9 @@ These queries are required outputs of [GET `/api/analytics/overview`](api-contra
 
 Lots are **program-scoped**. Program 1’s 100 points and program 2’s 200 points are different `loyalty_program_id` values and must never be summed for spend or for the customer wallet.
 
-**Unlocks:** Analytics points chart, Dashboard “Points Redeemed” truthfulness (with G-20). Do not spend a lot after `expires_at`. Customer wallet: [loyalty-page.md](../frontend/loyalty-page.md#customer-wallet-per-program-decided).
+**Available vs reserved (DECIDED):** pending catalog redemptions reserve `points_cost` in that program. `Available = Total − Reserved`. Do not spend a lot after `expires_at` (how reservation interacts with lot expiry is **not locked** — [redemption §14](../product/reward-redemption-flow.md#14-policies-that-are-not-locked-yet)).
+
+**Unlocks:** Analytics points chart, Dashboard “Points Redeemed” truthfulness (with G-20). Customer wallet: [loyalty-page.md](../frontend/loyalty-page.md#customer-wallet-per-program-decided).
 
 ### `referrals`
 
@@ -506,10 +508,15 @@ Unique: `(loyalty_program_id, referral_code)`.
 
 | Column | Type | Null | Notes |
 |--------|------|------|-------|
-| `order_id` | uuid FK → `orders` | yes | ticket linked at redeem; **required for ROI inclusion** |
+| `loyalty_program_id` | uuid FK | no | always the program of the membership; never implied from shop |
+| `order_id` | uuid FK → `orders` | yes | ticket linked at **complete**; **required for ROI inclusion** |
 | `branch_id` | uuid FK → `branches` | yes | where reward was earned/redeemed |
+| `points_cost` | integer | no | **snapshot** of catalog cost at create; later catalog edits must not mutate this |
+| `status` | text | no | catalog redeem: `pending` \| `completed` \| `rejected` (optional later: `cancelled` \| `expired` \| `reversed`). Visit **earn** rows may still use `earned` until an explicit redeem |
 
 Prefer extending `customer_rewards` over a second **catalog** redemptions table. **Referral / coupon discounts do not live here** — they are `vouchers` (`active` → `used` / `expired`). Do not auto-apply a % on the join bill or current cart. Do not add `referral_id` on `customer_rewards`.
+
+Catalog redeem: insert `pending` and **reserve** `points_cost`; approve consumes the reservation and sets `redeemed_at` + `completed`; reject releases. [reward-redemption-flow.md](../product/reward-redemption-flow.md).
 
 ### `referral_settings` — both-party kinds + expiry
 
@@ -542,6 +549,7 @@ Default **day counts are not locked** (shop configures). Amounts keep today’s 
 | `orders.paid_at` | `Invoice.Paid` — first paid invoice grants referrer | G-14, G-06 |
 | `customer_rewards.branch_id` nullable | Where reward was earned/redeemed | G-04 |
 | `customer_rewards.order_id` nullable FK → `orders` | ROI / redeem ticket link | G-06, G-20 |
+| `customer_rewards` pending/completed + snapshot `points_cost` | Catalog redeem reserve / approve | G-20 |
 | `points_ledger.expires_at` + `referral_id` | Referral point lot expiry | G-14 |
 | `referral_settings` kinds + expiry days | Points vs voucher per side | G-14 |
 | `rewards.cost_cents` integer NOT NULL DEFAULT 0 | Cash cost (`point_cost` ≠ money) | Analytics ROI |
@@ -662,7 +670,7 @@ ROI % = (Attributed Revenue − Total Reward Cost) / Total Reward Cost × 100
 
 **Rules:**
 
-1. Include only redemptions with `redeemed_at IS NOT NULL` and `order_id IS NOT NULL`.
+1. Include only redemptions with `redeemed_at IS NOT NULL` (catalog `completed`) and `order_id IS NOT NULL`.
 2. `point_cost` must never enter the ROI formula.
 3. If `Total Reward Cost = 0`, return `NULL` (UI shows `"—"`) — never fake `0%`.
 4. Redeem path should create/attach an `orders` row and set `customer_rewards.order_id` in the same transaction when a ticket exists; redemptions without `order_id` are excluded from ROI until linked.
@@ -700,17 +708,19 @@ FROM reward_metrics;
 1. **`visit_events` + denormalized counters:** when `customer_id` is set on check-in, insert the event and update `customers.visits` + `last_activity_at` in the **same transaction**. Temporal analytics always query `visit_events`, not the counter alone.
 2. **Tier assignment:** `assign_customer_tier` + trigger `customers_reassign_tier` keep `tier` / `tier_id` in sync on every points/visits change. Enroll calls the function for the base tier. Ladder edits call `recompute_program_tiers`.
 3. **`campaigns.revenue_cents`:** derived/rollup from `orders` where `campaign_id` matches — not a column the UI or send path writes.
-4. **Earn vs redeem:** check-in may insert `customer_rewards` with `status=earned`; only an explicit redeem path sets `redeemed_at`, increments `rewards.redeemed_count`, and attaches `order_id` (+ optional `branch_id`) when a ticket is present.
+4. **Earn vs redeem:** check-in may insert `customer_rewards` with `status=earned`; that is **not** a catalog redemption. Catalog redeem is `pending` (reserve `points_cost`) → staff approve `completed` (set `redeemed_at`, increment `rewards.redeemed_count`, attach `order_id` / `branch_id` when a ticket is present) or reject `rejected` (release reserve). [reward-redemption-flow.md](../product/reward-redemption-flow.md).
 5. **ROI exclusion:** redemptions without `order_id` or with `cost_cents` totaling 0 do not produce a numeric ROI.
 6. **Insight CTAs:** Send / Nudge / Create must call `POST /api/insights/:key/actions`, insert `insight_actions`, create a draft campaign from the insight audience, and enqueue `campaign_jobs` for `send` / `nudge` — never no-op UI.
 7. **Plan / billing:** checkout + webhook are the only writers of `profiles.plan`. Branch insert and enroll must enforce `PLAN_LIMITS` / contact caps server-side.
-8. **Authz:** owner-scoped to `loyalty_program_id` / `owner_id`. Service-role only in workers and public enroll ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)). Merchant roles: **`admin`** (buyer) and **`staff`** (**same permissions as `admin` for now**). Do not use stored name `purchaser`.
+8. **Authz:** owner-scoped to `loyalty_program_id` / `owner_id`. Service-role only in workers and public enroll ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)). Merchant roles: **`admin`** (buyer) and **`staff`** (**same permissions as `admin` for now**). Do not use stored name `purchaser`. Catalog redemption approve/reject must walk Staff → Shop → Program → Redemption — never the redemption ID alone.
 9. **Shop-customer identity (DECIDED, not shipped):** customers of the shop will register/login (role **customer**) to persist their data. KPIs must be **calculated** from stored activity, not only from owner **Add Customer**. Customer session must not be an `admin` / `staff` `/app` session. Identity schema is backend-owned. Owner manual add remains allowed.
-10. **Multiple loyalty programs (DECIDED, not shipped):** a shop has many `loyalty_programs`. Each has `status` = `draft` \| `active` \| `disabled`. Drop `UNIQUE (owner_id)`. Join/check-in only when the program is `active`. [loyalty-page.md](../frontend/loyalty-page.md#multiple-programs-and-status-decided).
+10. **Multiple loyalty programs (DECIDED, not shipped):** a shop has many `loyalty_programs`. Each has `status` = `draft` \| `active` \| `disabled`. Drop `UNIQUE (owner_id)`. Join/check-in only when the program is `active`. Counter QR `/join/shop/{shopSlug}` resolves to **one** program (only live, default, or picker) — never every live program. First join of a program creates that membership only; returning scan is check-in, no duplicate row. [loyalty-page.md](../frontend/loyalty-page.md#multiple-programs-and-status-decided) · [counter QR](../product/counter-qr-and-program-membership.md).
 11. **Account status (DECIDED, not shipped):** `admin` sets `staff` and `customer` to `active` \| `inactive`. Inactive cannot log in to their surface. Distinct from `customers.status`. **One page, two tabs:** Team (`admin` + `staff`) and Customers (`customer`). Filters: role (Team tab), email, name, phone; active/inactive on both. [11-authentication-migration.md](../frontend/11-authentication-migration.md#account-active--inactive-decided).
 12. **Referral grants (DECIDED, not shipped):** both parties get a reward. **OTP first:** do not INSERT `customers`, `referrals`, `points_ledger`, or `vouchers` until SMS/WhatsApp OTP is verified ([write rule 14](#binding-write-rules)). **Referred** (new): grant in the same transaction as OTP-verified **new** enroll/register with valid `?ref=` / code — never on returning check-in. **Referrer** (existing): grant **only** on the referred customer’s **first `Invoice.Paid`** (`orders.paid_at` set) in that program **and** `referrals.status = pending` (not `pending_review`). Unpaid order inserts do not grant. That paid-invoice gate is the primary economic anti-fraud control. Kind per side from `referral_settings`: **`points`** → `customers.points` + `points_ledger` (`reason = referral`, `expires_at` **required**) in the same transaction; **`discount`** → `vouchers` row (`status = active`, `expires_at` required) to redeem later — do **not** auto-apply a % on the join, cart, or first bill; do **not** write referral discounts to `customer_rewards`. Share is that member’s **link** or **QR** of `/join/{programId}?ref={referral_code}` on **that program’s customer wallet card**. **DB + app:** `CHECK (referrer_id <> referred_id)` and `UNIQUE (referred_id)` — self-invite and a second attribution **fail the insert**. **Device/IP:** same device or same public IP in the same minute → `pending_review`; do not grant the referrer until review clears to `pending` (then grant on first **paid** invoice, or immediately if `paid_at` already exists). [loyalty-page.md](../frontend/loyalty-page.md#referral-rewards-decided) · [fraud controls](../frontend/loyalty-page.md#referral-fraud-controls-decided) · [OTP](../frontend/loyalty-page.md#otp-verification-decided).
-13. **Program-scoped point lots (DECIDED, not shipped):** issued lots always carry `loyalty_program_id`. Stamp `expires_at` per [expiry source](#points_ledger). `customers.points` is the **spendable** sum for **that** membership only (unexpired lots). Never add program 1 + program 2 for a customer total. Customer wallet lists one card per program: spendable points, expiry groups, vouchers (`vouchers` table), share link/QR. [loyalty-page.md](../frontend/loyalty-page.md#customer-wallet-per-program-decided).
+13. **Program-scoped point lots (DECIDED, not shipped):** issued lots always carry `loyalty_program_id`. Stamp `expires_at` per [expiry source](#points_ledger). `customers.points` is the **spendable / available** sum for **that** membership only (unexpired lots minus **pending reserved**). `Available = Total − Reserved`. Never add program 1 + program 2 for a customer total. Customer wallet lists one card per program: available points, reserved, expiry groups, vouchers (`vouchers` table), share link/QR. [loyalty-page.md](../frontend/loyalty-page.md#customer-wallet-per-program-decided).
 14. **OTP before member finalization (DECIDED, not shipped):** public **new** enroll and shop-customer self-register require a verified `otp_verifications` row (`channel` = `sms` \| `whatsapp`). Store `code_hash` only. Failed / expired / missing OTP → no `customers` row, no referral, no reward. Owner **Add Customer** does not require this OTP. Send via messaging contracts; do not bind an SMS/WhatsApp vendor. [api-contract join](api-contract.md#join--otp--enroll).
+15. **Catalog redemption lifecycle (DECIDED, not shipped):** create is `pending` + reserve snapshot `points_cost`; approve is one transaction (still pending → consume reserved → `completed`); reject releases; already `completed` → no-op. Idempotency key on create/approve/reject/reverse. Combined pending cost cannot exceed available. Cross-program spend is forbidden. Config changes must not mutate existing rows. [reward-redemption-flow.md](../product/reward-redemption-flow.md) · [api-contract](api-contract.md#catalog-redemption-lifecycle-decided-not-shipped).
+16. **Earn idempotency (DECIDED, not shipped):** each earning event (check-in, POS purchase, `Invoice.Paid`) has a reference / idempotency key. A retry must not credit twice. Concurrent earn and redeem must serialize to a consistent available balance; never trust a client-side total.
 
 ---
 
@@ -741,7 +751,9 @@ One meaning everywhere (Dashboard, Customers, Analytics, Campaigns). Do not mix 
 | **Pending Review** | Invite and enroll from the same device or same Wi-Fi/IP in the same minute. Referrer grant is blocked until cleared. | `referrals.status = pending_review` |
 | **Referral voucher** | Discount-kind grant: a `vouchers` row (`active` → `used` / `expired`). Has `expires_at`. Not an automatic checkout %. Not `customer_rewards`. | `vouchers` where `referral_id` set |
 | **OTP verification** | SMS or WhatsApp code that must succeed before a new public member row is finalized | `otp_verifications` |
-| **Spendable points** | Unexpired lots for **one** `loyalty_program_id` membership. Not a cross-program total | `points_ledger`; customer wallet |
+| **Spendable / available points** | Unexpired lots for **one** `loyalty_program_id` membership, minus **pending reserved**. Not a cross-program total | `points_ledger` + pending redemptions; customer wallet |
+| **Reserved points** | Sum of `points_cost` on `pending` catalog redemptions in that program | [reward-redemption-flow.md](../product/reward-redemption-flow.md) |
+| **Catalog redemption** | Customer request for a program reward: `pending` → `completed` \| `rejected` | `customer_rewards` (catalog path) |
 
 Full collision history: [analytics-page.md](../frontend/analytics-page.md#three-different-systems-do-not-mix-them).
 

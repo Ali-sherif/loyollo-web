@@ -6,8 +6,8 @@
 
 | Doc | Purpose |
 |-----|---------|
-| [data-contract.md](data-contract.md) | Target schema (incl. `visit_events`, `orders.paid_at`, `otp_verifications`, `vouchers`, `referrals` + grant/expiry + fraud + OTP), tier DB functions/triggers, visit metric SQL, ROI formula, write rules, glossary |
-| [api-contract.md](api-contract.md) | Endpoint shapes (analytics ROI, `POST /api/insights/:key/actions`), client vs backend boundary |
+| [data-contract.md](data-contract.md) | Target schema (incl. `visit_events`, `orders.paid_at`, `otp_verifications`, `vouchers`, `referrals` + grant/expiry + fraud + OTP, catalog redeem pending/reserve), tier DB functions/triggers, visit metric SQL, ROI formula, write rules, glossary |
+| [api-contract.md](api-contract.md) | Endpoint shapes (analytics ROI, `POST /api/insights/:key/actions`, catalog redemption lifecycle, shop-QR resolve) |
 | [remediation-roadmap.md](remediation-roadmap.md) | Phases 0–7, G-IDs, acceptance criteria (tier automation, visit metrics, ROI, insight nudges) |
 
 ## Gap backlog

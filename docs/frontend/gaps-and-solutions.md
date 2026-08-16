@@ -35,9 +35,9 @@ These widgets are visible in production UI and systematically show **zero, even 
 
 | Field | Value |
 |-------|--------|
-| **Where** | Loyalty visit stats, `VisitsProgressSection`, Analytics visit chart / “1 visit from a reward” |
+| **Where** | Loyalty visit stats, `VisitsProgressSection`, Analytics visit chart / “1 visit from a reward”; customer stamp progress (wallet) |
 | **Blocked by** | Only denormalized `customers.visits`; no stamp/event ledger |
-| **Solution** | Same `visit_events`; until then derive buckets from `visits` vs `visits_required` (honesty) |
+| **Solution** | **Customer card:** derive `visits` vs `visits_required` (and spendable vs next catalog reward) — [customer-reward-progress.md](../product/customer-reward-progress.md). **Merchant charts / “stamps this month”:** `visit_events`; until then derive buckets from `visits` vs `visits_required` (honesty) |
 | **Status** | `DEFERRED-BACKEND` (derive buckets: `FRONTEND-FIXABLE`) |
 | **Owner** | Backend program |
 | **Phase** | 2 |
@@ -241,10 +241,10 @@ These widgets are visible in production UI and systematically show **zero, even 
 
 | Field | Value |
 |-------|--------|
-| **Where** | Dashboard redemption donut; Loyalty catalog |
-| **Blocked by** | Check-in inserts `earned`; no redeem API |
-| **Solution** | `POST .../redeem`; donut uses redemption events |
-| **Status** | `DEFERRED-BACKEND` |
+| **Where** | Dashboard redemption donut; Loyalty catalog; customer wallet redeem |
+| **Blocked by** | Check-in inserts `earned`; no redeem lifecycle (pending / reserve / approve) |
+| **Solution** | Customer request → `pending` + reserve points; staff approve/reject atomically; `Available = Total − Reserved`; idempotent earn and redeem; snapshot cost at create; authz via Staff → Shop → Program → Redemption. Donut uses `completed` events. [reward-redemption-flow.md](../product/reward-redemption-flow.md) · [loyalty-page.md](loyalty-page.md#reward-redemption-lifecycle-decided) |
+| **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-16) |
 | **Owner** | Backend program |
 | **Phase** | 4 |
 
@@ -390,7 +390,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | `/app/customers` Add Customer; public `/join/[programId]`; Dashboard / Analytics KPIs |
 | **Blocked by** | No shop-customer auth. Rows are owner-created or anonymous join. KPIs use denormalized / owner-typed fields |
-| **Solution** | Customer **register/login** (role **customer**, not `admin` / `staff` `/app`). **Passwordless:** register, login, and recovery never use a password. Public new register uses **OTP** (SMS/WhatsApp) before the member row is finalized. Lost access = **new OTP** (same channel), never `/auth/forgot-password` or the merchant `recovery` email. Store customer-owned profile + activity. **Calculate KPIs** from that data. Owner manual add remains (no OTP). Wallet: **one card per program** (spendable points + expiry groups + `vouchers` + share link/QR); never a cross-program total. Routes not locked. [11-authentication-migration.md](11-authentication-migration.md#shop-customer-register-and-login-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) · [loyalty-page.md](loyalty-page.md#customer-wallet-per-program-decided) · [OTP](loyalty-page.md#otp-verification-decided) |
+| **Solution** | Customer **register/login** (role **customer**, not `admin` / `staff` `/app`). **Passwordless:** register, login, and recovery never use a password. Public new register uses **OTP** (SMS/WhatsApp) before the member row is finalized. Lost access = **new OTP** (same channel), never `/auth/forgot-password` or the merchant `recovery` email. After OTP: inactive → generic block; existing in this shop → wallet; existing **first time in this shop** → link program; new phone → profile (name / email / DOB). Store customer-owned profile + activity. **Calculate KPIs** from that data. Owner manual add remains (no OTP). Wallet: **one card per program** (spendable points + expiry groups + `vouchers` + share link/QR + **reward progress for that program**); never a cross-program total or shop-wide progress. Routes not locked. [customer-portal-journey.md](../product/customer-portal-journey.md) · [customer-reward-progress.md](../product/customer-reward-progress.md) · [11-authentication-migration.md](11-authentication-migration.md#shop-customer-register-and-login-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) · [loyalty-page.md](loyalty-page.md#customer-wallet-per-program-decided) · [OTP](loyalty-page.md#otp-verification-decided) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
 | **Owner** | Backend program |
 | **Phase** | Later (customer portal; not product Phase 1 merchant roles) |
@@ -411,8 +411,8 @@ These widgets are visible in production UI and systematically show **zero, even 
 | Field | Value |
 |-------|--------|
 | **Where** | `/app/loyalty` upsert; Dashboard / Customers / Campaigns / Analytics `maybeSingle` |
-| **Blocked by** | `UNIQUE (owner_id)` on `loyalty_programs`; no `status` column |
-| **Solution** | Many programs per shop. Status **`draft` \| `active` \| `disabled`**. Drop unique-on-owner; stop overwrite-upsert. Join/check-in only for **`active`**. [loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided) |
+| **Blocked by** | `UNIQUE (owner_id)` on `loyalty_programs`; no `status` column; no shop slug / default-program for counter QR |
+| **Solution** | Many programs per shop. Status **`draft` \| `active` \| `disabled`**. Drop unique-on-owner; stop overwrite-upsert. Join/check-in only for **`active`**. **Counter QR** `/join/shop/{shopSlug}` identifies the shop then **one** program (default, only live, or picker — never every live program). Membership/points/stamps/wallet/rewards/redemptions stay `loyalty_program_id`. [loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided) · [counter QR](../product/counter-qr-and-program-membership.md) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
 | **Owner** | Backend program |
 | **Phase** | Later (multi-program) |
@@ -447,8 +447,8 @@ These widgets are visible in production UI and systematically show **zero, even 
 | `customers` (points, visits, last_activity_at, created_at, status, tier, birth_date, city, gender, custom_field_value) | List, proxies, join fields |
 | `loyalty_programs` + type-specific columns | Rules config (runtime still partial) |
 | `loyalty_program_tiers` | Ladder to **assign** `customers.tier` |
-| `rewards` + `point_cost` + `redeemed_count` | Catalog; count only until redeem API |
-| `customer_rewards` (earned_at, redeemed_at) | Earn events; wire detail + redeem |
+| `rewards` + `point_cost` + `redeemed_count` | Catalog; count only until redeem lifecycle (G-20 **DECIDED**) |
+| `customer_rewards` (earned_at, redeemed_at) | Earn events; wire detail + pending/completed redeem |
 | `qr_page_settings` + join BFF | Branding **is** wired |
 | `referral_settings` | Config; needs event table + grant writers (G-14 **DECIDED**) |
 | `branches` + `profiles.plan` | Locations + intended caps |

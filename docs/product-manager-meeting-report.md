@@ -3,6 +3,8 @@
 **Date:** 2026-08-14  
 **Status:** DECIDED for product language. Send-status writers and role schema are not implemented yet.
 
+**PO + UI follow-up (missing pages only):** [product-missing-pages.md](product-missing-pages.md) — inventory of routes that do not exist yet (customer portal, team/accounts, forced password change, Pending Review) vs existing hollow pages.
+
 ---
 
 ## 1. Campaigns — Completed vs Performance

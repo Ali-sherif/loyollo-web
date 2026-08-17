@@ -35,7 +35,7 @@ Do not enable Cache Components/PPR globally during parity migration.
 
 ## Risks
 
-The current localStorage token model limits authenticated Server Component reads until a trustworthy request session exists ([ADR-005](ADR-005-authentication.md)). Accidental caching of user data is a Critical risk.
+Authenticated Server Component reads require a trustworthy Nest JWT request session (HTTP-only cookies). The leftover localStorage model must not be used as the Phase 1 IdP ([ADR-005](ADR-005-authentication.md) Option C). Accidental caching of user data is a Critical risk.
 
 ## Verification
 

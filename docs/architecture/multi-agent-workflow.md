@@ -25,7 +25,7 @@ Switch models freely **between** roles or slices. Do not switch mid-slice withou
 3. **No parallel rewrite of locked decisions** (ADR-006/009/010/011/014 messaging/Lovable/visual/data-ownership; target versions) without explicit user approval.
 4. **Do not skip dependency-aware order** for foundation → assets → server-infra/auth proof → messaging → routes. Limited parallelization only where paths do not collide (see below).
 5. **TanStack Start / Lovable are retired** — do not recreate `src/routes`, Vite/Nitro, or `@lovable.dev/*` packages (ADR-009).
-6. **D-28 cookie/SSR** stays documented **BLOCKED** until spike **PASSED**; agents may work the spike during server-infra/auth but must not claim auth complete early.
+6. **D-28 cookie/SSR** stays documented **BLOCKED** until Nest JWT HTTP-only cookies are **PASSED**; do not re-run or claim PASS on the superseded `@supabase/ssr` spike ([ADR-005](decisions/ADR-005-authentication.md) Option C).
 7. Prefer **separate branches / commits per agent** with a clear slice id in the message.
 8. **`docs/backend/` product-data contracts** have a **single owner** when edited. Agents **must not** add `supabase/migrations/` (or Next BFF persistence) for gaps **G-01…G-32** (orders, visit_events, tiers, referrals, etc.) — those belong to the backend program ([ADR-014](decisions/ADR-014-product-data-ownership.md)). Presentational Phase 0 honesty fixes in frontend UI are allowed.
 
@@ -35,7 +35,7 @@ Switch models freely **between** roles or slices. Do not switch mid-slice withou
 | ----- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
 | 1     | Foundation                                       | **Done** — do not re-scaffold                                                                                                  |
 | 2     | Vendor/re-host Lovable/CDN assets                | **Done**                                                                                                                       |
-| 3     | Server infrastructure + auth proof (D-28)        | **Done (scaffolding)** — cookie/SSR proof still **BLOCKED** (D-28)                                                             |
+| 3     | Server infrastructure + auth proof (D-28)        | **Done (scaffolding)** — leftover `@supabase/ssr` is **not** the IdP; Nest JWT cookie/SSR proof still **BLOCKED** (D-28, ADR-005 Option C) |
 | 4     | Messaging skeleton (`src/lib/server/messaging/`) | **Done** (stubs; no real provider)                                                                                             |
 | 5+    | Routes / domains                                 | **Done (ported)** — Next is the only app (`npm run dev` / `npm run build`); TanStack Start and Lovable retired |
 
@@ -44,7 +44,7 @@ Switch models freely **between** roles or slices. Do not switch mid-slice withou
 ## Where parallel agents start now
 
 1. **Lead:** production smoke on Vercel + confirm env UI values ([docs/deployment/env.md](../deployment/env.md)).
-2. **Optional:** D-28 cookie/SSR proof (needs credentials; do not fake PASS).
+2. **Optional:** D-28 Nest JWT cookie/SSR proof (needs Nest test user; do not fake PASS; do not use `@supabase/ssr`).
 3. **Do not** restore TanStack Start / Lovable packages or `src/routes`.
 4. **Reviewer:** visual/messaging parity vs approved Next routes; ADR compliance.
 

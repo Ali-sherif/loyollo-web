@@ -6,7 +6,7 @@ Aligned with [ADR-004](../architecture/decisions/ADR-004-data-and-state.md).
 | ---------------- | ------------------------------------ | ---------------------------------------------------------------------- | -------------------------- |
 | Local UI         | `useState`                           | Keep local                                                             | Smallest scope             |
 | Server state     | effects/direct Supabase              | RSC for initial reads; TanStack Query for interactive server state     | Separate transport from UI |
-| Auth             | React Context + localStorage session | Backend-owned auth; Next route gates; cookie/SSR spike                 | Backend is source of truth |
+| Auth             | React Context + localStorage session | NestJS-owned auth (local JWT); Next route gates; HTTP-only cookies (D-28 retargeted) | NestJS is source of truth; no Supabase Auth |
 | URL state        | Router params/search                 | App Router params/searchParams                                         | Shareable/navigation-safe  |
 | Forms            | local state; selective Zod           | Keep existing approach per form; shared schemas where server validates | Avoid rewrite              |
 | Persistent UI    | sidebar cookie                       | Cookie with explicit scope/security                                    | Existing behavior          |

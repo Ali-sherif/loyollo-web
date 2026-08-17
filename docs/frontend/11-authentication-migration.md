@@ -4,18 +4,20 @@ Aligned with [ADR-005](../architecture/decisions/ADR-005-authentication.md).
 
 ## Current behavior
 
-Supabase browser auth persists in localStorage, auto-refreshes, and drives `AuthProvider`. A global TanStack client middleware adds the access token as Bearer for authenticated server functions. Most protected routes redirect in `useEffect`; MFA and recovery are client flows.
+The leftover frontend still reflects Supabase browser auth in localStorage, auto-refresh, and `AuthProvider`. That IdP is **withdrawn**. Do not extend it.
 
 ## Target behavior
 
-1. Keep authentication and authorization ownership in the backend (Supabase Auth + RLS/policies remain the final source of truth for permissions).
-2. Do not duplicate business authorization logic in the frontend.
-3. Use secure HTTP-only cookies/session mechanisms where applicable; prove cookie/SSR session refresh in a spike before adopting it broadly.
-4. Next.js is responsible for route protection, session-aware rendering, and redirects.
-5. Client checks may remain for UX only; they are not authorization.
-6. Build separate browser and server client factories.
-7. Validate ownership even when using the service-role client on the server.
-8. Preserve exact verification, recovery, MFA, onboarding, and sign-out behavior.
+Aligned with [ADR-005](../architecture/decisions/ADR-005-authentication.md) **Option C** (DECIDED 2026-08-17).
+
+1. **Do not use Supabase Auth** even in Phase 1. No GoTrue, no `@supabase/ssr`, no Supabase recovery/OTP as the identity provider.
+2. Build a **fully independent NestJS auth system** for all roles (`admin`, `staff`, `customer`) with **local JWTs** issued and validated by Nest.
+3. NestJS natively handles admin/staff temp-passwords, first-login force-change, email password reset, admin re-issue temp password, and customer OTP (SMS/WhatsApp).
+4. Authorization ownership stays in the backend. NestJS is the final source of truth for permissions. Do not duplicate business authorization in the frontend.
+5. Use secure HTTP-only cookies on the Next.js host to hold the Nest-issued session; prove cookie/SSR refresh (D-28 retargeted) before relying on authenticated RSC reads.
+6. Next.js is responsible for route protection, session-aware rendering, and redirects.
+7. Client checks may remain for UX only; they are not authorization.
+8. Preserve product behavior for verification, recovery, MFA (if in product scope), onboarding, and sign-out — implemented against Nest, not Supabase.
 
 ## Locked role matrix
 
@@ -161,9 +163,9 @@ Customer portal URLs stay **not** locked. Do not add recovery routes or APIs fro
 
 ### Admin and staff (same as owner)
 
-Once a teammate `/app` user exists ([G-34](gaps-and-solutions.md#g-34--admin-cannot-create-adminstaff-with-emailed-temp-password)), forgotten password is the **same Supabase recovery** as the shop owner:
+Once a teammate `/app` user exists ([G-34](gaps-and-solutions.md#g-34--admin-cannot-create-adminstaff-with-emailed-temp-password)), forgotten password is the **same NestJS email-password reset** as the shop owner (not Supabase Auth):
 
-1. `/auth/forgot-password` → `resetPasswordForEmail`
+1. `/auth/forgot-password` → NestJS issues a reset token and sends the recovery email via messaging contracts
 2. Recovery email (`RecoveryEmail`) with link to `/auth/reset-password`
 3. Set a new password → sign in → `/app`
 
@@ -194,14 +196,17 @@ Inactive `customer` must not get a session from a new OTP ([G-36](gaps-and-solut
 
 ## Backend change required
 
-| Concern                                | Backend change required                                                                                                                     |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| App Router pages/forms                 | No                                                                                                                                          |
-| Server verification of current session | No                                                                                                                                          |
-| Cookie-based SSR session               | UNKNOWN; likely configuration/adapter work, must prove                                                                                      |
-| RLS/schema                             | No for Phase 1 — retain existing policies ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md)); Phase 2 Backend APIs only |
-| Auth email webhook URLs                | Configuration update at cutover, not contract redesign                                                                                      |
+| Concern                                | Backend change required                                                                                                                                                          |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App Router pages/forms                 | No (frontend consumes Nest auth APIs)                                                                                                                                            |
+| Independent NestJS auth (Option C)     | **Yes** — local JWT IdP for `admin` / `staff` / `customer`; no Supabase Auth                                                                                                     |
+| Admin temp-password + first-login gate | **Yes** — NestJS generates temp password, emails it, enforces change on first login                                                                                              |
+| Admin/staff password reset             | **Yes** — NestJS-native reset token + recovery email                                                                                                                             |
+| Customer OTP                           | **Yes** — NestJS-native OTP (SMS/WhatsApp) for register, login, lost access                                                                                                      |
+| Server verification of current session | **Yes** — NestJS validates JWT; Next may hold HTTP-only cookies and forward the token                                                                                            |
+| Cookie-based SSR session               | Next BFF/proxy must prove Nest JWT cookies (D-28 retargeted; `@supabase/ssr` spike superseded)                                                                                   |
+| Auth email / OTP delivery              | Messaging contracts only ([17-messaging-templates.md](17-messaging-templates.md)); NestJS triggers send — not Supabase Auth hooks                                                |
 
 ## Security gates
 
-CSRF is required if cookie-authenticated mutations are introduced. XSS remains material while tokens are in localStorage. Redirect destinations must be allow-listed. Secrets are referenced by name only. Frontend route gates must never substitute for backend permission checks.
+CSRF is required if cookie-authenticated mutations are introduced. XSS remains material while leftover tokens are in localStorage; Phase 1 target is Nest JWT in HTTP-only cookies. Redirect destinations must be allow-listed. Secrets are referenced by name only. Frontend route gates must never substitute for NestJS permission checks.

@@ -10,6 +10,6 @@ Lead from documentation — do not invent a parallel plan:
 - Always-apply rule: `.cursor/rules/migration-docs.mdc`
 - Workflow skill: `.cursor/skills/nextjs-migration/SKILL.md`
 
-Critical checklist items are cleared (DECIDED or ACCEPTED RISK). D-28 cookie/SSR remains documented BLOCKED until proven. Slice 15 remainder: production smoke + visual/email HTML parity.
+Critical checklist items are cleared (DECIDED or ACCEPTED RISK). D-28 cookie/SSR remains documented BLOCKED until Nest JWT cookies are proven (ADR-005 Option C; `@supabase/ssr` spike is superseded). Slice 15 remainder: production smoke + visual/email HTML parity.
 
-**Parallel agents start here:** production smoke on Vercel + optional D-28 proof. Next remaining work is slice 15 parity, not a second frontend.
+**Parallel agents start here:** production smoke on Vercel + optional Nest JWT D-28 proof. Next remaining work is slice 15 parity, not a second frontend.

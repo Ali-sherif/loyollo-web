@@ -29,4 +29,4 @@ Indexed UI vs API vs DB gaps (**G-01…G-36**): [../frontend/gaps-and-solutions.
 
 ## Current system (as built)
 
-How pages talk to Supabase / BFF today: [../frontend/system-architecture.md](../frontend/system-architecture.md). Phase 1 keeps those contracts. Phase 2 replaces direct client Postgres/PostgREST with NestJS APIs over PostgreSQL 18 via Prisma.
+How pages talk to the API today: [../frontend/system-architecture.md](../frontend/system-architecture.md). **Auth is NestJS from Phase 1** ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Remaining product data access still follows [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md) until Phase 2 Nest APIs replace direct client Postgres/PostgREST.

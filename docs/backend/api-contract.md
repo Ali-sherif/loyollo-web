@@ -2,7 +2,7 @@
 
 **Status:** SPEC-READY (docs-only). Paths below are the **backend program** surface (or BFF that only forwards). Next.js must not become the system of record ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md), [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
-**Stack (DECIDED):** NestJS 11.x + Prisma 7.x + PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md), [README.md](README.md#target-stack-decided)). These paths are Nest HTTP contracts in Phase 2.
+**Stack (DECIDED):** NestJS 11.x + Prisma 7.x + PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md), [README.md](README.md#target-stack-decided)). **Auth is NestJS from Phase 1** (local JWT for `admin` / `staff` / `customer`; no Supabase Auth — [ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Other paths below are Nest HTTP contracts; remaining non-auth domains may still follow the Phase 2 cutover in [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md).
 
 **Related:** [data-contract.md](data-contract.md) · [remediation-roadmap.md](remediation-roadmap.md) · [gaps-and-solutions.md](../frontend/gaps-and-solutions.md) · [program-model.md](../product/program-model.md)
 

@@ -4,11 +4,11 @@ This is the consolidated reference; detailed inventories and decisions remain au
 
 ## Architecture
 
-Next.js App Router owns URL composition, layouts, metadata, loading/errors, and thin page composition. Features own domain UI and logic. The existing backend remains the primary business/API backend—Next.js does not replace it. Phase 2 that backend is NestJS 11.x over PostgreSQL 18.x via Prisma 7.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md)); Phase 1 continues on current Supabase contracts.
+Next.js App Router owns URL composition, layouts, metadata, loading/errors, and thin page composition. Features own domain UI and logic. The existing backend remains the primary business/API backend—Next.js does not replace it. Auth is NestJS from Phase 1 (local JWT; no Supabase Auth — [ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Phase 2 remaining product APIs are NestJS 11.x over PostgreSQL 18.x via Prisma 7.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md)).
 
 Server Components perform safe initial reads against the backend when appropriate. Client Components use the established API layer and small interactive islands. `lib/server` holds privileged orchestration. Messaging templates and infrastructure live under `src/lib/server/messaging/` with provider-agnostic contracts.
 
-Supabase schema and contracts do not change. Lovable is withdrawn. Visual styles and email/SMS templates are preserved. Initial hosting is Vercel (Node 24 LTS). Target lines: Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x.
+Supabase Auth is withdrawn. Lovable is withdrawn. Visual styles and email/SMS templates are preserved. Initial hosting is Vercel (Node 24 LTS). Target lines: Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x.
 
 ## Data flow
 
@@ -38,7 +38,7 @@ flowchart TD
 - Hybrid data fetching: RSC initial reads + TanStack Query for interactive server state ([ADR-004](../architecture/decisions/ADR-004-data-and-state.md)).
 - Existing backend is primary; Route Handlers only for BFF/proxy or frontend-specific needs ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)).
 - Server Actions only with clear benefit; orchestrate backend calls; do not become the business API.
-- Backend owns authz; Next.js owns route protection, session-aware rendering, redirects ([ADR-005](../architecture/decisions/ADR-005-authentication.md)).
+- Backend owns authz via NestJS independent auth (local JWT); Next.js owns route protection, session-aware rendering, redirects ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C).
 - Thin `app/`; domain logic in `features/` ([ADR-007](../architecture/decisions/ADR-007-project-structure.md)).
 - Production route map approved ([02-route-migration.md](02-route-migration.md)); further URL changes need an explicit contract update ([ADR-002](../architecture/decisions/ADR-002-app-router.md)).
 - No visual redesign; messaging under `src/lib/server/messaging/`; no direct provider deps from features ([ADR-010](../architecture/decisions/ADR-010-style-and-template-parity.md)).

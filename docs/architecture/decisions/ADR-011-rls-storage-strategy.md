@@ -27,7 +27,7 @@ The pre-implementation checklist required RLS and storage policies to be indepen
 
 ## Consequences
 
-- Migration risk stays bounded: no parallel authz model in Next.js; backend/Supabase policies remain authoritative in Phase 1 ([ADR-005](ADR-005-authentication.md), [ADR-006](ADR-006-server-boundaries.md)).
+- Migration risk stays bounded: no parallel authz model in Next.js. **Identity and permission checks for sessions are NestJS** from Phase 1 ([ADR-005](ADR-005-authentication.md) Option C). Existing RLS/storage rules still apply to leftover client data paths until Phase 2 ([ADR-006](ADR-006-server-boundaries.md)). Do not treat Supabase Auth as the IdP.
 - Security defects discovered in existing policies still require a separate approval to change schema/RLS (see deferred decisions).
 - Phase 2 cutover of data access is explicitly **not** part of clearing this frontend gate.
 

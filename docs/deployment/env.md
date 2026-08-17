@@ -27,6 +27,8 @@ This inventory is the canonical list for deployment configuration. Source of tru
 
 Runtime: Next.js App Router (`npm run dev` / `npm run build`). Public client names are `NEXT_PUBLIC_*`. `next.config.ts` still maps leftover `VITE_*` / `SUPABASE_*` into public names if `NEXT_PUBLIC_*` is unset.
 
+**Auth IdP is NestJS** ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). The `SUPABASE_*` names below are leftover data-path scaffolding, **not** the Phase 1 identity provider. Do not add new Supabase Auth usage.
+
 | Variable                        | Required | Scope            | Environments | Used In                                                                 | Purpose                                       | Secret                |
 | ------------------------------- | -------- | ---------------- | ------------ | ----------------------------------------------------------------------- | --------------------------------------------- | --------------------- |
 | `NEXT_PUBLIC_SUPABASE_URL`      | Yes      | Client (+ build) | All          | `src/config/env.ts`; `@supabase/ssr` factories                          | Supabase API URL                              | No                    |
@@ -55,14 +57,14 @@ Do **not** set `LOVABLE_API_KEY` or `LOVABLE_SEND_URL`.
 
 ## B. Auth SSR spike (D-28) extra names
 
-The isolated `spikes/auth-ssr/` POC was **removed** from the repo. When D-28 is re-run, expect these extra names (see [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)).
+The isolated `spikes/auth-ssr/` POC was **removed**. That harness targeted `@supabase/ssr` and is **superseded** ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). When D-28 is re-run, prove **NestJS local JWT** HTTP-only cookies in Next `proxy.ts` + RSC — not Supabase Auth. Nest auth env names belong in the backend program; do not add `SUPABASE_SERVICE_ROLE_KEY` as the IdP bootstrap.
+
+Historical leftover names (do not treat as the Phase 1 IdP):
 
 | Variable                        | Required  | Scope           | Environments | Purpose                                                | Secret |
 | ------------------------------- | --------- | --------------- | ------------ | ------------------------------------------------------ | ------ |
-| `SPIKE_TEST_EMAIL`              | Optional  | Server (script) | Spike local  | Confirmed test user email                              | No     |
-| `SPIKE_TEST_PASSWORD`           | Optional  | Server (script) | Spike local  | Confirmed test user password                           | Yes    |
-
-Validation needs **either** service-role bootstrap **or** confirmed `SPIKE_TEST_*` credentials.
+| `SPIKE_TEST_EMAIL`              | Optional  | Server (script) | Spike local  | Confirmed Nest test user email                         | No     |
+| `SPIKE_TEST_PASSWORD`           | Optional  | Server (script) | Spike local  | Confirmed Nest test user password                      | Yes    |
 
 ### Retired names (do not carry forward)
 

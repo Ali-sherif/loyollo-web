@@ -17,11 +17,11 @@ This documentation describes migration from TanStack Start to Next.js. It does n
 
 ```mermaid
 flowchart LR
-  Browser --> TanStack[TanStack Start SSR]
-  TanStack --> ServerFns[TanStack Server Functions]
-  Browser --> Supabase[Supabase Auth and Data]
+  Browser --> TanStack[TanStack Start SSR leftover]
+  TanStack --> ServerFns[TanStack Server Functions leftover]
+  Browser --> Supabase[Leftover Supabase data paths]
   ServerFns --> Supabase
-  TanStack --> Email[Lovable Email API]
+  TanStack --> Email[Lovable Email API withdrawn]
 ```
 
 ```mermaid
@@ -30,8 +30,8 @@ flowchart LR
   Next --> RSC[Server Components]
   Next --> Actions[Server Actions when justified]
   Next --> Handlers[Route Handlers BFF only]
-  Browser --> API[Established API / Supabase client layer]
-  RSC --> Backend[Existing backend]
+  Browser --> API[NestJS API]
+  RSC --> Backend[NestJS backend]
   RSC --> ServerLib[lib/server]
   Actions --> ServerLib
   Handlers --> ServerLib
@@ -52,7 +52,7 @@ flowchart LR
 - Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x; package manager npm.
 - App Router; native route typing; Metadata API; `error`/`not-found`/`loading` ([ADR-002](../architecture/decisions/ADR-002-app-router.md)).
 - Existing backend remains primary API; Route Handlers/Server Actions only when justified ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)).
-- Backend owns authz; Next.js route protection + session-aware rendering; cookies where applicable ([ADR-005](../architecture/decisions/ADR-005-authentication.md)). Locked roles: `admin` · `staff` (same permissions as `admin` for now) · `customer` ([11-authentication-migration.md](11-authentication-migration.md#locked-role-matrix)).
+- Backend owns authz via **NestJS independent auth** (local JWT for `admin` · `staff` · `customer`); **no Supabase Auth** even in Phase 1 ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Next.js route protection + session-aware rendering; HTTP-only cookies where applicable. NestJS natively handles admin temp-passwords/resets and customer OTP. Locked roles: `admin` · `staff` (same permissions as `admin` for now) · `customer` ([11-authentication-migration.md](11-authentication-migration.md#locked-role-matrix)).
 - Server-function mapping **DECIDED**: Backend API / Server Action / BFF tree ([15-server-function-mapping.md](15-server-function-mapping.md)).
 - RSC by default; small Client islands; static/SSR/ISR per route ([ADR-003](../architecture/decisions/ADR-003-rendering-strategy.md)).
 - Hybrid data fetching: RSC initial reads; TanStack Query for interactive server state ([ADR-004](../architecture/decisions/ADR-004-data-and-state.md)).
@@ -65,7 +65,7 @@ flowchart LR
 
 **ACCEPTED RISK (remain open in docs)**
 
-- Cookie/SSR session spike (**BLOCKED** until PASSED after migration start ΓÇö [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md)); prove during foundation / server-infra / auth with service-role or confirmed test user.
+- Cookie/SSR session spike (**BLOCKED** until Nest JWT HTTP-only cookies are proven — [ADR-005](../architecture/decisions/ADR-005-authentication.md); `@supabase/ssr` spike [superseded](../architecture/spikes/auth-ssr-spike.md)).
 - Minimal parity baselines ([parity-baselines.md](../architecture/parity-baselines.md)); asset vendoring **done** (slice 2); env confirm at Vercel deploy; rollback owner not a GO gate.
 
 **DECIDED (go-live / cutover)**
@@ -105,6 +105,6 @@ flowchart LR
 - [Gaps and solutions](gaps-and-solutions.md) — UI vs API vs DB backlog (**G-01…G-36**)
 - Backend contracts (separate program, not migration): [../backend/README.md](../backend/README.md) · [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md) · [ADR-015](../architecture/decisions/ADR-015-backend-stack.md)
 
-**Next step:** slice 3 ΓÇö Server infrastructure (backend/Supabase factories, secret isolation, auth proof / D-28 cookie SSR, portable logging). Slice 2 assets **done** (`npm run scan:assets`). Keep [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md) open until PASSED. Multi-agent roles: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md).
+**Next step:** slice 15 remainder — production smoke + visual/email HTML parity. Optional: prove Nest JWT cookie/SSR (D-28 retargeted; do not re-run `@supabase/ssr`). Multi-agent roles: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md).
 
 **Migration Go / No-Go:** **GO**.

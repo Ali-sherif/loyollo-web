@@ -28,4 +28,4 @@ Follow dependency-aware slices in `docs/frontend/12-migration-plan.md`. Do not s
 
 ## Multi-model / multi-agent
 
-Multiple AI models are allowed. They must follow `docs/architecture/multi-agent-workflow.md`: one docs plan, one owner per overlapping path, slice-scoped work. Remaining parallel work is production smoke / slice 15 parity or D-28 proof — one domain owner per overlapping path.
+Multiple AI models are allowed. They must follow `docs/architecture/multi-agent-workflow.md`: one docs plan, one owner per overlapping path, slice-scoped work. Remaining parallel work is production smoke / slice 15 parity or Nest JWT D-28 proof — one domain owner per overlapping path.

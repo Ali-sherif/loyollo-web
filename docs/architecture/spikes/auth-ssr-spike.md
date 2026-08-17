@@ -1,9 +1,13 @@
 # Spike: Auth Cookie / SSR Session
 
 **Date:** 2026-08-11  
-**Status:** **ACCEPTED RISK** — remain **BLOCKED** until PASSED; prove **after** migration start (foundation / server-infra / auth slices). Not APPROVED.  
-**Code:** Removed from the repo (`spikes/auth-ssr/` deleted). Findings below stand; recreate an isolated Next 16.3 App Router POC (or prove in-app during auth slices) when clearing this remaining item.  
-**Related:** [ADR-005](../decisions/ADR-005-authentication.md), checklist item “Supabase server-session / HTTP-only cookie approach”, D-28
+**Status:** **SUPERSEDED** (2026-08-17) — this spike proved `@supabase/ssr`. [ADR-005](../decisions/ADR-005-authentication.md) **Option C** withdraws Supabase Auth even in Phase 1. Do **not** treat a PASS of this document as D-28 complete.
+
+**Replacement proof (D-28):** NestJS-issued local JWT in HTTP-only cookies via Next `proxy.ts` + RSC session validation against Nest. Recreate the harness against Nest auth APIs, not `@supabase/ssr`.
+
+Historical notes below are kept for the leftover `@supabase/ssr` scaffolding only.
+
+**Related:** [ADR-005](../decisions/ADR-005-authentication.md) Option C, D-28 (retargeted)
 
 ## Goal
 

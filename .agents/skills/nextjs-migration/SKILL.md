@@ -22,7 +22,7 @@ description: >-
 - They share one plan: never invent a parallel migration.
 - One overlapping path → one owner. Prefer one slice per agent.
 - Parallelize only as mapped in `docs/architecture/multi-agent-workflow.md`.
-- **Current start for parallel agents:** production smoke / slice 15 parity; optional D-28 cookie/SSR proof. TanStack Start and Lovable are retired — do not recreate `src/routes`.
+- **Current start for parallel agents:** production smoke / slice 15 parity; optional Nest JWT D-28 cookie/SSR proof (not `@supabase/ssr`). TanStack Start and Lovable are retired — do not recreate `src/routes`.
 
 ## Workflow
 
@@ -45,7 +45,7 @@ Work open Critical items with the user. Typical blockers:
 - Production route map approval
 - Canonical package manager
 - Email/SMS provider or adapter stub ACCEPTED RISK
-- Cookie/SSR session spike
+- Cookie/SSR session spike (Nest JWT HTTP-only cookies; `@supabase/ssr` superseded)
 - Characterization / visual / email HTML baselines
 
 Output a go/no-go. If no-go, stop before creating a Next.js app.

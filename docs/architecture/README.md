@@ -12,15 +12,15 @@
 - **ACCEPTED RISK:** Concrete email/SMS providers deferred; use `src/lib/server/messaging/` adapter stubs (SMS fails explicitly until configured).
 - **DECIDED:** Initial hosting target is Vercel. See [ADR-008](decisions/ADR-008-deployment.md).
 - **DECIDED:** Target Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x, and Node.js 24 LTS for Node-based deployments. Cloudflare Workers (if used) target `workerd` via OpenNext with separate Node compatibility validation. See [ADR-001](decisions/ADR-001-nextjs-version.md).
-- **RECOMMENDED:** Preserve Supabase schema and contracts. Keep the existing backend as the primary API; Next.js orchestrates and protects routes but does not replace backend ownership.
-- **DECIDED:** Authentication ownership in the backend ([ADR-005](decisions/ADR-005-authentication.md)). Locked roles: **`admin`** (buyer / owner), **`staff`** (same permissions as admin for now), **`customer`** (shop member login).
+- **DECIDED:** Keep the existing backend as the primary API; Next.js orchestrates and protects routes but does not replace backend ownership ([ADR-006](decisions/ADR-006-server-boundaries.md)).
+- **DECIDED:** Authentication is a fully independent NestJS system for all roles, local JWT, no Supabase Auth even in Phase 1 ([ADR-005](decisions/ADR-005-authentication.md) Option C). Locked roles: **`admin`** (buyer / owner), **`staff`** (same permissions as admin for now), **`customer`** (shop member login). NestJS natively handles admin temp-passwords/resets and customer OTP.
 - **DECIDED:** Canonical package manager is npm (`package-lock.json`); remove `bun.lock` at implementation start.
 - **DECIDED:** Production route map approved and restructured ΓÇö [02-route-migration.md](../frontend/02-route-migration.md).
 - **DECIDED:** RLS/storage for this migration ΓÇö retain existing Lovable policies in Phase 1; Phase 2 custom Backend APIs own all data/storage access. See [ADR-011](decisions/ADR-011-rls-storage-strategy.md).
 - **DECIDED:** Phase 2 backend stack is NestJS 11.x, Prisma 7.x, and PostgreSQL 18.x (latest stable patches at implementation). Not a frontend-migration slice. See [ADR-015](decisions/ADR-015-backend-stack.md).
 - **DECIDED:** Go-live/cutover (D-23) ΓÇö pre-launch; first prod is Next on Vercel; no dual production frontends; first-party email BFF; no dual writes. See [cutover.md](cutover.md).
-- **ACCEPTED RISK:** Cookie/SSR session spike (**BLOCKED** until proven after migration start ΓÇö [spikes/auth-ssr-spike.md](spikes/auth-ssr-spike.md)); minimal parity baselines ([parity-baselines.md](parity-baselines.md)); **Vercel env confirm** (open until UI check) ΓÇö see [deferred-decisions.md](deferred-decisions.md); rollback owner not a GO gate. **DONE:** asset vendoring (slice 2); server infra scaffolding + messaging stubs (slices 3–4).
-- **Go / No-Go:** **GO** for migration implementation and root Next.js app creation. D-28 remains documented open/BLOCKED until PASSED.
+- **ACCEPTED RISK:** Cookie/SSR session spike (**BLOCKED** until Nest JWT cookies proven — [ADR-005](decisions/ADR-005-authentication.md); `@supabase/ssr` spike [superseded](spikes/auth-ssr-spike.md)); minimal parity baselines ([parity-baselines.md](parity-baselines.md)); **Vercel env confirm** (open until UI check) — see [deferred-decisions.md](deferred-decisions.md); rollback owner not a GO gate. **DONE:** asset vendoring (slice 2); server infra scaffolding + messaging stubs (slices 3–4).
+- **Go / No-Go:** **GO** for migration implementation and root Next.js app creation. D-28 remains documented open/BLOCKED until Nest JWT SSR is PASSED.
 
 ## Critical decisions
 
@@ -42,7 +42,7 @@
 
 ## Recommended decision order
 
-`Messaging adapter stubs (at implementation) ΓåÆ migration slices; prove cookie/SSR session (D-28) during foundation / server-infra / auth (remains open until PASSED)`
+`Messaging adapter stubs (at implementation) → migration slices; prove Nest JWT cookie/SSR session (D-28, ADR-005 Option C) during auth (remains open until PASSED)`
 
 (Server-function ΓåÆ Backend API / Server Action / BFF mapping is **DECIDED** ΓÇö [15-server-function-mapping.md](../frontend/15-server-function-mapping.md).)
 

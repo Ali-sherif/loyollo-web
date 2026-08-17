@@ -6,7 +6,7 @@ import * as React from "react";
 import { buildHref, resolveHref } from "@/lib/navigation/paths";
 
 export type AppLinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href"> & {
-  /** TanStack-style path (`/signin`) or approved Next path (`/auth/sign-in`). */
+  /** Approved Next path (`/auth/sign-in`) or leftover legacy path (`/signin`). */
   to?: string;
   href?: string;
   params?: Record<string, string>;
@@ -17,8 +17,7 @@ export type AppLinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "
 };
 
 /**
- * Framework-agnostic link: plain anchor with runtime path resolution.
- * Works in both TanStack (Vite) and Next during dual in-repo coexistence.
+ * App link: plain anchor with approved-path resolution.
  */
 export const Link = React.forwardRef<HTMLAnchorElement, AppLinkProps>(function AppLink(
   { to, href, params, search, hash, replace, children, onClick, ...rest },
@@ -81,24 +80,7 @@ export function useNavigate() {
   }, []);
 }
 
-function useWindowPathname(): string {
-  const [pathname, setPathname] = React.useState(() =>
-    typeof window !== "undefined" ? window.location.pathname : "",
-  );
-
-  React.useEffect(() => {
-    const sync = () => setPathname(window.location.pathname);
-    sync();
-    window.addEventListener("popstate", sync);
-    return () => window.removeEventListener("popstate", sync);
-  }, []);
-
-  return pathname;
-}
-
-/** Next: SSR-safe pathname from App Router. TanStack: window + popstate. */
-export const usePathname =
-  process.env.NEXT_PUBLIC_IS_NEXT === "1" ? useNextPathname : useWindowPathname;
+export const usePathname = useNextPathname;
 
 /** Compatibility shim for `useRouterState({ select: s => s.location.pathname })`. */
 export function useRouterState<T>(options: {

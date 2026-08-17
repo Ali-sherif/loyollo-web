@@ -45,12 +45,12 @@ function timingSafeEqualString(a: string, b: string): boolean {
 }
 
 /**
- * First-party auth email webhook (replaces `/lovable/email/auth/webhook`).
- * Auth: `Authorization: Bearer <EMAIL_WEBHOOK_SECRET|LOVABLE_API_KEY>`.
- * Renders preserved templates and enqueues via Supabase RPC (no Lovable SDK).
+ * First-party auth email webhook.
+ * Auth: `Authorization: Bearer <EMAIL_WEBHOOK_SECRET>`.
+ * Renders preserved templates and enqueues via Supabase RPC.
  */
 export async function POST(request: Request) {
-  const secret = process.env.EMAIL_WEBHOOK_SECRET || process.env.LOVABLE_API_KEY;
+  const secret = process.env.EMAIL_WEBHOOK_SECRET;
   if (!secret) {
     logger.error("email.auth.webhook.missing_secret");
     return Response.json({ error: "Server configuration error" }, { status: 500 });

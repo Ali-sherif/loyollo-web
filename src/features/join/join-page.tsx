@@ -1,7 +1,6 @@
 "use client";
 
 import { Link, useNavigate, useRouterState } from "@/lib/navigation";
-// TanStack useServerFn removed — call server modules directly from client with fetch/BFF later
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { CheckCircle2, Gift, Loader2, Sparkles } from "lucide-react";

@@ -1,8 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Pre-launch D-23: first production is Next on Vercel; TanStack remains in-repo
-  // as migration source only (not a dual production surface). App under src/app (ADR-007).
+  // App Router under src/app (ADR-007). First production is Next on Vercel (ADR-008).
   reactStrictMode: true,
   typescript: {
     tsconfigPath: "tsconfig.next.json",
@@ -10,7 +9,7 @@ const nextConfig: NextConfig = {
   env: {
     // Lets shared navigation / auth pick Next approved URLs (docs/frontend/02-route-migration.md).
     NEXT_PUBLIC_IS_NEXT: "1",
-    // Map TanStack/Vite env names for Next client bundles (docs/deployment/env.md).
+    // Map leftover Vite env names for Next client bundles (docs/deployment/env.md).
     NEXT_PUBLIC_SUPABASE_URL:
       process.env.NEXT_PUBLIC_SUPABASE_URL ??
       process.env.VITE_SUPABASE_URL ??

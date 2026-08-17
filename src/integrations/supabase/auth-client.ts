@@ -1,17 +1,15 @@
 "use client";
 
 /**
- * Browser Supabase client for AuthProvider / client UI.
- * Next → @supabase/ssr cookie client; TanStack/Vite → localStorage client.
+ * Browser Supabase client for AuthProvider / client UI (@supabase/ssr cookies).
  */
 
 import { createBrowserClient } from "@supabase/ssr";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { getOptionalPublicSupabaseEnv, isPublicSupabaseConfigured } from "@/config/env";
 import type { Database } from "@/integrations/supabase/types";
 import { createSupabaseFetch } from "@/integrations/supabase/fetch";
-import { isNextRuntime } from "@/lib/navigation/paths";
 
 let cached: SupabaseClient<Database> | null = null;
 
@@ -35,21 +33,8 @@ export function tryGetAuthSupabase(): SupabaseClient<Database> | null {
   if (!env) return null;
 
   const { url, anonKey } = env;
-
-  if (isNextRuntime()) {
-    cached = createBrowserClient<Database>(url, anonKey, {
-      global: { fetch: createSupabaseFetch(anonKey) },
-    });
-    return cached;
-  }
-
-  cached = createClient<Database>(url, anonKey, {
+  cached = createBrowserClient<Database>(url, anonKey, {
     global: { fetch: createSupabaseFetch(anonKey) },
-    auth: {
-      storage: typeof window !== "undefined" ? localStorage : undefined,
-      persistSession: true,
-      autoRefreshToken: true,
-    },
   });
   return cached;
 }

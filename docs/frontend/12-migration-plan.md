@@ -23,14 +23,14 @@
 
 ## Multi-model / multi-agent
 
-Multiple AI models may execute this plan. Rules and parallelization map: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md). **Do not** invent a second slice order. **Current parallel start:** slice 5 (marketing/legal); optional second lane = D-28 spike **or** auth email BFF (slice 6). Slices 1–4 baselines exist.
+Multiple AI models may execute this plan. Rules and parallelization map: [multi-agent-workflow.md](../architecture/multi-agent-workflow.md). **Do not** invent a second slice order. **Current parallel start:** production smoke / slice 15 parity; optional D-28 spike. Slices 1–14 are done.
 
 ## Dependency-aware slices
 
-1. Foundation spike: Next 16.3.x, TypeScript 6.0.x, Node 24 / Vercel, Tailwind/assets parity, root layout, `error`/`not-found`/`loading`, Metadata API, environment validation. ΓÇö **done:** `src/app` (layout/page/error/not-found/loading), `next.config.ts`, `tsconfig.next.json`, `src/config/env.ts` (public + server), PostCSS/Tailwind via `src/styles.css`, `.nvmrc` 24 / `engines.node >=24`, scripts `dev:next` / `build:next` / `typecheck:next` (TanStack `dev`/`build` retained in-repo until retirement ΓÇö not production coexistence).
+1. Foundation spike: Next 16.3.x, TypeScript 6.0.x, Node 24 / Vercel, Tailwind/assets parity, root layout, `error`/`not-found`/`loading`, Metadata API, environment validation. — **done:** `src/app` (layout/page/error/not-found/loading), `next.config.ts`, `tsconfig.next.json`, `src/config/env.ts` (public + server), PostCSS/Tailwind via `src/styles.css`, `.nvmrc` 24 / `engines.node >=24`; default scripts `dev` / `build` / `start` are Next.
 2. Vendor/re-host assets currently tied to Lovable/CDN manifests. ΓÇö **done:** binaries under `src/assets/` (no `*.asset.json` / `__l5e`); OG at `public/og-image.png`; imports use local files; `npm run scan:assets` acceptance.
 3. Server infrastructure: backend/Supabase factories, secret isolation, auth proof (route protection + session-aware rendering), portable logging. ΓÇö **done (scaffolding):** `@supabase/ssr` browser/server/admin factories; `src/proxy.ts` session refresh + `/app` coarse gate; `requireUser` / `getCurrentUser`; portable `logger`; D-28 remains **BLOCKED** until confirmed cookie session proven.
-4. Messaging skeleton under `src/lib/server/messaging/` that renders existing templates without Lovable SDKs or direct provider coupling. ΓÇö **done:** contracts + render + transport stubs (email refuses silently-success; SMS fails explicitly); auth templates under `templates/auth/` (legacy `src/lib/email-templates/*` re-exports); campaign personalize/HTML helpers.
+4. Messaging skeleton under `src/lib/server/messaging/` that renders existing templates without Lovable SDKs or direct provider coupling. — **done:** contracts + render + transport stubs (email refuses silently-success; SMS fails explicitly); auth templates under `templates/auth/`; campaign personalize/HTML helpers.
 5. Static marketing/legal routes with visual and SEO metadata parity. — **done:** `(marketing)/*`, `/legal/*` via feature pages + Metadata API.
 6. Auth and recovery routes, including first-party auth email webhook/preview BFF handlers (not `/lovable/*`). — **done:** `/auth/*` + `/api/email/auth/{webhook,preview}` + `/api/email/queue/process`.
 7. Onboarding. — **done:** `/onboarding/*` with authenticated layout.
@@ -40,16 +40,16 @@ Multiple AI models may execute this plan. Rules and parallelization map: [multi-
 11. Branches/maps (client islands for maps). — **done:** `/app/branches`, `/app/branches/[branchId]`.
 12. Campaigns: UI + Backend API enqueue; **queue workers outside Next** ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)); messaging contracts; preserve SMS channel content. — **done:** `/app/campaigns*` + `/api/campaigns/send` via messaging stubs.
 13. Analytics and settings/MFA/uploads/account deletion. — **done:** `/app/analytics`, `/app/settings`, `/app/settings/password` + account delete/password-changed APIs.
-14. Remove remaining Lovable packages/env references. — **partial:** Next no longer routes through `/lovable/*` (first-party `/api/email/*`); Lovable packages remain for in-repo TanStack source until explicit retirement approval.
-15. SEO, performance, accessibility, visual, and messaging parity regression. — **baseline:** `npm run typecheck:next` + `npm run build` green; production smoke + visual/email HTML parity still required before TanStack deletion.
+14. Remove remaining Lovable packages/env references. — **done:** `@lovable.dev/*` and `LOVABLE_*` withdrawn; `/lovable/*` deleted; first-party `/api/email/*` only; TanStack Start (`src/routes`, Vite/Nitro) removed after explicit retirement approval.
+15. SEO, performance, accessibility, visual, and messaging parity regression. — **baseline:** `npm run typecheck:next` + `npm run build` green; production smoke + visual/email HTML parity still required.
 
 ## Go-live and cutover
 
-**DECIDED** ΓÇö see [cutover.md](../architecture/cutover.md): pre-launch product; **first production** is Next.js on Vercel with the **approved** route map; **no** dual production frontends (TanStack/Lovable may remain as in-repo source until retirement). Replace `/lovable/email/*` with first-party API paths at auth/messaging slices; no dual writes. Named rollback owner is **ACCEPTED RISK** (not a pre-implementation gate); prefer per-slice Next deploy rollback operationally.
+**DECIDED** — see [cutover.md](../architecture/cutover.md): pre-launch product; **first production** is Next.js on Vercel with the **approved** route map; **no** dual production frontends. TanStack Start and Lovable are retired from the repo. Auth/email callers use first-party `/api/email/*`; no dual writes. Named rollback owner is **ACCEPTED RISK** (not a pre-implementation gate); prefer per-slice Next deploy rollback operationally.
 
 ## Retirement
 
-Remove TanStack and Lovable code only after all route/API contracts pass production smoke tests, rollback window expires, and the user explicitly approves deletion.
+**Done** (explicit user approval, 2026-08-17). TanStack Start and Lovable source, packages, `/lovable/*` routes, and `LOVABLE_*` env are removed. Do not recreate them. Remaining slice 15 work is production smoke and visual/email HTML parity — not a second frontend.
 
 ## Out of scope for this plan
 

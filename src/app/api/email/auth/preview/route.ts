@@ -63,10 +63,10 @@ function timingSafeEqualString(a: string, b: string): boolean {
 }
 
 /**
- * First-party auth email HTML preview (replaces `/lovable/email/auth/preview`).
+ * First-party auth email HTML preview.
  */
 export async function POST(request: Request) {
-  const secret = process.env.EMAIL_WEBHOOK_SECRET || process.env.LOVABLE_API_KEY;
+  const secret = process.env.EMAIL_WEBHOOK_SECRET;
   if (!secret) {
     return Response.json({ error: "Server configuration error" }, { status: 500 });
   }

@@ -14,7 +14,7 @@ function timingSafeEqualString(a: string, b: string): boolean {
 }
 
 /**
- * First-party email queue worker (replaces `/lovable/email/queue/process`).
+ * First-party email queue worker.
  * Uses messaging transport stubs until a provider is chosen (ACCEPTED RISK).
  */
 export async function POST(request: Request) {

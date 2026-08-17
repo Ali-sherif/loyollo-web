@@ -1,5 +1,5 @@
 ---
-description: Docs-led TanStack Start → Next.js migration gates and locked constraints
+description: Docs-led Next.js migration gates and locked constraints
 alwaysApply: true
 ---
 
@@ -18,14 +18,14 @@ Source of truth: `docs/architecture/` and `docs/frontend/`. Do not invent a para
 
 - Visual style parity — no redesign (ADR-010).
 - Preserve email/SMS templates under `src/lib/server/messaging/`; provider-agnostic contracts only.
-- Withdraw Lovable packages, `/lovable/*` routes, secrets, and host coupling (ADR-009).
+- Lovable packages, `/lovable/*` routes, secrets, and host coupling are withdrawn (ADR-009). Do not restore them.
 - Existing backend remains primary API; Next.js is not a backend replacement (ADR-006).
 - Target: Next.js 16.3.x, React 19.2.x, TypeScript 6.0.x, Vercel + Node 24 LTS.
 
 ## Execution order
 
-Follow dependency-aware slices in `docs/frontend/12-migration-plan.md`. Do not skip foundation/auth/messaging gates. Do not delete TanStack/Lovable code until production smoke + rollback window + explicit user approval.
+Follow dependency-aware slices in `docs/frontend/12-migration-plan.md`. Do not skip foundation/auth/messaging gates. TanStack Start and Lovable were deleted after explicit retirement approval — do not recreate `src/routes` or `@lovable.dev/*`.
 
 ## Multi-model / multi-agent
 
-Multiple AI models are allowed. They must follow `docs/architecture/multi-agent-workflow.md`: one docs plan, one owner per overlapping path, slice-scoped work. Parallel agents start at **slice 5** (marketing/legal); optional non-colliding work is D-28 spike or auth email BFF — one domain owner per overlapping path.
+Multiple AI models are allowed. They must follow `docs/architecture/multi-agent-workflow.md`: one docs plan, one owner per overlapping path, slice-scoped work. Remaining parallel work is production smoke / slice 15 parity or D-28 proof — one domain owner per overlapping path.

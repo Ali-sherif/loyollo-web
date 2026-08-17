@@ -1,7 +1,6 @@
 "use client";
 
 import { Link, useNavigate, useRouterState } from "@/lib/navigation";
-// TanStack useServerFn removed — call server modules directly from client with fetch/BFF later
 import * as React from "react";
 import { toast } from "sonner";
 import QRCode from "qrcode";

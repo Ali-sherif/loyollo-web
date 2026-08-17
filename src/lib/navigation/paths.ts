@@ -1,5 +1,5 @@
 /**
- * Approved App Router paths + legacy TanStack path mapping
+ * Approved App Router paths + legacy URL mapping
  * (docs/frontend/02-route-migration.md).
  */
 
@@ -38,7 +38,7 @@ export const paths = {
   join: (programId: string) => `/join/${programId}`,
 } as const;
 
-/** Legacy TanStack URL → approved Next URL */
+/** Legacy TanStack URL → approved Next URL (bookmarks / leftover hrefs). */
 export const LEGACY_TO_APPROVED: Record<string, string> = {
   "/signin": paths.signIn,
   "/signup": paths.signUp,
@@ -59,47 +59,24 @@ export const LEGACY_TO_APPROVED: Record<string, string> = {
 };
 
 export function isNextRuntime(): boolean {
-  return (
-    process.env.NEXT_PUBLIC_IS_NEXT === "1" ||
-    process.env.NEXT_RUNTIME === "nodejs" ||
-    process.env.NEXT_RUNTIME === "edge"
-  );
+  return true;
 }
 
 /**
- * Resolve a path for the active runtime.
- * - Next: map legacy → approved; leave approved/marketing paths alone
- * - TanStack: map approved → legacy where needed so in-repo Vite app keeps working
+ * Resolve a path for the Next.js app.
+ * Map leftover legacy URLs → approved App Router paths.
  */
 export function resolveHref(to: string): string {
   if (!to) return "/";
-  // Dynamic segments: /customers/$id or /customers/:id → leave structure, map prefix
   const normalized = to.split("?")[0] ?? to;
   const search = to.includes("?") ? to.slice(to.indexOf("?")) : "";
 
-  if (isNextRuntime()) {
-    if (LEGACY_TO_APPROVED[normalized]) {
-      return `${LEGACY_TO_APPROVED[normalized]}${search}`;
-    }
-    // /customers/xyz → /app/customers/xyz
-    for (const [legacy, approved] of Object.entries(LEGACY_TO_APPROVED)) {
-      if (normalized.startsWith(`${legacy}/`)) {
-        return `${approved}${normalized.slice(legacy.length)}${search}`;
-      }
-    }
-    return to;
+  if (LEGACY_TO_APPROVED[normalized]) {
+    return `${LEGACY_TO_APPROVED[normalized]}${search}`;
   }
-
-  // TanStack: if someone passes approved paths, map back to legacy
-  const APPROVED_TO_LEGACY = Object.fromEntries(
-    Object.entries(LEGACY_TO_APPROVED).map(([k, v]) => [v, k]),
-  ) as Record<string, string>;
-  if (APPROVED_TO_LEGACY[normalized]) {
-    return `${APPROVED_TO_LEGACY[normalized]}${search}`;
-  }
-  for (const [approved, legacy] of Object.entries(APPROVED_TO_LEGACY)) {
-    if (normalized.startsWith(`${approved}/`)) {
-      return `${legacy}${normalized.slice(approved.length)}${search}`;
+  for (const [legacy, approved] of Object.entries(LEGACY_TO_APPROVED)) {
+    if (normalized.startsWith(`${legacy}/`)) {
+      return `${approved}${normalized.slice(legacy.length)}${search}`;
     }
   }
   return to;

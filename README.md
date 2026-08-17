@@ -2,20 +2,21 @@
 
 Loyalty platform frontend for local businesses: marketing site, auth/onboarding, and authenticated dashboard for customers, loyalty programs, branches, campaigns, and analytics.
 
-This repository is currently a **TanStack Start** SSR app with an in-progress migration to **Next.js App Router**. Critical gates are **GO**; slices 1–2 are done (foundation + asset vendoring). TanStack remains the primary running app until route cutover.
+This repository is a **Next.js App Router** app (slices 1–14 of the TanStack Start → Next.js migration are done; Lovable and TanStack Start are retired). Slice 15 remainder is production smoke + visual/email HTML parity.
 
 ## Current stack
 
 | Concern      | Implementation                               |
 | ------------ | -------------------------------------------- |
-| Framework    | TanStack Start 1.x (SSR)                     |
+| Framework    | Next.js 16.3.x App Router                    |
 | UI           | React / React DOM 19.2                       |
-| Routing      | TanStack Router (file-based)                 |
-| Build        | Vite 8, Nitro                                |
-| Data / auth  | Supabase (browser RLS + server service-role) |
-| Server state | React Query (limited use today)              |
+| Routing      | Next.js App Router (`src/app`)               |
+| Build        | Next.js (`next build`)                       |
+| Data / auth  | Supabase (cookie session + service-role)     |
+| Server state | TanStack Query (interactive client state)    |
 | Styling      | Tailwind CSS 4, Radix / shadcn, Figtree      |
 | Forms        | Local state + selective Zod                  |
+| Messaging    | `src/lib/server/messaging/` (provider-agnostic stubs) |
 
 ## Target stack (DECIDED)
 
@@ -36,17 +37,11 @@ Cloudflare Workers via OpenNext/`workerd` remains a secondary option and require
 # Install (canonical: npm / package-lock.json)
 npm install
 
-# TanStack development (current primary app)
+# Next.js development / production
 npm run dev
-
-# Next.js foundation (migration)
-npm run dev:next
-npm run build:next
-npm run typecheck:next
-
-# TanStack production build / preview
 npm run build
-npm run preview
+npm run start
+npm run typecheck:next
 
 # Lint / format
 npm run lint
@@ -57,21 +52,22 @@ npm run format
 
 Do not commit secrets. Canonical inventory (names + classification only): [`docs/deployment/env.md`](docs/deployment/env.md). Template: [`.env.example`](.env.example).
 
-| Name                                                         | Scope           | Purpose                               |
-| ------------------------------------------------------------ | --------------- | ------------------------------------- |
-| `VITE_SUPABASE_URL` / `SUPABASE_URL`                         | Client / server | Supabase project URL                  |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` / `SUPABASE_PUBLISHABLE_KEY` | Client / server | Public Supabase key                   |
-| `SUPABASE_SERVICE_ROLE_KEY`                                  | Server only     | Privileged Supabase access            |
-| `LOVABLE_API_KEY`                                            | Server only     | Lovable email routes (to be removed)  |
-| `LOVABLE_SEND_URL`                                           | Server only     | Lovable send endpoint (to be removed) |
+| Name                                      | Scope           | Purpose                    |
+| ----------------------------------------- | --------------- | -------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`                | Client          | Supabase project URL       |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`           | Client          | Public Supabase anon key   |
+| `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` | Server        | SSR fallbacks (optional)   |
+| `SUPABASE_SERVICE_ROLE_KEY`               | Server only     | Privileged Supabase access |
+| `EMAIL_WEBHOOK_SECRET`                    | Server only     | Auth email webhook/preview |
 
-Service-role and Lovable keys must never ship in the client bundle.
+Service-role keys must never ship in the client bundle. Do not set `LOVABLE_*`.
 
 ## Project structure (current)
 
 ```text
 src/
-├── routes/                 # TanStack file-based pages + Lovable email APIs
+├── app/                    # Next.js App Router pages + API routes
+├── features/               # Route page implementations
 ├── components/
 │   ├── ui/                 # shadcn / Radix primitives
 │   ├── landing/            # marketing sections
@@ -82,30 +78,31 @@ src/
 │   └── guide/              # guide illustrations
 ├── hooks/                  # auth and shared hooks
 ├── integrations/supabase/  # browser + server clients, types
-├── lib/                    # server functions, email templates, utilities
+├── lib/
+│   ├── server/             # BFF services + messaging
+│   ├── client/             # browser API helpers
+│   └── navigation/         # approved path helpers
 ├── data/                   # static domain data
-├── assets/                 # local images / logos (vendored in slice 2)
+├── assets/                 # local images / logos
 └── styles.css              # Tailwind tokens and global styles
 ```
 
-Route conventions: see [`src/routes/README.md`](src/routes/README.md).
-
 ## Product areas
 
-| Area                 | Routes (current)                                                                                        |
-| -------------------- | ------------------------------------------------------------------------------------------------------- |
-| Marketing / legal    | `/`, `/about`, `/features`, `/pricing`, `/guide`, `/contact`, `/terms`, `/privacy`                      |
-| Auth                 | `/signin`, `/signup`, `/verify`, `/verified`, `/forgot-password`, `/reset-password`, `/change-password` |
-| Onboarding           | `/onboarding/*`                                                                                         |
-| App                  | `/dashboard`, `/customers`, `/loyalty-program`, `/branches`, `/campaigns`, `/analytics`, `/settings`    |
-| Public join          | `/join/$programId`                                                                                      |
-| Email APIs (Lovable) | `/lovable/email/*` → will move to first-party `/api/email/*`                                            |
+| Area              | Routes                                                                                         |
+| ----------------- | ---------------------------------------------------------------------------------------------- |
+| Marketing / legal | `/`, `/about`, `/features`, `/pricing`, `/guide`, `/contact`, `/legal/terms`, `/legal/privacy` |
+| Auth              | `/auth/sign-in`, `/auth/sign-up`, `/auth/verify`, `/auth/verified`, `/auth/forgot-password`, `/auth/reset-password` |
+| Onboarding        | `/onboarding/*`                                                                                |
+| App               | `/app/dashboard`, `/app/customers`, `/app/loyalty`, `/app/branches`, `/app/campaigns`, `/app/analytics`, `/app/settings` |
+| Public join       | `/join/[programId]`                                                                            |
+| Email APIs        | `/api/email/auth/webhook`, `/api/email/auth/preview`, `/api/email/queue/process`               |
 
 ## Architecture decisions (summary)
 
 **DECIDED** (see `docs/architecture/` — ADRs 001–013)
 
-- Withdraw Lovable packages, `/lovable/*` routes, secrets, and host hooks.
+- Withdraw Lovable packages, `/lovable/*` routes, secrets, and host hooks (**done**).
 - Keep visual design and email/SMS message content (no redesign).
 - Host on Vercel initially; pin Next 16.3.x / React 19.2.x / TypeScript 6.0.x / Node 24 LTS.
 - Messaging templates and transport live under `src/lib/server/messaging/`; features use provider-agnostic contracts only.
@@ -122,26 +119,22 @@ Full ADRs: [`docs/architecture/`](docs/architecture/README.md).
 | [`docs/frontend/02-route-migration.md`](docs/frontend/02-route-migration.md)                 | Route inventory                   |
 | [`docs/frontend/15-server-function-mapping.md`](docs/frontend/15-server-function-mapping.md) | Server function → Next.js mapping |
 | [`docs/frontend/17-messaging-templates.md`](docs/frontend/17-messaging-templates.md)         | Email/SMS template inventory      |
-| [`AGENTS.md`](AGENTS.md)                                                                     | Agent / Lovable sync notes        |
+| [`AGENTS.md`](AGENTS.md)                                                                     | Agent notes                       |
 
 ## Scripts
 
-| Script                   | Description                            |
-| ------------------------ | -------------------------------------- |
-| `npm run dev`            | Vite/TanStack Start development server |
-| `npm run build`          | TanStack production build              |
-| `npm run build:dev`      | Development-mode build                 |
-| `npm run preview`        | Preview TanStack production build      |
-| `npm run dev:next`       | Next.js development server             |
-| `npm run build:next`     | Next.js production build               |
-| `npm run start:next`     | Serve Next.js production build         |
-| `npm run typecheck:next` | Typecheck Next.js project              |
-| `npm run lint`           | ESLint                                 |
-| `npm run format`         | Prettier write                         |
+| Script                   | Description                |
+| ------------------------ | -------------------------- |
+| `npm run dev`            | Next.js development server |
+| `npm run build`          | Next.js production build   |
+| `npm run start`          | Serve Next.js production   |
+| `npm run typecheck:next` | Typecheck Next.js project  |
+| `npm run lint`           | ESLint                     |
+| `npm run format`         | Prettier write             |
 
 ## Migration status
 
-**GO** — Critical gates cleared. Slices **1** (foundation) and **2** (asset vendoring) are done. Next: slice **3** (server infra + auth cookie/SSR proof). See [`docs/frontend/12-migration-plan.md`](docs/frontend/12-migration-plan.md). D-28 remains open until PASSED.
+**GO** — slices **1–14** done (including Lovable/TanStack retirement). Next: slice **15** (production smoke + visual/email HTML parity). D-28 remains open until PASSED. See [`docs/frontend/12-migration-plan.md`](docs/frontend/12-migration-plan.md).
 
 ## License
 

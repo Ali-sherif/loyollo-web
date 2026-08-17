@@ -22,7 +22,7 @@ description: >-
 - They share one plan: never invent a parallel migration.
 - One overlapping path → one owner. Prefer one slice per agent.
 - Parallelize only as mapped in `docs/architecture/multi-agent-workflow.md`.
-- **Current start for parallel agents:** slice 5 (marketing/legal); optional parallel = D-28 spike **or** auth email BFF (slice 6) — one owner per overlapping path. Slices 1–4 baselines exist.
+- **Current start for parallel agents:** production smoke / slice 15 parity; optional D-28 cookie/SSR proof. TanStack Start and Lovable are retired — do not recreate `src/routes`.
 
 ## Workflow
 
@@ -65,7 +65,7 @@ Follow `docs/frontend/12-migration-plan.md` slices in order. For each slice:
 - Do not redesign UI
 - Do not couple features to a specific email/SMS vendor — use messaging contracts
 - Do not move business authz/persistence into Next as a second backend
-- Do not remove TanStack/Lovable until smoke tests pass, rollback window ends, and user explicitly approves deletion
+- Do not restore TanStack Start (`src/routes`, Vite/Nitro) or Lovable packages/routes/secrets (retired, ADR-009)
 - Prefer Plan Mode for architecture and multi-slice planning
 
 ## Response shape when leading

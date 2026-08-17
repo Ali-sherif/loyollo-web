@@ -3,7 +3,6 @@
 import { assetSrc } from "@/lib/asset-src";
 
 import { Link, useNavigate, useRouterState } from "@/lib/navigation";
-// TanStack useServerFn removed — call server modules directly from client with fetch/BFF later
 import * as React from "react";
 import { sendCampaign } from "@/lib/client/campaigns-api";
 import { notifyCampaignCreated } from "@/lib/notify-client";

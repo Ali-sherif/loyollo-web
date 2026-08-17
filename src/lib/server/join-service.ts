@@ -367,7 +367,7 @@ function brandNameOf(
 }
 
 async function enqueueTransactional(args: {
-  supabase: Awaited<ReturnType<typeof importAdmin>>["supabaseAdmin"];
+  supabase: ReturnType<typeof createAdminSupabaseClient>;
   messageId: string;
   templateName: string;
   to: string;
@@ -411,16 +411,12 @@ async function enqueueTransactional(args: {
   if (enqErr) throw new Error(enqErr.message);
 }
 
-async function importAdmin() {
-  return await import("@/integrations/supabase/client.server");
-}
-
 async function notifyOwnerOfNewCustomer(args: {
   programId: string;
   customerId: string;
   customerName: string;
 }) {
-  const { supabaseAdmin } = await importAdmin();
+  const supabaseAdmin = createAdminSupabaseClient();
   const { data: program } = await supabaseAdmin
     .from("loyalty_programs")
     .select("owner_id")
@@ -484,7 +480,7 @@ async function notifyOwnerOfRewardEarned(args: {
   customerName: string;
   rewardName: string;
 }) {
-  const { supabaseAdmin } = await importAdmin();
+  const supabaseAdmin = createAdminSupabaseClient();
   const { data: program } = await supabaseAdmin
     .from("loyalty_programs")
     .select("owner_id")
@@ -548,7 +544,7 @@ async function emailCustomerRewardEarned(args: {
   customerName: string;
   rewardName: string;
 }) {
-  const { supabaseAdmin } = await importAdmin();
+  const supabaseAdmin = createAdminSupabaseClient();
   const { data: program } = await supabaseAdmin
     .from("loyalty_programs")
     .select("owner_id")

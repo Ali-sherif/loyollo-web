@@ -34,7 +34,7 @@ export function getServerEnv(): ServerEnv {
   });
 }
 
-/** Resolve public Supabase URL (Next public names, then Vite/TanStack fallbacks). */
+/** Resolve public Supabase URL (Next public names, then leftover Vite names). */
 export function resolvePublicSupabaseUrl(): string | undefined {
   return (
     process.env.NEXT_PUBLIC_SUPABASE_URL ||

@@ -1,6 +1,6 @@
 # Backend contracts (product data remediation)
 
-> **Scope warning:** This folder is a **specification for a separate Backend / Database program** ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md) Phase 2, [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md), [ADR-015](../architecture/decisions/ADR-015-backend-stack.md)). It is **not** Next.js migration work and does **not** authorize migrations or BFF persistence in this frontend repo.
+> **Scope warning:** This folder is a **specification for a separate Backend / Database program** ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md) Phase 2, [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md), [ADR-015](../architecture/decisions/ADR-015-backend-stack.md)). It is **not** Next.js migration work and does **not** authorize migrations or BFF persistence in this frontend repo. Implementation lives in the sibling **`loyollo-backend`** repo.
 
 ## Target stack (DECIDED)
 

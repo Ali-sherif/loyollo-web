@@ -180,6 +180,8 @@ Rewards / Referrals / QR call `ensureProgramSaved()` so a **tier** program can b
 
 Required: `spendAmount > 0`, `pointsEarned > 0`. Optional: minimum spend, expiry months, grace months, bonus signup points, double points on birthdays.
 
+**Minimum spend to earn (`minimum_spend`) — product intent:** ticket floor for Points. No points awarded when the paid invoice is **below** this amount. Parallel Visit gate: [Minimum invoice amount](../product/program-model.md#qualifying-visit--minimum-invoice-amount-min_spend_per_visit).
+
 **What check-in actually uses** (`join-service` `recordCheckIn`):
 
 - Adds `program.points_earned` to `customers.points` (flat, **not** `spend_amount` / ticket size)
@@ -198,7 +200,9 @@ Signup bonus and birthday double are stored flags only.
 
 Required: `visitsRequired > 0`, `rewardOnCompletion` (select: free item / discount / custom — **string labels**, not a `rewards.id`).
 
-Optional: min spend per visit, card expiry days, max visits per day, after-reward action (`reset` \| `continue`), bonus stamp on signup, double stamp weekends, notify one visit away.
+Optional: **Minimum invoice amount** (`min_spend_per_visit`; UI label today “Minimum spend per visit”), card expiry days, max visits per day, after-reward action (`reset` \| `continue`), bonus stamp on signup, double stamp weekends, notify one visit away.
+
+**Minimum invoice amount — product intent:** a visit is **qualifying** only if the paid invoice / ticket is **≥** this amount. Example: owner sets `200` → invoice `< 200` does **not** add a stamp; `≥ 200` does. `0` / empty = every visit qualifies. Full lock: [program-model.md](../product/program-model.md#qualifying-visit--minimum-invoice-amount-min_spend_per_visit).
 
 **Intended v1:** at the target count the counter **resets** (see above). Today’s `after_reward_action === "continue"` is stored UI, **not** the v1 product lock.
 
@@ -209,7 +213,7 @@ Optional: min spend per visit, card expiry days, max visits per day, after-rewar
 - When `visits >= visits_required`, inserts `customer_rewards` with `reward_name_snapshot` from `reward_on_completion` (`reward_id` null)
 - `after_reward_action === "reset"` subtracts `visits_required` from `visits`
 
-**Not used:** `min_spend_per_visit`, `card_expiry_days`, `bonus_stamp_signup`, `notify_one_visit_away`.
+**Not used:** `min_spend_per_visit` (Minimum invoice amount — saved, **not** enforced until ticket amount exists), `card_expiry_days`, `bonus_stamp_signup`, `notify_one_visit_away`.
 
 ### Visit UI extras (always empty)
 

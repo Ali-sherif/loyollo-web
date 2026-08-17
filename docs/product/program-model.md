@@ -54,6 +54,21 @@ Stored `program_type`: `points` · `visit` · `tier`.
 
 Tier is **status**, not a spendable currency. Catalog redeem stays a points-program (or visit-completion) path: [reward-redemption-flow.md](./reward-redemption-flow.md) · [customer-reward-progress.md](./customer-reward-progress.md).
 
+### Qualifying visit — Minimum invoice amount (`min_spend_per_visit`)
+
+**Product meaning (DECIDED intent):** on a **Visit** Program, **Minimum invoice amount** (UI today: “Minimum spend per visit”; column `min_spend_per_visit`) is the floor on the **paid invoice / ticket** for that in-store transaction. A visit **counts** (stamp +1) only when invoice amount **≥** this value. Below the floor → **no stamp**, no progress change.
+
+**Owner example:** “The visit does not count unless the invoice is ≥ 200” → set Minimum invoice amount to `200` (shop currency). Invoice `150` → no stamp. Invoice `200` or `350` → stamp counts.
+
+| Setting | Effect |
+| ------- | ------ |
+| `0` or empty | Every recorded visit / check-in qualifies (no invoice floor) |
+| `> 0` | Only invoices at or above the amount qualify |
+
+This is a **Visit** earning gate, not a Points conversion rule. The Points parallel is **Minimum spend to earn** (`minimum_spend`): no points below that ticket floor — [loyalty-page Points](../frontend/loyalty-page.md#points-system).
+
+**Honesty:** the field is saved on the program today; check-in does **not** enforce it until ticket amount is available (G-10). Product meaning above is what design and backend must honour when orders/POS land — do not invent a different rule.
+
 ### Open — tier downgrade
 
 Whether a member **downgrades** if activity drops (and how `tier_downgrade_protection` behaves) is **not decided**. Do not invent a default. Today’s merchant form stores a `tierDowngradeProtection` flag; that is **not** a product lock. Track in [deferred-decisions.md](../architecture/deferred-decisions.md).

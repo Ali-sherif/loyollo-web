@@ -605,7 +605,7 @@ Existing widgets that train the merchant to distrust numbers. Prefer relabel or 
 | **UX-58** | Email change disabled on Settings | Keep disabled with explanation, or design Auth email-change flow | settings-page |
 | **UX-59** | Reward “on completion” is a free-text label, not a catalog `rewards.id` | Picker from Rewards tab vs keep string | loyalty-page |
 | **UX-60** | Settings subtitle mentions “team members” with no team UI | Point at UX-01/03 or drop the phrase until those ship | settings-page known limitations |
-| **UX-60a** | Loyalty advanced rules saved but unused (min spend, expiry, birthday double, signup bonus, card expiry, notify 1-away, tier multipliers) | **Hide** those fields until check-in/POS honours them, or mark “not applied yet” | G-10 |
+| **UX-60a** | Loyalty advanced rules saved but unused (min spend / **Minimum invoice amount** `min_spend_per_visit`, expiry, birthday double, signup bonus, card expiry, notify 1-away, tier multipliers) | **Hide** those fields until check-in/POS honours them, or mark “not applied yet”. Product meaning of Minimum invoice amount: [program-model.md](./program-model.md#qualifying-visit--minimum-invoice-amount-min_spend_per_visit) | G-10 |
 | **UX-60b** | Loyalty QR / visit / tier-member stats hardcoded `"0"` | Use `"—"` or hide until `visit_events` + tier write | G-01, G-02, G-03 |
 | **UX-60c** | Notification toggles save but in-app bell ignores them | Disable toggles, or annotate “email only / not applied yet” | G-15 |
 | **UX-60d** | Delete last / **main** branch allowed; no reassign | Confirm + block, or force pick a new main | G-28 |

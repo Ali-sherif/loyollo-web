@@ -8,7 +8,7 @@
 
 **There is no standalone PRD** in `docs/`. Product locks live in [product-manager-meeting-report.md](../product-manager-meeting-report.md) and the page specs. This file does not add new product decisions; it extracts what design still owes.
 
-Customer portal **case map** (every outcome on the 2026-08-16 diagram, plus cases the diagram omitted): [customer-portal-journey.md](./customer-portal-journey.md). Program model (Shop vs Program, types, same-type / rule vs new Program): [program-model.md](./program-model.md). Counter QR vs program membership: [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md). Customer reward progress: [customer-reward-progress.md](./customer-reward-progress.md). Catalog redeem (pending / reserve / QR verification): [reward-redemption-flow.md](./reward-redemption-flow.md).
+Customer portal **case map** (every outcome on the 2026-08-16 diagram, plus cases the diagram omitted): [customer-portal-journey.md](./customer-portal-journey.md). Program model (Shop capabilities, one-per-type, one membership per Shop): [program-model.md](./program-model.md). Counter QR vs Shop membership: [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md). Customer reward progress: [customer-reward-progress.md](./customer-reward-progress.md). Catalog redeem (pending / reserve / QR verification): [reward-redemption-flow.md](./reward-redemption-flow.md).
 
 **Jump to:** [How to use](#how-to-use-this-document) · [Locked constraints](#locked-constraints-do-not-redesign) · [1. New screens](#1-new-screens--flows-to-design) · [2. UX decisions](#2-ux-decisions-hide-vs-honest-placeholder-vs-wire) · [3. Copy](#3-copy--content) · [4. Assets](#4-assets--brand) · [5. Not UI/UX](#5-not-uiux--do-not-design-as-if-these-exist) · [Index](#request-index) · [Traceability](#traceability-docs--this-file)
 
@@ -40,8 +40,8 @@ These are already decided. Design new surfaces **inside** them.
 | Roles are **`admin`** (buyer), **`staff`** (same `/app` permissions as admin **for now**), **`customer`** (never `/app`). Never `purchaser`. | [locked role matrix](../frontend/11-authentication-migration.md#locked-role-matrix) |
 | `customer` register / login / recovery are **passwordless OTP** (SMS or WhatsApp). No customer password, no `/auth/forgot-password` for customers. | [credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided) |
 | Campaigns: **Draft → Active (sending) → Completed / Failed**. Completed is a status, not a score. Performance is `% Open` / `% Redeemed`. | [campaigns-page.md](../frontend/campaigns-page.md#product-meanings-decided) |
-| Wallet: **one card per program** (any mix of Points / Visit / Tier). Never show a mixed points total (100 + 200 ≠ 300). **No shop-wide** points, membership, rewards catalog, or progress bar. Reward progress is on that program’s card (points: numeric available + next-reward bar; visit: stamp icons; tier: current + next threshold). **Available = total − pending reserved.** | [program-model.md](./program-model.md) · [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-program-decided) · [counter QR](./counter-qr-and-program-membership.md) · [reward progress](./customer-reward-progress.md) · [redemption](./reward-redemption-flow.md) |
-| Shop QR is an entry to **one program**. Never auto-join every live program. **URL / multiple ACTIVE** pending Business Owner. | [counter QR](./counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending) |
+| Wallet: **one card per Shop** (sections for enabled Points / Visit / Tier). Never show a mixed points total across Shops (Shop A 100 + Shop B 200 ≠ 300). Reward progress is on that Shop’s card (points: numeric available + next-reward bar; visit: stamp icons; tier: current + next threshold). **Available = total − pending reserved.** | [program-model.md](./program-model.md) · [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-shop-decided) · [counter QR](./counter-qr-and-program-membership.md) · [reward progress](./customer-reward-progress.md) · [redemption](./reward-redemption-flow.md) |
+| Shop QR is the entry to **this Shop**. Always one destination. No program picker. | [counter QR](./counter-qr-and-program-membership.md) |
 | Honesty: do not invent percentages, even-split donuts, or proxy metrics under misleading labels. Prefer `"—"` or hide. | [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md) · audit §3.6 |
 | Approved merchant URLs are frozen in [02-route-migration.md](../frontend/02-route-migration.md). Customer-portal and team-management **routes are not in that map** — proposing them is part of the work below. | 02-route-migration · 03-frontend-domains |
 
@@ -179,31 +179,31 @@ Customer-portal **URLs are not locked** and are **not** on the approved route ma
 
 **Working journey:** same screens as [UX-05](#ux-05--customer-register-passwordless-otp). Unknown phone is **not** shown before OTP; after OTP a new phone goes to [UX-75](#ux-75--customer-profile-setup-name-email-dob).
 
-#### UX-07 — Customer wallet (per program)
+#### UX-07 — Customer wallet (per Shop)
 
 | | |
 |--|--|
 | **Need / priority** | Design · **P0** |
-| **Source** | [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-program-decided) · [program-model.md](./program-model.md) · [customer-reward-progress.md](./customer-reward-progress.md) · meeting report §8 · G-33 |
+| **Source** | [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-shop-decided) · [program-model.md](./program-model.md) · [customer-reward-progress.md](./customer-reward-progress.md) · meeting report §8 · G-33 |
 
-**Locked facts on each program card**
+**Locked facts on each Shop card**
 
 | Fact | Rule |
 |------|------|
-| Program name | From that program |
-| Spendable points | That program only. **Available = total − pending reserved.** **Forbidden:** a single mixed total across programs |
+| Shop / business name | From this Shop |
+| Spendable points | This Shop only (if Points enabled). **Available = total − pending reserved.** **Forbidden:** a single mixed total across Shops |
 | Expiry | One date if lots share it; otherwise **amount + date groups**. Never one date that hides a sooner-expiring lot |
 | Vouchers | `active` vouchers + their dates. Used / expired are not spendable points |
-| Share | Personal **link** + **QR** for `/join/{programId}?ref={referral_code}` — this is **not** the shop **counter** QR |
-| **Reward progress** | **This program only.** Visit: filled / empty stamp icons — `current / visits_required` toward that program’s completion reward. Points: numeric **available** vs next unearned live catalog reward (cheapest). Tier: current + remaining to next (status, not spendable). Ready-at-counter when earned/available; earn ≠ redeem. Catalog redeem is pending + single-use QR (staff scan verifies; 10-minute expiry). No shop-wide bar. [customer-reward-progress.md](./customer-reward-progress.md) · [reward-redemption-flow.md](./reward-redemption-flow.md) · [program-model.md](./program-model.md#4-customer-wallet-summary) |
+| Share | Personal **link** + **QR** for this Shop’s join URL `?ref={referral_code}` — this is **not** the shop **counter** QR |
+| **Reward progress** | **This Shop only.** Visit, Points, and Tier are **sections on the same card** when enabled. Visit: filled / empty stamp icons — `current / visits_required`. Points: numeric **available** vs next unearned live catalog reward (cheapest). Tier: current + remaining to next (status, not spendable). Ready-at-counter when earned/available; earn ≠ redeem. Catalog redeem is pending + single-use QR (staff scan verifies; 10-minute expiry). [customer-reward-progress.md](./customer-reward-progress.md) · [reward-redemption-flow.md](./reward-redemption-flow.md) · [program-model.md](./program-model.md#4-customer-membership-and-wallet) |
 
 **Open**
 
-- Pixel layout: cards vs list vs tabs; bar vs stamp row. Portal URL.
-- Empty wallet (member of zero programs), expired-lot treatment, copy/share/download QR.
-- “See all rewards” for this program (optional under the primary target).
+- Pixel layout: sections vs tabs on the card; bar vs stamp row. Portal URL.
+- Empty wallet (member of zero Shops), expired-lot treatment, copy/share/download QR.
+- “See all rewards” for this Shop (optional under the primary target).
 - Redeem control on the card / list: disable after submit; show the **single-use QR** + remaining TTL; reconcile `pending` / `completed` / `expired` from the server (multi-device). Pixel layout of pending QR vs available is free. Insufficient Available → clear error, no QR.
-- Example that must stay true in mockups: 100 pts (month window) + 200 pts (week window) = **two cards, not 300**. Progress on each card is independent.
+- Example that must stay true in mockups: Shop A 100 pts + Shop B 200 pts = **two cards, not 300**. Points + Visit **on the same Shop** = **one card with two sections**.
 
 #### UX-08 — Customer portal shell
 
@@ -231,18 +231,17 @@ Customer-portal **URLs are not locked** and are **not** on the approved route ma
 
 **Locked**
 
-- Today `/join/[programId]` enrolls without login. Direct `/join/{programId}` remains for program QR + `?ref=` (valid while that program is `active`). OTP before new enroll; returning scan **in that program** = check-in (no new OTP). Existing account, first time in this program → create **this** membership only.
-- `?ref=` is a personal invite. Returning check-in with `ref` does **not** create another referral. Referral never changes program scope.
-- Selecting one Program must **never** auto-join every live program. No `active` → Program unavailable.
-- Check-in / enroll **success** shows **this program’s** reward progress (same numbers as the wallet card), plus this-visit delta when there was one. [customer-reward-progress.md](./customer-reward-progress.md)
+- Today `/join/[programId]` enrolls without login. Direct `/join/{programId}` remains as today’s printed QR + `?ref=` (valid while the Shop has at least one `active` capability). OTP before new enroll; returning scan **at that Shop** = check-in (no new OTP). Existing account, first time at this Shop → create **this** membership only.
+- `?ref=` is a personal invite. Returning check-in with `ref` does **not** create another referral. Referral never changes Shop scope.
+- Shop QR always this Shop. No live capability → unavailable.
+- Check-in / enroll **success** shows **this Shop’s** reward progress (same numbers as the wallet card), plus this-visit delta when there was one. [customer-reward-progress.md](./customer-reward-progress.md)
 
 **Open**
 
-- **Pending Business Owner (item 15):** whether a Shop may have multiple ACTIVE Programs, and therefore Shop QR behavior (one-active → `/join/{programId}`; multiple-active → Shop / Program selection then `/join/{programId}`). Do not finalize Shop QR or a picker until that decision. [counter QR §15](./counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending)
-- Step sequence on the existing join page (branding from QR Experience tab **is** wired — keep it for program URLs).
-- Shop landing + program **picker** pixel layout (UX-09 owns this **only if** multiple `active` is allowed).
+- Exact Shop QR URL (backend-owned).
+- Step sequence on the existing join page (branding from QR Experience tab **is** wired).
 - How referred reward is previewed before OTP (working: **referral banner** on the entry screen).
-- 429 / invalid OTP / expired OTP / already-used OTP / inactive program (`draft`/`disabled` must not accept join) empty states.
+- 429 / invalid OTP / expired OTP / already-used OTP / no live capability (`draft`/`disabled` must not accept join) empty states.
 - Marketing consent: today disclaimer is **copy-only**, no stored opt-in ([DG-08](#ux-24--communication-policy--sms-in-phase-1)). Design a real consent control if product includes it in Phase 1.
 
 Do **not** fold returning in-store check-in into the portal OTP diagram. Portal login is always OTP ([customer-portal-journey.md](./customer-portal-journey.md)).
@@ -258,14 +257,14 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 
 - Shown only after a **successful OTP** for a **new** phone (no `customers` row yet). Failed OTP → no profile write.
 - Fields on the diagram: **name, email, date of birth**. Invalid → highlight required fields, stay on this screen.
-- After valid save: wallet ([UX-07](#ux-07--customer-wallet-per-program)). If `?ref=` was valid, **referred-party** grant only — referrer still waits for first paid invoice.
+- After valid save: wallet ([UX-07](#ux-07--customer-wallet-per-shop)). If `?ref=` was valid, **referred-party** grant only — referrer still waits for first paid invoice.
 
 **Open**
 
 - All three fields required vs optional (join stores them as optional today). Diagram treats them as required — product should confirm.
 - Gender / city / custom (G-17) on this screen or later.
 
-#### UX-76 — First-shop welcome + link program
+#### UX-76 — First-shop welcome + link Shop
 
 | | |
 |--|--|
@@ -274,41 +273,39 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 
 **Locked**
 
-- Existing **active** customer (phone already has an account) who is **not** yet a member of **this** program.
-- After OTP: welcome + **link** this loyalty program, then wallet with a **new** card for that program (never merge points with other programs; never auto-join sibling programs).
-- Welcome is **UX only**. It does **not** grant a bonus unless **this Program’s Signup Bonus** is configured ([Signup vs Referral](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided)). Do not copy “you got a welcome bonus” unless that flag is on.
-- Distinct from in-store returning check-in (already a member of **this** program — no OTP, UX-09).
+- Existing **active** customer (phone already has an account) who is **not** yet a member of **this Shop**.
+- After OTP: welcome + **link** this Shop, then wallet with a **new** card for that Shop (never merge points with other Shops).
+- Welcome is **UX only**. It does **not** grant a bonus unless **this Shop’s Signup Bonus** is configured ([Signup vs Referral](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided)). Do not copy “you got a welcome bonus” unless that flag is on.
+- Distinct from in-store returning check-in (already a member of **this** Shop — no OTP, UX-09).
 
 **Open**
 
 - Copy and whether this is a full screen vs a banner on the wallet.
-- Behavior when the target program is not `active`.
+- Behavior when the Shop has no `active` capability.
 
 ### 1.3 Loyalty operations (merchant)
 
-#### UX-10 — Multi-program list / switcher
+#### UX-10 — Loyalty capabilities settings
 
 | | |
 |--|--|
 | **Need / priority** | Design · **P0** |
-| **Source** | [G-35](../frontend/gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status) · [program-model.md](./program-model.md) · [multiple programs](../frontend/loyalty-page.md#multiple-programs-and-status-decided) · [counter QR](./counter-qr-and-program-membership.md) |
+| **Source** | [G-35](../frontend/gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-one-config-per-capability) · [program-model.md](./program-model.md) · [Shop capabilities](../frontend/loyalty-page.md#shop-loyalty-capabilities-decided) · [counter QR](./counter-qr-and-program-membership.md) |
 
 **Locked**
 
-- Many programs per shop, including **multiple of the same type** (no 1-per-type). Status **`draft` \| `active` \| `disabled`** (no other spellings).
-- Direct `/join/{programId}` remains for program QR + `?ref=` (valid while that program is `active`). Only **`active`** programs accept join/check-in.
-- Selecting one Program never auto-joins sibling Programs. No shop-wide wallet. Shop is a container; each Program owns its own members / wallet / rewards ([program-model.md](./program-model.md)).
-- Today `/app/loyalty` is create+edit of **one** row (no overview). That page cannot stay the only surface.
-- **Create-flow copy (locked guidance, pixel layout free):** when the owner creates a new Program, show the rule-vs-program helper. Suggested tooltip: *Same goal, different rate? Add it as a rule instead of a new program.* “Happy Hour 3x points” is a **rule inside** Regular Points (one balance), not a second Points Program. Two punch cards that need independent tracking **are** two Programs.
+- One loyalty system per Shop. **At most one** Points, one Visit, one Tier config. Status **`draft` \| `active` \| `disabled`** per capability (no other spellings).
+- Shop QR always this Shop. Join/check-in when **at least one** capability is `active`.
+- One membership / one wallet / one catalog per Shop ([program-model.md](./program-model.md)).
+- Today `/app/loyalty` is create+edit of **one** row (type radios, overwrite upsert). Target: **one settings surface** with three capability sections / toggles — not a multi-program list or switcher.
+- Do **not** offer “create another Points program.” Happy Hour–style rates stay rules **inside** Points.
 
 **Open**
 
-- **Pending Business Owner (item 15):** whether more than one program may be `active` at once, and therefore Shop QR (one-active → `/join/{programId}`; multiple-active → selection then `/join/{programId}`). Do not finalize Shop QR, default-program reprint, or a picker until that decision.
-- List vs switcher in the shell vs tabs on Loyalty.
-- Default status on create.
-- Merchant UI to **print the Shop QR** (pixel layout is free; URL not locked until item 15).
-- Empty state: zero programs vs all disabled.
-- How Dashboard / Customers / Campaigns / Analytics pick “which program” (today `maybeSingle`).
+- Default status on create / enable.
+- Merchant UI to **print the Shop QR** (pixel layout is free; exact URL backend-owned).
+- Empty state: zero capabilities vs all disabled.
+- How Dashboard / Customers / Campaigns / Analytics scope to the Shop (today `maybeSingle` on one program row).
 
 #### UX-11 — Staff POS: identify · award · redeem
 
@@ -322,10 +319,10 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 - Identify member (QR / phone), award visit or spend (**idempotent** on a purchase/event key). Earn ≠ redeem. Catalog **Redeem** from the customer wallet is not a staff “create redemption” click — the customer taps Redeem; staff **scans the redemption QR** at checkout.
 - Catalog redeem: customer request → if Available < cost, refuse (no row); else `pending` + reserve + **single-use QR** (10-minute `qr_expires_at`). Staff **scan verifies** (atomic `PENDING → COMPLETED` + consume reserved; `UPDATE … WHERE status = 'pending'`, affected rows = 1). Second scan / retry → **“already redeemed”** (no second deduct). Expired QR → **“expired”**. Create is idempotent (double-click / tabs / devices / retry). Viewing the same pending QR on two devices is allowed.
 - Staff scanning is **verification**, not discretionary approval. Staff **cannot** reject a valid, unexpired, un-redeemed QR. Do **not** design an Approve / Reject pending list for physical catalog rewards (previous spec — superseded).
-- Staff authz is **Shop-level**: any authorized Staff from any Branch of that Shop. `staff.branch.shop_id === redemption.program.shop_id`; redemption must belong to the correct program. Backend enforces independently.
+- Staff authz is **Shop-level**: any authorized Staff from any Branch of that Shop. `staff.branch.shop_id === redemption.shop_id`. Backend enforces independently.
 - Phase 1: any existing Staff or Admin role may perform Redemption scan/verify. Do not add extra role restrictions unless decided later.
 - Reward eligibility evaluated at create; later reward `expires_at` does not auto-invalidate a pending redemption. QR TTL is 10 minutes and independent.
-- A redemption stays on the Program it was created under even if the customer later uses another Program.
+- A redemption stays on the Shop it was created under even if the customer later uses another Shop.
 - UI disable of Redeem and QR countdown are not the protection; reconcile from server. A scheduled job expires unscanned `pending` rows and releases Reserved even if the customer never reopens the app.
 - Refund / reversal is **not** Phase 1.
 
@@ -366,7 +363,7 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 
 **Open**
 
-- After multi-program: list → create → edit. Status chips. Confirm before disabling an `active` program that has members.
+- After capabilities: three sections on `/app/loyalty` (not a program list). Status chips per capability. Confirm before disabling an `active` capability that has members earning it.
 
 ### 1.4 Campaigns & messaging
 
@@ -663,7 +660,7 @@ ADR-010: **no new visual language**. New screens reuse Figtree, navy/yellow, exi
 
 | ID | Asset | Notes | Priority |
 |----|-------|-------|----------|
-| **UX-66** | Customer **wallet card** | Facts locked (incl. per-program reward progress); pixel layout free. Share QR is **personal**, not the shop counter QR | P0 |
+| **UX-66** | Customer **wallet card** | Facts locked (incl. per-Shop reward progress, capability sections); pixel layout free. Share QR is **personal**, not the shop counter QR | P0 |
 | **UX-67** | Customer portal chrome | Distinct from merchant sidebar; same tokens | P0 |
 | **UX-68** | OTP / channel picker (SMS vs WhatsApp) | Icons, selected states, 429 toast | P0 |
 | **UX-69** | Program **status pills** | `draft` / `active` / `disabled` — do not collide with campaign pills (Active = sending) or member status | P0 |
@@ -702,7 +699,7 @@ Designing pixel-perfect charts against missing data produces unbuildable screens
 From [meeting report “Not decided”](../product-manager-meeting-report.md) and deferred-decisions:
 
 1. Customer-portal **URL** (case map: [customer-portal-journey.md](./customer-portal-journey.md); register+login = one OTP funnel is the working answer)
-2. Whether **more than one** loyalty program can be `active` at once
+2. ~~Whether **more than one** loyalty program can be `active` at once~~ **Resolved 2026-08-17:** one Shop, up to three capabilities, Shop QR always this Shop. Remaining open: tier metric source / downgrade; referral points kind when Points is off.
 3. Whether `staff` can add teammates (`admin` rows **are** on the Team tab — locked)
 4. **Staff subtypes** (manager / cashier / …) and a later permission split — `staff` = `admin` permissions until then
 5. Default referral expiry **day counts**
@@ -726,15 +723,15 @@ From [meeting report “Not decided”](../product-manager-meeting-report.md) an
 | UX-04 | Design | P1 | Re-issue temp password |
 | UX-05 | Design | P0 | Customer register (OTP) |
 | UX-06 | Design | P0 | Customer login / lost access (OTP) |
-| UX-07 | Design | P0 | Customer wallet per program (incl. reward progress + available vs reserved) |
+| UX-07 | Design | P0 | Customer wallet per Shop (capability sections + available vs reserved) |
 | UX-08 | Design | P0 | Customer portal shell + routes proposal |
-| UX-09 | Design | P0 | Join page: OTP + referral context; Shop QR / picker **pending BO item 15** |
+| UX-09 | Design | P0 | Join page: OTP + referral context; Shop QR → this Shop |
 | UX-75 | Design | P0 | Customer profile setup (name, email, DOB) |
-| UX-76 | Design | P0 | First-shop welcome + link program |
-| UX-10 | Design | P0 | Multi-program list / switcher + status + rule-vs-program create helper |
+| UX-76 | Design | P0 | First-shop welcome + link Shop |
+| UX-10 | Design | P0 | Loyalty capabilities settings (Points / Visit / Tier, one each) |
 | UX-11 | Design | P1 | Staff POS award / redeem QR scan (pending → verify, not approve/reject) |
 | UX-12 | Design | P1 | Referral Pending Review screen |
-| UX-13 | Design | P1 | Loyalty list vs create/edit |
+| UX-13 | Design | P1 | Loyalty create vs edit (capability sections, not a program list) |
 | UX-14 | Decision | P1 | Campaign Scheduled tab: design or hide |
 | UX-15 | Decision | P1 | Automations: hide / config-only / later |
 | UX-16 | Design | P2 | Campaign token hints + freeze-after-send |
@@ -805,7 +802,7 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 | G-32 Plan contact/admin caps | UX-01, UX-17 |
 | G-33 Customer register/login | UX-05, UX-06, UX-07, UX-08, UX-09, UX-75, UX-76 |
 | G-34 Add admin/staff | UX-01, UX-02, UX-04, UX-61, UX-73 |
-| G-35 Multiple programs | UX-10, UX-13, UX-69 |
+| G-35 Shop capabilities (one per type) | UX-10, UX-13, UX-69 |
 | G-36 Account active/inactive | UX-03, UX-06 (customer blocked state), UX-65, UX-70 |
 
 ### DG-01 … DG-15 · A-01
@@ -831,7 +828,7 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 
 ### Meeting-report “not decided” → this file
 
-Portal URL → UX-08. **Pending Business Owner:** multiple `active` programs + Shop QR → UX-09 / UX-10 ([counter QR §15](./counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending)). Catalog redeem pending/reserve/QR → UX-07 / UX-11 ([redemption](./reward-redemption-flow.md)). Account page two tabs (Team / Customers); `admin` rows on Team → UX-03. Staff can add teammates → UX-01 (not locked). Staff subtypes → §5 (do not design a permission matrix). Phase 1 Redemption: any Staff/Admin may **scan/verify**, Shop-scoped; not Approve/Reject. Referral default days → §5. OTP TTL/cap → UX-05 states only. Pending Review screen → UX-12. SMS vs WhatsApp provider → UX-24 / §5. Automations / opens / revenue → UX-14, UX-15, UX-20.
+Portal URL → UX-08. Shop QR always this Shop → UX-09 / UX-10 ([counter QR](./counter-qr-and-program-membership.md)). Catalog redeem pending/reserve/QR → UX-07 / UX-11 ([redemption](./reward-redemption-flow.md)). Account page two tabs (Team / Customers); `admin` rows on Team → UX-03. Staff can add teammates → UX-01 (not locked). Staff subtypes → §5 (do not design a permission matrix). Phase 1 Redemption: any Staff/Admin may **scan/verify**, Shop-scoped; not Approve/Reject. Referral default days → §5. OTP TTL/cap → UX-05 states only. Pending Review screen → UX-12. SMS vs WhatsApp provider → UX-24 / §5. Automations / opens / revenue → UX-14, UX-15, UX-20.
 
 ---
 

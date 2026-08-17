@@ -31,7 +31,7 @@ export default function Page() {
 
 Same shell `requireUser()` + client verification + onboarding redirects. Legacy `/branches` → `/app/branches`. Detail: `/app/branches/[branchId]`.
 
-`branches` rows are scoped by `owner_id`, **not** by `loyalty_program_id`. There is no FK from `customers` or `customer_rewards` to `branches`.
+`branches` rows are scoped by `owner_id`, **not** by `loyalty_program_id`. There is no FK from `customers` or `customer_rewards` to `branches`. Target loyalty scoping is the Shop (`owner_id`); branches remain locations under that owner ([program-model.md](../product/program-model.md#1-shop-vs-capability)).
 
 ---
 

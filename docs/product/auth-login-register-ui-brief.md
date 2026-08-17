@@ -34,10 +34,10 @@ There are **two separate levels**. Don't mix the screens.
 | [UX-05](./ui-ux-team-requests.md#ux-05--customer-register-passwordless-otp)                                                | Customer registration (OTP: SMS or WhatsApp)                        | Customer       | **No UI**                                                                               |
 | [UX-06](./ui-ux-team-requests.md#ux-06--customer-login--lost-access-new-otp)                                               | Customer login / lost access = new OTP (not forgot-password)        | Customer       | **No UI**                                                                               |
 | [UX-08](./ui-ux-team-requests.md#ux-08--customer-portal-shell)                                                             | Portal shell after OTP (nav, sign-out, not `/app`'s look)           | Customer       | **No UI** — the URL is still not locked: propose a path                                 |
-| [UX-07](./ui-ux-team-requests.md#ux-07--customer-wallet-per-program)                                                       | Wallet card **per program** of any type mix (not one combined total) | Customer       | **No UI**                                                                               |
-| [UX-09](./ui-ux-team-requests.md#ux-09--join-page-otp--referral-context)                                                   | `/join/[programId]` page: OTP step + referral context `?ref=`       | Customer       | Page exists **without** OTP                                                             |
+| [UX-07](./ui-ux-team-requests.md#ux-07--customer-wallet-per-shop)                                                       | Wallet card **per Shop** (capability sections; never mix Shops) | Customer       | **No UI**                                                                               |
+| [UX-09](./ui-ux-team-requests.md#ux-09--join-page-otp--referral-context)                                                   | Join page: OTP step + referral context `?ref=`       | Customer       | Page exists **without** OTP                                                             |
 | [UX-75](./ui-ux-team-requests.md#ux-75--customer-profile-setup-name-email-dob)                                              | After OTP: profile setup (name, email, DOB)                         | Customer       | **No UI** — from the portal case map                                                    |
-| [UX-76](./ui-ux-team-requests.md#ux-76--first-shop-welcome--link-program)                                                   | Existing customer, first time in this program: welcome + link (UX only — no implied bonus) | Customer       | **No UI** — from the portal case map                                                    |
+| [UX-76](./ui-ux-team-requests.md#ux-76--first-shop-welcome--link-shop)                                                   | Existing customer, first time in this Shop: welcome + link (UX only — no implied bonus) | Customer       | **No UI** — from the portal case map                                                    |
 | [UX-01](./ui-ux-team-requests.md#ux-01--add-teammate-form-admin-creates-admin-or-staff)                                    | Add-teammate form (name, email, role `admin`\|`staff`)              | Merchant       | **No UI**                                                                               |
 | [UX-02](./ui-ux-team-requests.md#ux-02--first-login-force-password-change)                                                 | First login: must change temporary password before `/app`           | Merchant/Staff | **No UI**                                                                               |
 | [UX-03](./ui-ux-team-requests.md#ux-03--account-list--activeinactive)                                                      | One page, two tabs (Team = admin/staff, Customers) + active/inactive + filters (role, email, name, phone) | Merchant       | **No UI**                                                                               |
@@ -212,7 +212,7 @@ There are still **two journeys**. Do not draw them as one screen sequence:
 | Journey | OTP |
 | ------- | --- |
 | **A. Opens portal** (direct, personal QR, `?ref=`) | Always |
-| **B. In-store shop QR** (URL **pending item 15**; then one program) | New phone: OTP. Returning phone **in that program**: check-in, **no** new OTP |
+| **B. In-store shop QR** (this Shop) | New phone: OTP. Returning phone **in that Shop**: check-in, **no** new OTP |
 
 `G-33` / `G-36` on the case diagram are **gap IDs**, not Figma frame names. Wallet = UX-07. Inactive account = UX-06 blocked state (`inactive`, generic copy).
 
@@ -231,8 +231,8 @@ Covers direct entry **and** scanned QR / referral link. Unknown phone is **not**
 7. Wrong / expired / already-used code → stay on OTP; **no** account created.
 8. Correct code → branch on account:
    - **`inactive`** → blocked state, **generic** message (do not use “account suspended — contact support”; that enumerates). **UX-06** / G-36
-   - **Existing**, already in this shop/program → wallet **UX-07**
-   - **Existing**, first time in this shop → welcome + link program **UX-76**, then wallet. Welcome is **UX only** — no implied bonus unless that Program’s Signup Bonus is configured.
+   - **Existing**, already in this Shop → wallet **UX-07**
+   - **Existing**, first time in this Shop → welcome + link Shop **UX-76**, then wallet. Welcome is **UX only** — no implied bonus unless that Shop’s Signup Bonus is configured.
    - **New** → profile **name, email, DOB** **UX-75**. Invalid → highlight required fields. Valid + `?ref=` → **referred-party** reward only (referrer waits for first **paid** invoice), then wallet
 9. **Never** `/app` or `/auth/reset-password`.
 
@@ -264,63 +264,56 @@ flowchart TD
 
 ### 5.2 In-store join / check-in (journey B) — not the portal diagram
 
-The `/join/[programId]` page exists (QR Experience branding is wired up). **Shop QR URL and whether multiple ACTIVE programs are allowed are pending Business Owner** ([counter QR §15](./counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending)). Do not finalize a shop resolver or program picker until that decision. Missing today: OTP before a **new** member is created.
+The `/join/[programId]` page exists (QR Experience branding is wired up). **Shop QR always resolves to this Shop** ([counter QR](./counter-qr-and-program-membership.md)). Missing today: OTP before a **new** member is created.
 
 **Steps**
 
-1. Scans the **shop** QR (URL pending item 15) **or** opens `/join/{programId}` (possibly with a personal invite `?ref=`).
-2. Land on **one** `active` program. If only one active is allowed: Shop QR → `/join/{programId}`. If multiple active are allowed: Shop / Program selection → `/join/{programId}`. **Never** auto-join every live program. No `active` program → **no join**. Direct program URL: if `draft` or `disabled` → **no join**. Program QR stays valid only while `active`.
-3. New phone: same OTP rules as §5.1 (channel, 429, no password). Existing account, first time in **this** program → create this membership only.
-4. Correct code **before** a `customers` row, referral, or reward is created **in that program**.
-5. If `?ref=` is valid: **referred** reward in the same transaction **for that program**. Referral never changes program scope. **Referrer** still waits for first paid invoice.
-6. Returning scan (same phone **in this program**), even with `ref` = check-in, **not** another OTP and **not** another referral (no duplicate membership).
+1. Scans the **shop** QR **or** opens `/join/{programId}` (possibly with a personal invite `?ref=`).
+2. Land on **this Shop**. No live capability → **no join**. Direct URL: if all capabilities are `draft` or `disabled` → **no join**.
+3. New phone: same OTP rules as §5.1 (channel, 429, no password). Existing account, first time in **this** Shop → create this membership only.
+4. Correct code **before** a `customers` row, referral, or reward is created **in that Shop**.
+5. If `?ref=` is valid: **referred** reward in the same transaction **for that Shop**. Referral never changes Shop scope. **Referrer** still waits for first paid invoice.
+6. Returning scan (same phone **in this Shop**), even with `ref` = check-in, **not** another OTP and **not** another referral (no duplicate membership).
 
 ```mermaid
 flowchart TD
-  QR["Scan shop QR\nURL pending BO item 15"] --> Resolve{Land on one program}
-  Resolve -->|None active| Empty["Empty state: program unavailable"]
-  Resolve -->|Only one active allowed| Prog{Program active?}
-  Resolve -->|Multiple active allowed| Pick["Choose one program"]
-  Pick --> Prog
-  Direct["Or /join/programId"] --> Prog
-  Prog -->|No| Empty
-  Prog -->|Yes| Phone["Phone + channel SMS or WhatsApp"]
+  QR["Scan shop QR"] --> Shop["This Shop"]
+  Direct["Or /join/programId"] --> Shop
+  Shop --> Active{At least one capability active?}
+  Active -->|No| Empty["Empty state: unavailable"]
+  Active -->|Yes| Phone["Phone + channel SMS or WhatsApp"]
   Phone --> Req["Request OTP"]
   Req --> RL{429?}
   RL -->|Yes| Toast["429 toast — no silent retry"]
   RL -->|No| Code["Enter code"]
   Code --> Valid{Code valid?}
   Valid -->|No/expired/used| NoRow["No account created"]
-  Valid -->|Yes| NewOrOld{Phone already in program?}
+  Valid -->|Yes| NewOrOld{Phone already in Shop?}
   NewOrOld -->|New| Enroll["Enroll + referred grant if ref"]
   NewOrOld -->|Returning| CheckIn["Check-in — no new OTP\nand no second referral"]
-  Enroll --> Portal["Customer portal / wallet\nthat program only"]
-  CheckIn --> Stay["Stay on join success\nthis program's progress"]
+  Enroll --> Portal["Customer portal / wallet\nthat Shop only"]
+  CheckIn --> Stay["Stay on join success\nthis Shop's progress"]
 ```
 
 Returning check-in does **not** replace portal login. That member still uses §5.1 OTP when they open the portal later.
 
 ### 5.3 After login — wallet
 
-**Locked per program card**
+**Locked per Shop card**
 
 | Field             | Rule                                                                           |
 | ----------------- | ------------------------------------------------------------------------------ |
-| Program name      | From this program                                                              |
-| Redeemable points | This program only. **Never** sum 100+200 = 300                                 |
+| Shop name         | From this Shop                                                                 |
+| Redeemable points | This Shop only (if Points enabled). **Never** sum Shop A + Shop B = 300        |
 | Expiry            | Single date if batches share the same day; otherwise amount + date groups      |
 | Coupons           | `active` + their dates                                                         |
-| Sharing           | Personal link + QR `/join/{programId}?ref={code}` — this is not the shop **counter** QR |
-| **Reward progress** | This program only. Visit: filled/empty stamp icons `n / visits_required`. Points: numeric available vs next unearned live catalog reward. Tier: current + remaining to next (status). Check-in success uses the same numbers. [program-model.md](./program-model.md#4-customer-wallet-summary) · [customer-reward-progress.md](./customer-reward-progress.md) |
+| Sharing           | Personal link + QR for this Shop’s join URL `?ref={code}` — this is not the shop **counter** QR |
+| **Reward progress** | This Shop only. Visit / Points / Tier are sections on the **same** card when enabled. Check-in success uses the same numbers. [program-model.md](./program-model.md#4-customer-membership-and-wallet) · [customer-reward-progress.md](./customer-reward-progress.md) |
 
 ```mermaid
 flowchart LR
-  Portal["Portal shell UX-08"] --> W1["Program 1 card\n100 points"]
-  Portal --> W2["Program 2 card\n200 points"]
-  W1 --> Share1["Personal referral QR"]
-  W1 --> Prog1["Progress · this program"]
-  W2 --> Share2["Personal referral QR"]
-  W2 --> Prog2["Progress · this program"]
+  Portal["Portal shell UX-08"] --> W1["Shop A card\n100 points + stamps"]
+  Portal --> W2["Shop B card\n200 points"]
 ```
 
 ---
@@ -339,7 +332,7 @@ Design the state, don't invent TTL/attempt numbers (still not locked in the prod
 | Resend cooldown / cap              | Blocked state (draw it; **don't** hardcode 60s / 5 min as product)           |
 | 429                                | Toast + disable submit + no silent retry                                     |
 | Send failure (503)                 | Generic "could not send code"                                                |
-| Program not `active`               | No join (journey B)                                                          |
+| Program not live               | No join (journey B) — no `active` capability |
 | `inactive` account                 | No session — **generic** copy, not "account suspended"                       |
 | Double-click / retry after timeout | Same as OTP already used                                                     |
 | Pasting the code                   | **Allowed** (don't block paste)                                              |

@@ -58,4 +58,4 @@
 - [Spikes ΓÇö Auth Cookie/SSR](spikes/auth-ssr-spike.md)
 - [Frontend blueprint](../frontend/README.md)
 - [Backend product-data contracts](../backend/README.md) (ADR-014 / ADR-015; not migration work)
-- [Program model](../product/program-model.md) (Shop vs Program, v1 types, same-type / rule-vs-program)
+- [Program model](../product/program-model.md) (Shop capabilities: Points / Visit / Tier, one each, one membership per Shop)

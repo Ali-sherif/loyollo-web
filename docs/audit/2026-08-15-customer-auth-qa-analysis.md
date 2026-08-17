@@ -65,7 +65,7 @@ Every test case below is tagged **[SHIPPED]**, **[DECIDED-NOT-SHIPPED]**, or **[
 | **High** | International phone numbers for OTP: non-E.164 formats, numbers with country-code ambiguity (e.g. `+1` vs local), numbers with letters | `otp_verifications.phone` is documented as **E.164, required**. Test rejection of malformed numbers, and correct channel routing (`sms` vs `whatsapp`) for numbers that only support one channel in a given country. |
 | **Medium** | Unicode/RTL text in name fields (Arabic given the merchant base) mixed with LTR punctuation | Loyollo's audience is Arabic-first (`نشط`/`غير نشط` used in product docs for active/inactive). Test bidi rendering in emails and UI, not just storage. |
 | **Low** | Case sensitivity in email (`User@Example.com` vs `user@example.com`) creating duplicate accounts | Supabase Auth normally lower-cases emails; confirm this is not bypassable via sign-up API directly. |
-| **High** | Duplicate `customers` row race: two concurrent enroll requests with the same email/phone in the same program | **Confirmed gap** (`S-17`): "No unique `(loyalty_program_id, email\|phone)` index... two concurrent enrolls with the same email create two rows." This is a documented, unresolved defect — write a load-test case for it specifically. |
+| **High** | Duplicate `customers` row race: two concurrent enroll requests with the same email/phone in the same Shop | **Confirmed gap** (`S-17`): "No unique `(loyalty_program_id, email\|phone)` index... two concurrent enrolls with the same email create two rows." Uniqueness is per **Shop membership** (2026-08-17 capability model). This is a documented, unresolved defect — write a load-test case for it specifically. |
 
 ### 2.2 Concurrency, timeouts, duplicate requests, device switching
 

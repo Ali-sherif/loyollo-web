@@ -109,6 +109,8 @@ Unlike Analytics, there is **no dedicated “create a program first” empty can
 2. `loyalty_programs` — `id` where `owner_id = user.id`
 3. `customers` — `id, full_name, email, phone, birth_date, tier, points, visits, status, last_activity_at` where `loyalty_program_id = pid`, `order created_at desc`
 
+**Today** customers are loaded from the owner’s single program row. **Intended:** one membership per Shop (all capability balances on that row). `loyalty_program_id` is a transitional alias for Shop identity ([data-contract](../backend/data-contract.md#shop-capability-model-decided-not-shipped)).
+
 **Entire table is pulled into the browser.** Filters, sort, and CSV run client-side.
 
 ### Customer type (UI)
@@ -363,7 +365,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 5. **No pagination**
 6. **Detail analytics** — rewards, LTV, referrals, charts, health all placeholders
 7. **Join-only fields** not visible to the owner
-8. **One program per owner (today)** — all customers hang off that program; no branch_id. **DECIDED:** many programs ([loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided))
+8. **One program per owner (today)** — all customers hang off that program; no branch_id. **DECIDED:** one Shop membership with up to three capabilities ([loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided))
 
 ---
 

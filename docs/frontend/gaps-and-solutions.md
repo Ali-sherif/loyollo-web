@@ -48,7 +48,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Customers tier column/filter; Dashboard top-customer colors; Analytics donut; Loyalty tier stats `"0"`; Campaigns VIP/Gold |
 | **Blocked by** | Ladder saved; enroll/check-in never write `customers.tier` |
-| **Solution** | Shared assign function on enroll + check-in (`tier` or `tier_id`) |
+| **Solution** | Shared assign function on enroll + check-in (`tier` or `tier_id`) for the Shop’s **single** Tier capability. **Open:** spendable counters vs lifetime metric ([program-model.md](../product/program-model.md#open--tier-metric-source)) |
 | **Status** | `DEFERRED-BACKEND` |
 | **Owner** | Backend program |
 | **Phase** | 1 |
@@ -129,7 +129,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Points/Visit/Tier advanced fields |
 | **Blocked by** | Columns exist; `recordCheckIn` uses a small subset; often needs `orders` |
-| **Solution** | Implement against orders/events, or hide unused fields until POS. Issued point lots must stamp `expires_at` from `points_expiry_months` (G-10 expiry). Customer wallet is per-program. |
+| **Solution** | Implement against orders/events, or hide unused fields until POS. Issued point lots must stamp `expires_at` from `points_expiry_months` (G-10 expiry). Visit min invoice is independent of Points. Customer wallet is per-Shop. |
 | **Status** | `DEFERRED-BACKEND` (hide unused: `FRONTEND-FIXABLE`) |
 | **Owner** | Backend program |
 | **Phase** | 5 |
@@ -177,7 +177,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Loyalty Referrals tab; Customer detail Referrals = 0 |
 | **Blocked by** | `referral_settings` only; no `referrals` events |
-| **Solution** | `otp_verifications` then atomic enroll; `referrals` + `?ref=` / personal QR; both-party grants (referred after OTP, referrer **only** on first **paid** invoice / `Invoice.Paid`); discount → `vouchers` (`active`/`used`/`expired`); `CHECK (referrer_id <> referred_id)`; `UNIQUE (referred_id)`; same device/IP in the same minute → `pending_review`. [DECIDED](loyalty-page.md#referral-rewards-decided) · [fraud](loyalty-page.md#referral-fraud-controls-decided) · [OTP](loyalty-page.md#otp-verification-decided). Schema: [data-contract](../backend/data-contract.md#referrals) |
+| **Solution** | `otp_verifications` then atomic enroll; `referrals` + `?ref=` / personal QR **Shop-scoped**; both-party grants (referred after OTP, referrer **only** on first **paid** invoice / `Invoice.Paid`); discount → `vouchers` (`active`/`used`/`expired`); `CHECK (referrer_id <> referred_id)`; `UNIQUE (referred_id)` per Shop membership; same device/IP in the same minute → `pending_review`. **Open:** referral `points` kind when Points is disabled. [DECIDED](loyalty-page.md#referral-rewards-decided) · [fraud](loyalty-page.md#referral-fraud-controls-decided) · [OTP](loyalty-page.md#otp-verification-decided). Schema: [data-contract](../backend/data-contract.md#referrals) · [program-model.md](../product/program-model.md) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED**, not shipped) |
 | **Owner** | Backend program |
 | **Phase** | 6 |
@@ -362,13 +362,13 @@ These widgets are visible in production UI and systematically show **zero, even 
 | **Owner** | Frontend |
 | **Phase** | — |
 
-### G-31 — Program type change after members exist
+### G-31 — Capability type change after members exist
 
 | Field | Value |
 |-------|--------|
 | **Where** | Loyalty copy “change anytime” |
-| **Blocked by** | No lock / migration path |
-| **Solution** | Lock after first customer, or migrate counters |
+| **Blocked by** | No lock / migration path; today’s upsert overwrites the single row’s type |
+| **Solution** | Do not switch a row’s `program_type` after members exist. Enable/disable a **sibling** capability instead (`UNIQUE (owner_id, program_type)`). Copy: lock type on an existing capability row. |
 | **Status** | `DEFERRED-BACKEND` (copy: `FRONTEND-FIXABLE`) |
 | **Owner** | Backend program |
 | **Phase** | — |
@@ -390,7 +390,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | `/app/customers` Add Customer; public `/join/[programId]`; Dashboard / Analytics KPIs |
 | **Blocked by** | No shop-customer auth. Rows are owner-created or anonymous join. KPIs use denormalized / owner-typed fields |
-| **Solution** | Customer **register/login** (role **customer**, not `admin` / `staff` `/app`). **Passwordless:** register, login, and recovery never use a password. Public new register uses **OTP** (SMS/WhatsApp) before the member row is finalized. Lost access = **new OTP** (same channel), never `/auth/forgot-password` or the merchant `recovery` email. After OTP: inactive → generic block; existing in this shop → wallet; existing **first time in this shop** → link program (welcome is UX only — no implied bonus unless Signup Bonus is configured); new phone → profile (name / email / DOB). Store customer-owned profile + activity. **Calculate KPIs** from that data. Owner manual add remains (no OTP). Wallet: **one card per program** of any type mix (Points: available + next-reward progress; Visit: stamp icons; Tier: current + next; plus expiry groups + `vouchers` + share link/QR); never a cross-program total or shop-wide progress. Routes not locked. [program-model.md](../product/program-model.md) · [customer-portal-journey.md](../product/customer-portal-journey.md) · [customer-reward-progress.md](../product/customer-reward-progress.md) · [11-authentication-migration.md](11-authentication-migration.md#shop-customer-register-and-login-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) · [loyalty-page.md](loyalty-page.md#customer-wallet-per-program-decided) · [OTP](loyalty-page.md#otp-verification-decided) |
+| **Solution** | Customer **register/login** (role **customer**, not `admin` / `staff` `/app`). **Passwordless:** register, login, and recovery never use a password. Public new register uses **OTP** (SMS/WhatsApp) before the member row is finalized. Lost access = **new OTP** (same channel), never `/auth/forgot-password` or the merchant `recovery` email. After OTP: inactive → generic block; existing in this Shop → wallet; existing **first time in this Shop** → link Shop (welcome is UX only — no implied bonus unless Signup Bonus is configured); new phone → profile (name / email / DOB). Store customer-owned profile + activity. **Calculate KPIs** from that data. Owner manual add remains (no OTP). Wallet: **one card per Shop** with sections for enabled Points / Visit / Tier (Points: available + next-reward progress; Visit: stamp icons; Tier: current + next; plus expiry groups + `vouchers` + share link/QR); never a cross-Shop total. Routes not locked. [program-model.md](../product/program-model.md) · [customer-portal-journey.md](../product/customer-portal-journey.md) · [customer-reward-progress.md](../product/customer-reward-progress.md) · [11-authentication-migration.md](11-authentication-migration.md#shop-customer-register-and-login-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) · [loyalty-page.md](loyalty-page.md#customer-wallet-per-shop-decided) · [OTP](loyalty-page.md#otp-verification-decided) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
 | **Owner** | Backend program |
 | **Phase** | Later (customer portal; not product Phase 1 merchant roles) |
@@ -406,16 +406,16 @@ These widgets are visible in production UI and systematically show **zero, even 
 | **Owner** | Backend program |
 | **Phase** | Later (merchant team; after role names) |
 
-### G-35 — Shop is limited to one loyalty program; no program status
+### G-35 — Shop loyalty is one row, not one config per capability
 
 | Field | Value |
 |-------|--------|
 | **Where** | `/app/loyalty` upsert; Dashboard / Customers / Campaigns / Analytics `maybeSingle` |
-| **Blocked by** | `UNIQUE (owner_id)` on `loyalty_programs`; no `status` column |
-| **Solution** | Many programs per shop, including **same type** (no 1-per-type; do not unique `(shop, program_type)`). Status **`draft` \| `active` \| `disabled`**. Drop unique-on-owner; stop overwrite-upsert. Join/check-in only for **`active`**. Membership/points/stamps/wallet/rewards/redemptions stay `loyalty_program_id`. Selecting one Program never auto-joins siblings. Conditional earning modifiers (e.g. Happy Hour 3x) are **rules inside one Program**, not a second Program. **Pending Business Owner:** whether more than one may be `active` at once, and therefore Shop QR (one-active → `/join/{programId}`; multiple-active → selection then `/join/{programId}`). Creating any number is already decided — that is not this pending item. Do not finalize Shop QR until that decision. [program-model.md](../product/program-model.md) · [loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided) · [counter QR §15](../product/counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending) |
-| **Status** | `DEFERRED-BACKEND` (many programs + same-type + status **DECIDED** 2026-08-16; Shop QR / multiple ACTIVE **pending Business Owner**) |
+| **Blocked by** | `UNIQUE (owner_id)` on `loyalty_programs`; no `status` column; changing `program_type` overwrites the only row |
+| **Solution** | Target **`UNIQUE (owner_id, program_type)`** — at most one Points, one Visit, one Tier per Shop (up to three rows). Drop unique-on-owner-alone (that blocks Points+Visit). Do **not** drop uniqueness entirely (that would allow two Points configs). Optional `status` **`draft` \| `active` \| `disabled`** per capability. Stop overwrite-upsert. Join/check-in when **at least one** capability is `active`. One membership / wallet / catalog per Shop. Shop QR always this Shop. [program-model.md](../product/program-model.md) · [loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided) · [counter QR](../product/counter-qr-and-program-membership.md) |
+| **Status** | `DEFERRED-BACKEND` (Shop capabilities + one-per-type **DECIDED** 2026-08-17; supersedes 2026-08-16 many-programs / same-type / pending Shop QR picker) |
 | **Owner** | Backend program |
-| **Phase** | Later (multi-program) |
+| **Phase** | Later (capability rows) |
 
 ### G-36 — No admin account list or active/inactive for staff/customer
 

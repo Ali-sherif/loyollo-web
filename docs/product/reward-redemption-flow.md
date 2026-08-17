@@ -1,13 +1,13 @@
 # Reward redemption flow (per program)
 
 **Date:** 2026-08-16  
-**Status:** DECIDED for Phase 1 lifecycle and agreed edge cases (not shipped). Five items remain **pending owner decision** — see [§14](#14-pending-owner-decisions-do-not-implement-yet).  
+**Status:** DECIDED for Phase 1 lifecycle and agreed edge cases (not shipped). Four items remain **pending owner decision** — see [§14](#14-pending-owner-decisions-do-not-implement-yet).  
 **Audience:** Product, UI/UX, QA, backend  
 **Does not authorize** schema, APIs, or Next.js implementation ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
 **Sources of truth to keep in sync:** [program-model.md](./program-model.md) · [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md) · [loyalty-page.md](../frontend/loyalty-page.md#reward-redemption-lifecycle-decided) · [customer-reward-progress.md](./customer-reward-progress.md) · [G-20](../frontend/gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) · [data-contract](../backend/data-contract.md) · [api-contract](../backend/api-contract.md)
 
-The customer redeems **only** rewards that belong to the program in which they have membership. Points, stamps, wallet, and catalog never mix across programs ([program-model.md](./program-model.md)). Program-level wallet (`Total` / `Reserved` / `Available = Total − Reserved`), Signup Bonus, and Referral Bonus stay as documented on the [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-program-decided) and [Signup vs Referral](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided) — this file does not restate those grants.
+The customer redeems **only** rewards that belong to the Shop in which they have membership. Points, stamps, wallet, and catalog never mix across **Shops** ([program-model.md](./program-model.md)). Shop-level wallet (`Total` / `Reserved` / `Available = Total − Reserved`), Signup Bonus, and Referral Bonus stay as documented on the [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-shop-decided) and [Signup vs Referral](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided) — this file does not restate those grants.
 
 ---
 
@@ -48,7 +48,7 @@ Customer shows QR at checkout
    ↓
 Staff scans QR
    ↓
-Validate: maps to PENDING, correct program, scanner’s Shop,
+Validate: maps to PENDING, correct Shop,
           QR not expired, single-use
    ├── Valid     → atomic PENDING → COMPLETED
    │               permanently deduct reserved from Total
@@ -57,7 +57,7 @@ Validate: maps to PENDING, correct program, scanner’s Shop,
    └── EXPIRED   → reject scan (“expired”)
 ```
 
-The customer **cannot** redeem a reward that belongs to another program.
+The customer **cannot** redeem a reward that belongs to another Shop.
 
 Stored status names: `pending` · `completed` · `expired` · `rejected`. Do not use other spellings.
 
@@ -159,7 +159,7 @@ When the business rule does not allow it, a customer must not have multiple `pen
 Validate:
 
 ```text
-customer + program + reward + pending redemption
+customer + shop + reward + pending redemption
 ```
 
 Database-level uniqueness (or an equivalent transactional lock) must handle races. UI disable is insufficient.
@@ -316,28 +316,30 @@ Idempotency prevents duplicate processing of the **same** event; it must not pre
 
 ---
 
-## 10. Program isolation (agreed)
+## 10. Shop isolation (agreed)
 
-A Redemption remains **permanently** associated with the Program under which it was created:
+A Redemption remains **permanently** associated with the Shop under which it was created:
 
 ```text
-redemption.program_id = Program A
+redemption.shop_id = Shop A
 ```
 
-If the customer later joins or uses Program B, the existing Redemption must remain associated with Program A.
+(Today’s schema may still store `loyalty_program_id`; target meaning is the Shop — [data-contract](../backend/data-contract.md).)
 
-- The Redemption must not be transferred to Program B.
-- The Redemption must not be covered using Program B’s points.
-- The points reservation must remain associated with the customer’s balance / wallet for Program A.
-- The QR is valid only for that program. Staff/scanner must belong to the Shop that owns the program.
+If the customer later joins or uses Shop B, the existing Redemption must remain associated with Shop A.
+
+- The Redemption must not be transferred to Shop B.
+- The Redemption must not be covered using Shop B’s points.
+- The points reservation must remain associated with the customer’s balance / wallet for Shop A.
+- The QR is valid only for that Shop. Staff/scanner must belong to that Shop.
 
 ```text
 Customer
-├── Program A → 100 points  (Redemption #123 stays here)
-└── Program B → 50 points   (must not pay for #123)
+├── Shop A → 100 points  (Redemption #123 stays here)
+└── Shop B → 50 points   (must not pay for #123)
 ```
 
-No cross-program balance aggregation.
+No cross-Shop balance aggregation. Points, Visit, and Tier **inside Shop A** share that Shop’s membership — they are not separate redemption wallets.
 
 ---
 
@@ -345,7 +347,7 @@ No cross-program balance aggregation.
 
 A Shop can have multiple Branches. Staff members are associated with a Branch.
 
-Any authorized Staff member from **any Branch belonging to the same Shop** can **scan / verify** Redemptions for that Shop’s Programs.
+Any authorized Staff member from **any Branch belonging to the same Shop** can **scan / verify** Redemptions for that Shop.
 
 ```text
 Shop A
@@ -366,12 +368,14 @@ The authorization boundary is **Shop**, not Branch:
 ```text
 staff.branch.shop_id
     ===
-redemption.program.shop_id
+redemption.shop_id
 ```
+
+(Today: owner of the capability rows / `profiles.id`.)
 
 Knowing a `redemption_id` or `qr_code` must not let Shop A staff complete a Shop B redemption. Do not authorize on the redemption ID or QR payload alone.
 
-The scan must also confirm the redemption belongs to the **correct program** (the one the membership / catalog reward is on).
+The scan must confirm the redemption belongs to the **scanner’s Shop**.
 
 The Frontend should only expose a scanner for the Staff’s Shop. The Backend must enforce the same authorization independently.
 
@@ -421,11 +425,11 @@ Whether a pending Redemption should keep the original `points_cost` from the tim
 
 Whether an existing valid pending Redemption can still be completed after the Reward is disabled / deleted, or whether it should be cancelled with the reserved points returned, is **not** decided.
 
-### 3. Program is disabled while it has PENDING Redemptions
+### 3. Shop loyalty is disabled while it has PENDING Redemptions
 
 **Status:** Pending Product Owner decision.
 
-Whether existing pending Redemptions can still be completed after the Program is disabled, or whether they should be cancelled and the reserved points released, is **not** decided.
+Whether existing pending Redemptions can still be completed after the Shop’s loyalty (or the Points capability) is disabled, or whether they should be cancelled and the reserved points released, is **not** decided.
 
 ### 14. Point expiry while points are reserved
 
@@ -433,40 +437,25 @@ Whether existing pending Redemptions can still be completed after the Program is
 
 What happens when points are reserved for a PENDING Redemption and those **lots** reach their `points_ledger.expires_at` is **not** decided. Decide this before implementing reservation against expiring lots. This is **not** the 10-minute QR TTL (that TTL is locked in [§6b](#6b-expiry-handling-scheduled-job)).
 
-### 15. Shop QR with multiple active Programs
-
-**Status:** Pending Business Owner decision.
-
-Whether a Shop can have multiple **ACTIVE** Programs simultaneously is **not** decided. Shop QR behavior must **not** be finalized until that decision. Shop / door QR is unrelated to the **redemption** QR in this file.
-
-| If | Then |
-| -- | ---- |
-| Only one active Program is allowed | Shop QR → `/join/{programId}` |
-| Multiple active Programs are allowed | Shop QR → Shop / Program selection → customer chooses one Program → `/join/{programId}` |
-
-Selecting one Program must **not** automatically create a membership in the other Programs.
-
-Canonical tracking for QR / membership: [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending).
-
 ---
 
 ## 15. Core constraints (Phase 1)
 
-1. Membership, points, stamps, wallet, and rewards are always **program-scoped**.
-2. A customer joins a **program**, never a reward.
+1. Membership, points, stamps, wallet, and rewards are always **Shop-scoped**.
+2. A customer joins a **Shop**, never a reward.
 3. Pending redemptions **reserve** points at Redeem time; reserved points reduce **available** balance (`Available = Total − Reserved`). Concurrent Redeems check Available, not Total.
 4. Staff scan is **verification**, not approval. `PENDING → COMPLETED` is an **atomic conditional update** (`WHERE status = 'pending'`, affected rows = 1). A second scan is “already redeemed”; an expired QR is “expired”.
 5. Create-redemption is **idempotent** at the Backend / database (UI disable is UX only). Do not issue a second QR or reserve twice for the same operation.
 6. A scheduled job expires `pending` rows past the 10-minute `qr_expires_at` and **releases** reserved points. Do not rely on client-side / lazy expiry.
 7. Earn is **idempotent** per business event; concurrent earn and redeem share one consistency model.
-8. Cross-program points / rewards are never allowed. A redemption never moves to another program.
+8. Cross-Shop points / rewards are never allowed. A redemption never moves to another Shop.
 9. Staff authorization is **Shop-level**, enforced **server-side**. Phase 1: any existing Staff or Admin role may scan/verify redemptions for that Shop. Staff cannot reject a valid, unexpired, un-redeemed QR.
 10. Reward eligibility / expiry is evaluated **at create**. Later reward `expires_at` does not auto-invalidate an existing pending redemption. QR TTL is independent (10 minutes).
 11. Refund / reversal is **not** Phase 1.
 12. Digital catalog rewards may complete instantly without QR ([§16](#16-digital-rewards-exception)).
-13. Do not implement the five pending owner items in [§14](#14-pending-owner-decisions-do-not-implement-yet).
+13. Do not implement the four pending owner items in [§14](#14-pending-owner-decisions-do-not-implement-yet).
 
-Canonical shop → program → redeem diagram (Shop QR resolution still pending item 15): [counter QR](./counter-qr-and-program-membership.md#canonical-flow).
+Canonical shop → redeem diagram: [counter QR](./counter-qr-and-program-membership.md#canonical-flow).
 
 ---
 

@@ -1,6 +1,6 @@
 # Customer portal journey — all cases
 
-**Date:** 2026-08-17 (synced to current journey image)  
+**Date:** 2026-08-17 (synced to Shop-capability model)  
 **Audience:** Product, UI/UX, QA  
 **Purpose:** One case map for every outcome when a **shop customer** opens the portal (direct, QR, or referral). This is the working journey for design. It does **not** authorize schema, APIs, or Next.js implementation ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
@@ -14,7 +14,7 @@
 
 | Gap ID | Meaning | Screen / request |
 | ------ | ------- | ---------------- |
-| **G-33** | No customer register/login/wallet yet | [UX-07](./ui-ux-team-requests.md#ux-07--customer-wallet-per-program) wallet + [UX-08](./ui-ux-team-requests.md#ux-08--customer-portal-shell) shell |
+| **G-33** | No customer register/login/wallet yet | [UX-07](./ui-ux-team-requests.md#ux-07--customer-wallet-per-shop) wallet + [UX-08](./ui-ux-team-requests.md#ux-08--customer-portal-shell) shell |
 | **G-36** | No `account_status` yet | Inactive-account state on [UX-06](./ui-ux-team-requests.md#ux-06--customer-login--lost-access-new-otp). Stored value is **`inactive`**, not “disabled / blocked” |
 
 ---
@@ -24,7 +24,7 @@
 | Journey | When | OTP? |
 | ------- | ---- | ---- |
 | **A. Customer opens portal** | Direct URL, personal referral link/QR, or “log in” | **Always** — this *is* register + login + lost access |
-| **B. In-store shop QR** | Shop counter QR (URL **pending item 15**) → one **program**, then check-in | **New** phone: OTP then enroll **in that program**. **Returning** phone **in that program**: check-in, **no** new OTP, **no** second referral. Direct `/join/{programId}` still valid for program/referral QRs ([counter QR](./counter-qr-and-program-membership.md) · [loyalty-page](../frontend/loyalty-page.md#public-join--check-in)) |
+| **B. In-store shop QR** | Shop counter QR → this **Shop**, then check-in | **New** phone: OTP then enroll **in that Shop**. **Returning** phone **in that Shop**: check-in, **no** new OTP, **no** second referral. Direct `/join/{programId}` still valid as today’s printed QR ([counter QR](./counter-qr-and-program-membership.md) · [loyalty-page](../frontend/loyalty-page.md#public-join--check-in)) |
 
 Journey B is drawn as a **sibling** box on the same canvas (UX-09). Do not merge returning in-store check-in into Journey A OTP boxes. A returning member who later opens the **portal** still does OTP (Journey A).
 
@@ -51,8 +51,8 @@ Legend: **Covered** = on the current diagram. **Fix** = on the diagram but wrong
 | 13 | Transport failure (SMS/WhatsApp stub) | Covered | API `503` generic | Generic “could not send code” |
 | 14 | Program `draft` / `disabled` | Covered on Journey B | DECIDED: no join | Portal-only login with no program in URL may skip this |
 | 15 | `account_status = inactive` | Covered (generic block) | Generic message — do **not** enumerate ([QA §4.1](../audit/2026-08-15-customer-auth-qa-analysis.md)) | Keep generic copy |
-| 16 | Existing user, already in **this** program | Covered → wallet | No second membership | Happy path (portal) |
-| 17 | Existing user, **first time in this program** | Covered (UX-76) | Membership for **this** program only; welcome is **UX only** unless Signup Bonus is configured ([Signup vs Referral](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided)) | **Fix label:** “this **program**” not “this Shop”; note welcome ≠ bonus |
+| 16 | Existing user, already in **this** Shop | Covered → wallet | No second membership | Happy path (portal) |
+| 17 | Existing user, **first time in this Shop** | Covered (UX-76) | Membership for **this** Shop only; welcome is **UX only** unless Signup Bonus is configured ([Signup vs Referral](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided)) | Welcome ≠ bonus |
 | 18 | New user (phone not an account) | Covered (UX-75) | Join fields optional today; enroll accepts them | Required vs optional still **PROPOSED** |
 | 19 | Profile invalid | Covered | Required error on UX-75 | Highlight required fields |
 | 20 | New user **with** valid `?ref=` | Covered (referred-party) | Referred grant after OTP; **referrer** on first **paid** invoice | Do not show referrer as paid at enroll |
@@ -63,12 +63,12 @@ Legend: **Covered** = on the current diagram. **Fix** = on the diagram but wrong
 | 25 | Already has a portal session | Covered | Skip OTP → wallet | Re-auth if session expired |
 | 26 | Customer reaches `/app` | Out of scope | DECIDED forbidden | Never a portal screen |
 | 27 | Owner **Add Customer** | Out of scope | Merchant tool, no OTP | Do not merge into this funnel |
-| 28 | Journey B returning check-in | **Fix** | Already in program → check-in, **no** OTP | Image currently has Yes/No **reversed** |
-| 29 | Journey B new phone / first join | **Fix** | Not in program → OTP / enroll | Image currently sends this path to check-in |
-| 30 | Journey B resolve / multi-active | **Add** | Pending BO item 15 | Resolve shop → one program (or picker); never auto-join siblings |
-| 31 | Check-in / wallet reward progress | **Add** | [customer-reward-progress](./customer-reward-progress.md) | This program only; same numbers as wallet card |
+| 28 | Journey B returning check-in | **Fix** | Already in Shop → check-in, **no** OTP | Image currently has Yes/No **reversed** |
+| 29 | Journey B new phone / first join | **Fix** | Not in Shop → OTP / enroll | Image currently sends this path to check-in |
+| 30 | Journey B resolve | **Covered** | Shop QR always this Shop (item 15 **closed**) | No picker |
+| 31 | Check-in / wallet reward progress | **Add** | [customer-reward-progress](./customer-reward-progress.md) | This Shop only; same numbers as wallet card |
 
-Happy-path terminal for 16, 17, 20, and 21: **Customer wallet** (one card per program, any mix of types — never a mixed total). Welcome on case 17 does not grant a bonus unless Signup Bonus is configured.
+Happy-path terminal for 16, 17, 20, and 21: **Customer wallet** (one card per Shop, sections for enabled capabilities — never a mixed total across Shops). Welcome on case 17 does not grant a bonus unless Signup Bonus is configured.
 
 ---
 
@@ -79,7 +79,7 @@ Register and login are **one OTP funnel**. Pixel layout and portal **URL** stay 
 ```mermaid
 flowchart TD
   Start["Customer opens portal"] --> Sess{"Already has a portal session?"}
-  Sess -->|Yes| Wallet["Customer wallet UX-07\none card per program"]
+  Sess -->|Yes| Wallet["Customer wallet UX-07\none card per Shop"]
   Sess -->|No| Arrive{"How did they arrive?"}
   Arrive -->|Direct| Phone["Phone input"]
   Arrive -->|QR or referral link| Ref["Referral entry"]
@@ -115,8 +115,8 @@ flowchart TD
   Code -->|Yes| Status{"Account status"}
 
   Status -->|inactive| Block["Blocked state — generic message"]
-  Status -->|Active existing| First{"First time in this program?"}
-  First -->|Yes| Welcome["Welcome and link loyalty program UX-76\nUX only — Signup Bonus only if configured"]
+  Status -->|Active existing| First{"First time in this Shop?"}
+  First -->|Yes| Welcome["Welcome and link Shop UX-76\nUX only — Signup Bonus only if configured"]
   Welcome --> Wallet
   First -->|No| Wallet
   Status -->|New phone| Profile["Profile setup: name, email, DOB UX-75"]
@@ -137,20 +137,19 @@ flowchart TD
 
 ## Journey B flowchart (in-store shop QR — sibling)
 
-Shop QR URL and multi-active picker remain **pending Business Owner** ([item 15](./counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending)). Direct `/join/{programId}` stays valid for program / referral QRs while `active`.
+Shop QR always resolves to **this Shop**. Direct `/join/{programId}` stays valid as today’s printed QR while it maps to the Shop and at least one capability is `active`.
 
 ```mermaid
 flowchart TD
-  QR["Shop QR or /join/programId"] --> Resolve{"Land on one program\nURL / picker pending item 15"}
-  Resolve -->|None active| Empty["Program unavailable — stop"]
-  Resolve -->|One program| Active{"Program active?"}
-  Active -->|No draft or disabled| Empty
-  Active -->|Yes| InProg{"Phone already in this program?"}
-  InProg -->|Yes| CheckIn["Check-in — no new OTP\nno second referral\nshow this program progress — stop"]
-  InProg -->|No| OtpPath["OTP / enroll — same rules as Journey A\nthis program only"]
+  QR["Shop QR or /join/programId"] --> Shop["This Shop"]
+  Shop --> Active{"At least one capability active?"}
+  Active -->|No| Empty["Unavailable — stop"]
+  Active -->|Yes| InProg{"Phone already a member of this Shop?"}
+  InProg -->|Yes| CheckIn["Check-in — no new OTP\nno second referral\nshow this Shop progress — stop"]
+  InProg -->|No| OtpPath["OTP / enroll — same rules as Journey A\nthis Shop only"]
 ```
 
-Membership, points, stamps, wallet, and rewards after this are **that program only** — never a shop-wide balance. Never enroll the customer into every `active` program.
+Membership, points, stamps, wallet, and rewards after this are **this Shop only** — one card, sections for enabled capabilities. Never a second membership for Points vs Visit.
 
 Catalog redeem (pending + reserve + QR verification) is **not** on this canvas — [reward-redemption-flow.md](./reward-redemption-flow.md).
 
@@ -168,14 +167,14 @@ Catalog redeem (pending + reserve + QR verification) is **not** on this canvas �
 | 429 toast + disable submit | UX-68 | Yes — confirm “disable submit” in the label |
 | Inactive account (generic) | UX-06 | Yes |
 | Profile setup name / email / DOB | **UX-75** | Yes |
-| First-program welcome + link program | **UX-76** | Yes — note welcome ≠ Signup Bonus |
-| Wallet per program | UX-07 | Yes — one card per program |
+| First-Shop welcome + link Shop | **UX-76** | Yes — note welcome ≠ Signup Bonus |
+| Wallet per Shop | UX-07 | Yes — one card per Shop |
 | OTP already used | auth brief §6 | Yes |
 | Self-referral / invalid ref | journey case 22 | **Add** |
-| Reward progress on wallet / check-in success | UX-07 / UX-09 | **Add** (same numbers; that program only) |
+| Reward progress on wallet / check-in success | UX-07 / UX-09 | **Add** (same numbers; that Shop only) |
 | Portal shell | UX-08 | After wallet land (not required on this canvas) |
-| Program unavailable | UX-09 | Yes on Journey B — keep |
-| Program picker (several `active`) | UX-09 | **Add only if** BO allows multiple ACTIVE (item 15) |
+| Unavailable (no live capability) | UX-09 | Yes on Journey B — keep |
+| Program picker (several `active`) | — | **Removed** — Shop QR always this Shop |
 | Journey B Yes/No wiring | UX-09 | **Fix** (currently reversed on the image) |
 
 ---
@@ -189,23 +188,22 @@ Keep layout, legend, and colors. Do not redesign.
 ### Still open
 
 1. **Journey B — flip Yes/No**  
-   - `Phone already in this program?` **Yes** → Check-in (no OTP, no second referral) + this program’s progress — **stop**  
-   - **No** → OTP / enroll (Journey A rules) for **this** program only  
+   - `Phone already a member of this Shop?` **Yes** → Check-in (no OTP, no second referral) + this Shop’s progress — **stop**  
+   - **No** → OTP / enroll (Journey A rules) for **this** Shop only  
    - Do **not** send returning members into the portal OTP funnel from this box
 
-2. **Journey B — complete the front**  
-   - Resolve shop → one program (pending item 15)  
-   - Optional picker if multiple `active` allowed  
-   - Keep `Program unavailable` for no live / `draft` / `disabled`
+2. **Journey B — front**  
+   - Shop QR → this Shop (no picker)  
+   - Keep unavailable for no live capability / all `draft` / `disabled`
 
 3. **Journey A — small adds / renames**  
    - Phone decision: `Valid phone format (E.164)?`  
-   - First-time branch: `First time in this program?` (not Shop)  
+   - First-time branch: `First time in this Shop?`  
    - UX-76 note: welcome is UX only; Signup Bonus only if configured  
-   - UX-07 note: one card per program  
+   - UX-07 note: one card per Shop  
    - 429 box: include **disable submit**  
    - After valid profile + referral: self-referral / invalid `ref` → red `Referral not applied` → still wallet  
-   - Footnote: keep TTL/cap placeholders; add `inactive` ≠ program `disabled` ≠ member `at_risk`
+   - Footnote: keep TTL/cap placeholders; add `inactive` ≠ capability `disabled` ≠ member `at_risk`
 
 ### Already done on the current image (do not re-ask)
 
@@ -236,9 +234,10 @@ Keep layout, legend, and colors. Do not redesign.
 | Any timer / “wait N mins” number | Placeholder. OTP TTL and attempt cap are **not locked**. |
 | Disabled / Blocked / Suspended | Stored **`inactive`**. Distinct from member `at_risk` / `churned` and program `disabled`. |
 | Grant Referral Reward (undifferentiated) | **Referred** now; **referrer** on first paid invoice. |
-| First time in this Shop | First time in this **program**. |
+| First time in this Shop / this program | First time in this **Shop**. |
 | G-33 / G-36 as screen names | Gap IDs only. |
-| Journey B Yes → portal OTP | Wrong. Returning in program = check-in only. |
+| Journey B Yes → portal OTP | Wrong. Returning in Shop = check-in only. |
+| Journey B program picker | Removed. Shop QR always this Shop. |
 
 ---
 

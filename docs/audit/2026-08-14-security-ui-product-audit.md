@@ -196,6 +196,8 @@ Proxy sets `redirectedFrom` from **pathname only** (safe today). Sign-in does **
 
 Dedupe is application-only ([join-service.ts](../../src/lib/server/join-service.ts) L113–128). Race: two concurrent enrolls with the same email create two rows. No unique index.
 
+**Product note (2026-08-17):** uniqueness should be per **Shop membership**, not per capability row. Target: one customer row per Shop; see [program-model.md](../product/program-model.md) · [data-contract Shop capability model](../backend/data-contract.md#shop-capability-model-decided-not-shipped).
+
 #### S-18 — Notifications INSERT grant vs policy (Low)
 
 Policy allows INSERT own notifications; table GRANT is SELECT/UPDATE in the creating migration. Client inserts may fail; BFF uses service role so the Next route still works.
@@ -402,7 +404,7 @@ flowchart TD
 - `points_ledger` and `POST .../redeem` with insufficient-balance / zero-balance rejection (`G-20`).
 - Staff POS: identify member (QR/phone), award visit/spend, redeem.
 - Points expiry job honoring `points_expiry_months` / grace (`G-10`, `G-21`).
-- Unique constraint on member email/phone per program.
+- Unique constraint on member email/phone per Shop (today’s column may still be named `loyalty_program_id`; product uniqueness is Shop membership — [program-model.md](../product/program-model.md)).
 - `assign_customer_tier` on enroll/check-in/points change (`G-03`).
 
 #### Jobs, mail, campaigns

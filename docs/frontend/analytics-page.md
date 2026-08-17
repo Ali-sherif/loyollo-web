@@ -1,6 +1,6 @@
 # Analytics Page (`/app/analytics`)
 
-Reference for all components, conditions, and edge cases on the Analytics route. Includes domain notes for frontend + backend work (one program per owner **today**; **DECIDED** many programs with `draft`/`active`/`disabled` — [loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided); how tiers are stored vs assigned, segment cutoffs, revenue placeholders), plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
+Reference for all components, conditions, and edge cases on the Analytics route. Includes domain notes for frontend + backend work (one program per owner **today**; **DECIDED** up to three Shop capabilities with `draft`/`active`/`disabled` — [loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided); how tiers are stored vs assigned, segment cutoffs, revenue placeholders), plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
 
 **Jump to:** [one program](#one-owner--one-loyalty-program) · [how tiers work](#how-customer-tiers-actually-work) · [point ranges](#loyalty-page-point-ranges-saved-vs-ui) · [segments](#customer-segments--card) · [members by tier](#members-by-tier--card--donut) · [engagement stats](#stat-cards-4) · [visit frequency](#visit-frequency-over-time--card--emptychart-disabled) · [insights](#engagement-insights--card-suggestion-cards-not-a-report) · [most engaged / tier column](#most-engaged-members--card--table) · [engagement levels](#engagement-levels--card--horizontal-bars) · [colliding labels](#three-different-systems-do-not-mix-them) · [revenue tab](#tab-3-revenuetab) · [ROI](#roi-from-rewards) · [channel](#revenue-by-channel--what-channel-means) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
@@ -463,6 +463,8 @@ At redeem-in-store: create/attach the `orders` row, set `order_id` on the redemp
 
 3. Backend aggregation:
 
+`:program_id` below is **Shop identity** (`loyalty_program_id` as a transitional alias — [data-contract](../backend/data-contract.md#shop-capability-model-decided-not-shipped)).
+
 ```sql
 WITH reward_metrics AS (
   SELECT
@@ -508,7 +510,7 @@ ADD COLUMN attributed_channel VARCHAR(50), -- 'email', 'sms', 'in_store'
 ADD COLUMN campaign_id UUID REFERENCES campaigns(id);
 ```
 
-Also store `loyalty_program_id`, `amount_cents`, `customer_id` (nullable for non-members), `occurred_at`.
+Also store `loyalty_program_id` (Shop identity, transitional), `amount_cents`, `customer_id` (nullable for non-members), `occurred_at`.
 
 2. **Tracking links / promo codes:** campaign email/SMS includes a URL or discount code with `campaign_id`. Checkout or POS redeem of that code writes `attributed_channel` from `campaigns.channel` and sets `campaign_id`. In-store QR with no code → `in_store`.
 
@@ -538,7 +540,7 @@ Use this when wiring frontend and backend. Analytics assumes the current product
 - App fetches with `.eq("owner_id", user.id).maybeSingle()` (expects 0 or 1 row)
 - App saves with `.upsert(..., { onConflict: "owner_id" })` — create or **overwrite** that one program
 
-**Intended (DECIDED):** a shop has **many** programs; each is `draft` \| `active` \| `disabled`. See [loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided) and [G-35](gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status).
+**Intended (DECIDED):** a Shop has at most one Points, one Visit, and one Tier capability; each is `draft` \| `active` \| `disabled`. Analytics stay Shop-scoped. See [loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided) and [G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-one-config-per-capability).
 
 There is **no** (today):
 
@@ -806,7 +808,7 @@ Short list:
 5. **Revenue metrics** — need orders/transactions linked to members (no equations today)
 6. **Month-over-month deltas** on stat cards — need historical snapshots
 7. **`customers.tier` never written** — enroll/check-in do not apply `loyalty_program_tiers.points_threshold`; Analytics donut will stay Untiered until backend assigns tiers (or Analytics computes from points)
-8. **One program per owner (today)** — **DECIDED:** many programs + `draft`/`active`/`disabled` ([loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided))
+8. **One program per owner (today)** — **DECIDED:** up to three capabilities + `draft`/`active`/`disabled` ([loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided))
 9. **Segment/level cutoffs** — hardcoded in the frontend; not owner-configurable
 10. **Loyalty “Tier stats”** — member counts hardcoded `"0"` on `/app/loyalty`
 11. **Insight CTAs** — Send / Nudge / Explore / Create have no handlers; “1 visit from a reward” uses hardcoded `visits % 5 === 4`, not program `visits_required`

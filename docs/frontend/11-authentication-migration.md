@@ -26,7 +26,7 @@ This is **not** [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy
 | Role | Who | Surface | Permissions |
 |------|-----|---------|-------------|
 | **`admin`** | Buys Loyollo (the shop). Same as today’s **owner** (`owner_id`). | Merchant **`/app`** | Full merchant access. Product Phase 1: the software-purchase account is this role. |
-| **`staff`** | Works for that shop (team). | Merchant **`/app`** | **For now: same permissions as `admin`.** Phase 1 Redemption: any existing Staff or Admin may **scan/verify** redemptions for that **Shop** (`staff.branch.shop_id === redemption.program.shop_id`); do not add extra redemption role restrictions unless decided later. Scan is verification, not discretionary approval. A later split (limited staff) is not locked. Subtypes (manager / cashier / …) are **not** locked. |
+| **`staff`** | Works for that shop (team). | Merchant **`/app`** | **For now: same permissions as `admin`.** Phase 1 Redemption: any existing Staff or Admin may **scan/verify** redemptions for that **Shop** (`staff.branch.shop_id === redemption.shop_id`); do not add extra redemption role restrictions unless decided later. Scan is verification, not discretionary approval. A later split (limited staff) is not locked. Subtypes (manager / cashier / …) are **not** locked. |
 | **`customer`** | Shops at that business (loyalty member). | Customer register/login — **not** `/app` | Customer data + calculated KPIs only. Never merchant `/app`. |
 
 **Today:** there is typically one `/app` login per shop; it is **`admin`**. When `staff` accounts exist, they may use `/app` with **the same permissions as `admin`** until a split is approved. `staff` is a **different role name**, not a different permission set yet.
@@ -86,7 +86,7 @@ This is **account** status (can they use the product?), not:
 | Other “status” | Meaning |
 |----------------|---------|
 | Customer **member** status | `active` / `at_risk` / `churned` on `customers` |
-| Loyalty **program** status | `draft` / `active` / `disabled` |
+| Loyalty **capability** status | `draft` / `active` / `disabled` |
 | **Campaign** status | draft / active / completed / … |
 
 | Account status | Effect |
@@ -143,15 +143,15 @@ Purpose:
 
 Customer auth must **not** grant `admin` / `staff` `/app` access. Rate-limit public signup/enrollment and OTP request ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)). Schema and APIs are backend-owned ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)). Gap: [G-33](gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows).
 
-**Working journey for design (2026-08-16):** portal register, login, and lost access are **one OTP funnel**. After OTP: inactive → generic block; existing member of **this program** → wallet; existing customer **first time in this program** → link program then wallet (this membership only); new phone → profile then wallet. In-store returning check-in (Shop QR — URL pending item 15 — or `/join/{programId}`) stays **without** a new OTP once the **program** is known. Never auto-join every live program. Full case list: [customer-portal-journey.md](../product/customer-portal-journey.md). `G-33` / `G-36` are gap IDs, not screen names.
+**Working journey for design (2026-08-17):** portal register, login, and lost access are **one OTP funnel**. After OTP: inactive → generic block; existing member of **this Shop** → wallet; existing customer **first time in this Shop** → link Shop then wallet (this membership only); new phone → profile then wallet. In-store returning check-in (Shop QR or `/join/{programId}`) stays **without** a new OTP once the **Shop** is known. Full case list: [customer-portal-journey.md](../product/customer-portal-journey.md). `G-33` / `G-36` are gap IDs, not screen names.
 
 ### Customer wallet (DECIDED)
 
-After login, the `customer` sees **one card per program** they belong to (any mix of Points / Visit / Tier) — never a single mixed points total.
+After login, the `customer` sees **one card per Shop** they belong to — never a single mixed points total across Shops. Enabled capabilities (Points / Visit / Tier) are **sections on that card**.
 
-Each card must show: program name; **by type** — Points: **available** balance (`total − pending reserved`) + progress to next reward; Visit: stamp-icon counter; Tier: current tier + progress to next; plus expiry (one date if lots share it; otherwise amount + date groups), vouchers with their dates, that program’s share **link** + **QR**. [program-model.md](../product/program-model.md#4-customer-wallet-summary) · [customer-reward-progress.md](../product/customer-reward-progress.md) · [reward-redemption-flow.md](../product/reward-redemption-flow.md).
+Each card must show: Shop name; **by enabled capability** — Points: **available** balance (`total − pending reserved`) + progress to next reward; Visit: stamp-icon counter; Tier: current tier + progress to next; plus expiry (one date if lots share it; otherwise amount + date groups), vouchers with their dates, that Shop’s share **link** + **QR**. [program-model.md](../product/program-model.md#4-customer-membership-and-wallet) · [customer-reward-progress.md](../product/customer-reward-progress.md) · [reward-redemption-flow.md](../product/reward-redemption-flow.md).
 
-Example: 100 points in program 1 (month window) and 200 in program 2 (week window) = two cards, not 300. [loyalty-page.md](loyalty-page.md#customer-wallet-per-program-decided). Portal URL still **not** locked.
+Example: 100 points at Shop A and 200 at Shop B = two cards, not 300. Points + Visit at the **same** Shop = **one** card with two sections. [loyalty-page.md](loyalty-page.md#customer-wallet-per-shop-decided). Portal URL still **not** locked.
 
 ## Credential recovery (DECIDED)
 

@@ -1,6 +1,6 @@
 # Campaigns Page (`/app/campaigns`)
 
-Reference for all components, conditions, and edge cases on the Campaigns list route, plus the linked detail page (`/app/campaigns/[campaignId]`), send pipeline, audience matching, and automations. Includes domain notes for frontend + backend work, plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
+Reference for all components, conditions, and edge cases on the Campaigns list route, plus the linked detail page (`/app/campaigns/[campaignId]`), send pipeline, audience matching, and automations. Includes domain notes for frontend + backend work, plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions). **Today** campaigns hang off the owner’s single `loyalty_programs` row. **DECIDED:** campaigns are **Shop-scoped** (`loyalty_program_id` is a transitional alias — [data-contract](../backend/data-contract.md#shop-capability-model-decided-not-shipped)).
 
 **Jump to:** [product meanings](#product-meanings-decided) · [route](#route-structure) · [page flow](#high-level-page-flow) · [stat cards](#stat-cards-4) · [status tabs](#status-tabs) · [filters](#search--filters--sort) · [table](#campaign-table) · [row menu](#row-menu) · [create / edit](#create--edit-dialog) · [send](#launch--send-pipeline) · [audience](#how-audience-actually-resolves) · [status machine](#campaign-status-machine) · [automations](#scheduled-automations) · [detail page](#detail-page-appcampaignscampaignid) · [performance](#performance--open--redeemed) · [personalization](#personalization-tokens) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
@@ -169,7 +169,7 @@ Unlike Analytics, there is **no empty-state for “no loyalty program”** on th
 ### Data loading sequence
 
 1. Fetch `profiles` (`full_name`, `onboarding_completed`) for current user
-2. Fetch `loyalty_programs` where `owner_id = user.id` (expects 0 or 1 **today** — unique on `owner_id`). **DECIDED:** many programs ([loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided))
+2. Fetch `loyalty_programs` where `owner_id = user.id` (expects 0 or 1 **today** — unique on `owner_id`). **DECIDED:** up to three capability rows ([loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided))
 3. If program exists, fetch `campaigns` ordered by `created_at` descending
 
 Columns loaded:
@@ -843,7 +843,7 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 
 | G-ID | Widget / flow | UI gap | API gap | DB gap | Recommended fix |
 |------|---------------|--------|---------|--------|-----------------|
-| — | **Create without program** | Toast only | n/a | One program per owner **today** | Keep; **DECIDED** many programs ([G-35](gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status)) |
+| — | **Create without program** | Toast only | n/a | One program per owner **today** | Keep; **DECIDED** Shop capabilities ([G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-one-config-per-capability)) |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Scheduled tab / `scheduled_at`** | Tab always 0 | No schedule job | Column unused | Hide tab or schedule worker |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Completed tab** | Always 0 | Send writes `active` | No lifecycle | **DECIDED:** after all messages processed, write `completed` (do not drop the tab; do not leave successful sends as Active) |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Enable / Disable vs Launch** | Enable sets `active` without sending | Send blocks `active` | One status, two meanings | **DECIDED:** Active = working only; Enable restores draft; send refuses `completed` as finished |
@@ -876,7 +876,7 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 | `{{name}}` / `{{first_name}}` / `{{business_name}}` + HTML wrapper | Content parity |
 | `campaign_automations` unique type | Config store once a worker exists |
 | `enqueue_email` / `email_send_log` / unsubscribe token | Observability until queue product is chosen |
-| One program per owner **today** | Scope all campaigns. **DECIDED:** many programs — campaigns stay program-scoped |
+| One program per owner **today** | Scope all campaigns. **DECIDED:** Shop-scoped campaigns (one catalog per Shop; `loyalty_program_id` is a transitional alias) |
 
 ### Recommended send + attribution model
 
@@ -915,7 +915,7 @@ Short list:
 12. **Messaging** — send service duplicates campaign HTML helpers instead of contracts
 13. **Detail engagement / rewards redeemed** — placeholders
 14. **Personalization tokens** — work on send, hidden in the UI
-15. **One program per owner (today)** — campaigns belong to that program; no program switcher. **DECIDED:** many programs ([loyalty-page.md](loyalty-page.md#multiple-programs-and-status-decided))
+15. **One program per owner (today)** — campaigns belong to that program; no program switcher. **DECIDED:** Shop-scoped campaigns ([loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided))
 
 ---
 

@@ -1,11 +1,13 @@
-# Program model (Shop vs Program)
+# Program model (Shop loyalty capabilities)
 
-**Date:** 2026-08-16  
-**Status:** DECIDED for Shop vs Program, v1 program types, and same-type / rule-vs-program guidance (not shipped). **Open:** tier downgrade if activity drops. **Pending Business Owner:** whether more than one program may be `active` at once (Shop QR) — [§15](./counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending).  
+**Date:** 2026-08-17  
+**Status:** DECIDED for Shop as the loyalty unit, one-per-type capabilities (Points / Visit / Tier), and one customer membership per Shop (not shipped). **Open:** tier downgrade if activity drops; whether the Tier metric is a cumulative lifetime figure separate from spendable points / resettable visits.  
 **Audience:** Product, UI/UX, QA, backend  
 **Does not authorize** schema, APIs, or Next.js implementation ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
-**Sources of truth to keep in sync:** [loyalty-page.md](../frontend/loyalty-page.md#multiple-programs-and-status-decided) · [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md) · [customer-reward-progress.md](./customer-reward-progress.md) · [UX-10](./ui-ux-team-requests.md#ux-10--multi-program-list--switcher) · [G-35](../frontend/gaps-and-solutions.md#g-35--shop-is-limited-to-one-loyalty-program-no-program-status)
+**Supersedes (2026-08-16):** Shop as a container of many independent Programs (including same type); one wallet card per Program; pending Business Owner item 15 (multiple ACTIVE programs / Shop QR picker). Shop QR now always resolves to the Shop — [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md).
+
+**Sources of truth to keep in sync:** [loyalty-page.md](../frontend/loyalty-page.md#shop-loyalty-capabilities-decided) · [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md) · [customer-reward-progress.md](./customer-reward-progress.md) · [UX-10](./ui-ux-team-requests.md#ux-10--loyalty-capabilities-settings) · [G-35](../frontend/gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-one-config-per-capability)
 
 Do **not** restate Signup/Referral grant timing or the catalog redeem state machine here. Cross-ref:
 
@@ -14,113 +16,186 @@ Do **not** restate Signup/Referral grant timing or the catalog redeem state mach
 
 ---
 
-## 1. Shop vs Program
+## 1. Shop vs capability
 
-A **Shop** is a container. It has no shop-wide points balance, membership, wallet, or reward catalog.
+A **Shop** is the loyalty unit. It owns:
 
-A **Program** is the independent unit of loyalty logic. It owns its own:
+- One customer membership / relationship per shopper
+- One wallet (points balance, visit counter, current tier — each present only when that capability is enabled)
+- One rewards catalog
+- One referral configuration
+- One join / check-in QR
 
-- Members
-- Wallet
-- Points / stamps / tier state
-- Rewards
-- Signup Bonus config
-- Referral rules
+A **capability** is an optional configuration of that Shop’s loyalty system. Stored `program_type`: `points` · `visit` · `tier`.
 
-A customer’s balance in one Program **never** combines with their balance in another Program, even when both Programs belong to the same Shop.
+| Cap | Rule |
+| --- | ---- |
+| Points | At most **one** Points config per Shop |
+| Visit | At most **one** Visit config per Shop |
+| Tier | At most **one** Tier config per Shop |
+
+These are **not** independent loyalty programs. A customer does not join “the Points Program” separately from “the Visit Program.” They join **the Shop**, and the Shop’s enabled capabilities determine what that membership earns and displays.
 
 ```text
-Shop  (container only — no wallet)
-├── Program A  → members, wallet, points/stamps/tier, rewards, signup, referrals
-└── Program B  → members, wallet, points/stamps/tier, rewards, signup, referrals
-                 (never mixed with A)
+Shop  (loyalty unit — one membership, one wallet, one catalog)
+├── Points capability  (optional)  → conversion rate, min spend to earn, expiry
+├── Visit capability   (optional)  → stamp target, min invoice, max/day, weekend multiplier
+└── Tier capability    (optional)  → ladder + measured-by + reset period
 ```
 
-Joining Program A does **not** automatically join Program B. QR join / check-in always targets **one** Program: [counter QR](./counter-qr-and-program-membership.md).
+**Schema assumption (do not invent a `shops` table from this file):** today there is no `shops` table. The Shop identity is `owner_id` / `profiles` (the merchant who bought Loyollo). `branches` are locations under that owner and are not a second loyalty unit. Backend may later introduce a formal `shops` row; product meaning stays “one loyalty system per merchant Shop.”
+
+**Storage (backend-owned):** keep using `loyalty_programs` rows as capability configs. Target unique constraint: **`UNIQUE (owner_id, program_type)`** — at most three rows per Shop, never two of the same type. Do **not** unique-constrain `owner_id` alone (that is today’s 1-row-total limit and blocks Points+Visit). Do **not** drop uniqueness entirely (that would allow two Points configs).
+
+Joining a Shop creates **one** membership. QR join / check-in always targets **the Shop**: [counter QR](./counter-qr-and-program-membership.md).
 
 ---
 
-## 2. Program types (v1)
+## 2. Valid and invalid configurations
+
+Each capability is independently optional. Any non-empty subset is valid.
+
+**Valid**
+
+1. Points only
+2. Visits only
+3. Tiers only
+4. Points + Visits
+5. Points + Tiers
+6. Visits + Tiers
+7. Points + Visits + Tiers
+
+**Invalid**
+
+- Two Points configs for the same Shop
+- Two Visit configs for the same Shop
+- Two Tier configs for the same Shop
+
+A Shop with **no** capability enabled is a setup gap (no earn path). Join/check-in should treat that as unavailable — same empty state as “no live loyalty” today.
+
+Visit does **not** require Points. Tier does **not** require Points or Visit. See [§3](#3-capability-types-v1).
+
+---
+
+## 3. Capability types (v1)
 
 **v1 scope:** in-store transactions only. Do not design delivery / online / other-channel earning logic in this phase.
 
-Stored `program_type`: `points` · `visit` · `tier`.
-
 | Type | What it is | What the member spends / uses | Wallet display |
 | ---- | ---------- | ----------------------------- | -------------- |
-| **Points system** | Numeric balance earned via a **$-to-point** conversion rate | Spent on that Program’s catalog rewards | Numeric **available** balance + progress toward the next reward |
-| **Visit-based** | Counter incremented per qualifying in-store visit / transaction | At the target count (e.g. 10 visits), the Program grants a reward and the counter **resets** | Visit counter (filled / empty stamp icons) |
-| **Tier-based** | A **status** (e.g. Bronze / Silver / Gold) derived from a cumulative metric (e.g. annual spend or visit count) | **Not** redeemed or spent. Unlocks standing perks (discounts, priority) | Current tier + progress toward the next tier threshold |
+| **Points** | Numeric balance earned via a **currency-to-point** conversion rate | Spent on the Shop’s catalog rewards | Numeric **available** balance + progress toward the next reward |
+| **Visit** | Counter incremented per qualifying in-store visit / check-in (and purchase when a minimum is set) | At the target count (e.g. 10 visits), the Shop grants a reward and the counter **resets** | Visit counter (filled / empty stamp icons) |
+| **Tier** | A **status** (e.g. Bronze / Silver / Gold) derived from a cumulative metric | **Not** redeemed or spent. Unlocks standing perks (discounts, priority) | Current tier + progress toward the next tier threshold |
 
-Tier is **status**, not a spendable currency. Catalog redeem stays a points-program (or visit-completion) path: [reward-redemption-flow.md](./reward-redemption-flow.md) · [customer-reward-progress.md](./customer-reward-progress.md).
+Tier is **status**, not a spendable currency. Catalog redeem stays a points path (or visit-completion earn): [reward-redemption-flow.md](./reward-redemption-flow.md) · [customer-reward-progress.md](./customer-reward-progress.md).
 
-### Qualifying visit — Minimum invoice amount (`min_spend_per_visit`)
+Rewards catalog is **Shop-wide**. A reward’s `point_cost` is only redeemable when the Points capability is enabled. Visit-completion rewards remain the Visit capability’s completion grant (earn ≠ catalog redeem).
 
-**Product meaning (DECIDED intent):** on a **Visit** Program, **Minimum invoice amount** (UI today: “Minimum spend per visit”; column `min_spend_per_visit`) is the floor on the **paid invoice / ticket** for that in-store transaction. A visit **counts** (stamp +1) only when invoice amount **≥** this value. Below the floor → **no stamp**, no progress change.
+---
 
-**Owner example:** “The visit does not count unless the invoice is ≥ 200” → set Minimum invoice amount to `200` (shop currency). Invoice `150` → no stamp. Invoice `200` or `350` → stamp counts.
+### Points
+
+Optional. If enabled, points are earned from a **purchase amount** on a paid invoice / POS transaction or a cashier-entered purchase, using the configured conversion rate.
+
+**Example:** every 100 EGP = 10 points (`spend_amount = 100`, `points_earned = 10`). Invoice 250 EGP → 20 points (integer division; remainder not specified here — backend-owned).
+
+Points **require** a purchase amount. A QR/check-in with no ticket does **not** award points.
+
+**Minimum spend to earn (`minimum_spend`):** ticket floor. No points when the paid invoice is **below** this amount. Parallel Visit gate: [Minimum invoice amount](#qualifying-visit--minimum-invoice-amount-min_spend_per_visit) below.
+
+**Honesty vs today:** check-in currently awards a flat `points_earned` and ignores ticket size / `minimum_spend` (G-10). Product meaning above is what design and backend must honour when orders/POS land.
+
+---
+
+### Visit
+
+Optional. **Can exist without a Points capability.** Visit does **not** technically depend on Points. It can optionally depend on a qualifying **purchase amount**.
+
+#### Qualifying visit — Minimum invoice amount (`min_spend_per_visit`)
+
+**Product meaning (DECIDED):** on the Visit capability, **Minimum invoice amount** (UI today: “Minimum spend per visit”; column `min_spend_per_visit`) is the floor on the **paid invoice / ticket** for that in-store event.
 
 | Setting | Effect |
 | ------- | ------ |
-| `0` or empty | Every recorded visit / check-in qualifies (no invoice floor) |
-| `> 0` | Only invoices at or above the amount qualify |
+| `0` or empty (none) | A qualifying QR check-in awards **+1 Visit**. No invoice floor. |
+| `> 0` | Visit is awarded only when the customer’s **purchase amount meets that minimum**. QR/check-in **plus** purchase ≥ minimum → +1 Visit. Purchase below the floor → **no Visit**. |
 
-This is a **Visit** earning gate, not a Points conversion rule. The Points parallel is **Minimum spend to earn** (`minimum_spend`): no points below that ticket floor — [loyalty-page Points](../frontend/loyalty-page.md#points-system).
+**Examples**
 
-**Honesty:** the field is saved on the program today; check-in does **not** enforce it until ticket amount is available (G-10). Product meaning above is what design and backend must honour when orders/POS land — do not invent a different rule.
+- Visit enabled + minimum amount = none → QR/check-in → +1 Visit.
+- Visit enabled + minimum amount = 200 EGP → QR/check-in + purchase ≥ 200 EGP → +1 Visit.
+- Purchase &lt; 200 EGP → no Visit.
 
-### Open — tier downgrade
+This is a **Visit** earning gate, not a Points conversion rule.
+
+**Existing rules that remain configurable** (already stored; keep as product locks when the writer exists):
+
+- Maximum visits per day (`max_visits_per_day`)
+- Weekend multipliers (`double_stamp_weekends`)
+
+**Honesty:** the field is saved on the capability row today; check-in does **not** enforce a purchase floor until ticket amount is available (G-10). Product meaning above is what design and backend must honour when orders/POS land — do not invent a different rule.
+
+**Intended v1:** at the target count the counter **resets**. Today’s `after_reward_action === "continue"` is stored UI, **not** the v1 product lock.
+
+A Shop has **one** Visit config. Do not model “drinks punch card” and “pastries punch card” as two Visit programs. If a future product needs independent stamp cards, that is a new decision — not this lock.
+
+---
+
+### Tier
+
+Optional. **Only one Tier configuration per Shop.** Independent of whether Points or Visit is enabled.
+
+It works according to the configured tier rules (ladder rows on `loyalty_program_tiers`, `tier_measured_by`, `tier_reset_period`). It does **not** require multiple Tier programs.
+
+Wallet: current tier + progress to the next threshold. Standing perks, not catalog spend.
+
+#### Open — tier metric source
+
+Whether Tier is measured from **spendable** `customers.points` / `customers.visits` (today’s intended writer) or from a **cumulative lifetime** metric (e.g. lifetime spend or lifetime visit count that does not fall on redeem / stamp reset) is **not decided**. Redeeming points or resetting a visit card would currently move the same counters the ladder reads. Do not invent a default. Track in [deferred-decisions.md](../architecture/deferred-decisions.md).
+
+#### Open — tier downgrade
 
 Whether a member **downgrades** if activity drops (and how `tier_downgrade_protection` behaves) is **not decided**. Do not invent a default. Today’s merchant form stores a `tierDowngradeProtection` flag; that is **not** a product lock. Track in [deferred-decisions.md](../architecture/deferred-decisions.md).
 
 ---
 
-## 3. Multiple programs per Shop, including same type
+## 4. Customer membership and wallet
 
-A shop owner can **create any number of Programs**, including **multiple Programs of the same type** (for example two separate Points-system Programs). There is **no** 1-per-type restriction. Do not add a unique constraint on `(shop, program_type)`.
+A customer has **one loyalty relationship / account per Shop**. That membership holds separate balances / state for:
 
-This is independent of **how many may be `active` at once** (Shop QR — still [pending Business Owner](./counter-qr-and-program-membership.md#15-shop-qr--multiple-active-programs-pending)). Independently pausing / stopping a Program is already modeled as that Program’s `disabled` (or leaving it `draft`).
+- **Points** (if Points is enabled)
+- **Visits** (if Visit is enabled)
+- **Current Tier** (if Tier is enabled)
 
-### Rule vs new Program (decision rule)
+Not separate wallets for multiple programs inside the same Shop. Not one card per capability as if they were different Shops.
 
-Use this for product, backend modeling, and **admin UI copy** when the owner creates a Program (tooltip / helper on [UX-10](./ui-ux-team-requests.md#ux-10--multi-program-list--switcher) / `/app/loyalty`):
+A customer **may** be a member of **several Shops** at once. Those wallets never mix (Shop A points + Shop B points ≠ a combined total).
 
-| Model as… | When |
-| --------- | ---- |
-| **Multiple earning rules inside ONE Program** (one shared balance) | The initiatives share the **same underlying goal** and only differ by a **conditional earning modifier** (time-of-day multiplier, product-category variant, birthday double, weekend stamp, and similar). |
-| **Separate Programs** (even if the same type) | The initiatives have **genuinely different purposes**, **different lifespans** (limited-time campaign vs a permanent Program), need **independent analytics**, or need to be **independently paused / stopped**. |
-
-**Example — keep as a rule, not a Program:** “Happy Hour 3x points” is an earning rule **inside** “Regular Points.” Members share one Points balance. Do not create a second Points-system Program named Happy Hour.
-
-**Example — separate Programs:** “Punch card — drinks” and “Punch card — pastries” are two Visit-based Programs when they need independent stamp counts, catalogs, and pause/stop.
-
-Suggested create-flow helper copy (pixel layout not locked):
-
-> Same goal, different rate? Add it as a rule instead of a new program.
-
-How earning rules are **stored** is backend-owned. This lock is the product decision only — do not add tables from this frontend repo.
-
----
-
-## 4. Customer wallet (summary)
-
-A customer can be a member of **multiple Programs at once** (any mix of types). The wallet shows each membership **independently** — no aggregation across Programs.
-
-| Membership type | Card shows |
-| --------------- | ---------- |
-| Points | Numeric **available** balance (`Total − Reserved`) + progress toward the next reward |
+| Enabled on this Shop | Card shows |
+| -------------------- | ---------- |
+| Points | Numeric **available** balance (`Total − Reserved`) + progress toward the next catalog reward |
 | Visit | Visit counter (filled / empty stamp icons) |
 | Tier | Current tier + progress toward the next tier threshold |
+| Several | **One** Shop card with independent sections for each enabled capability |
 
-Full card facts (expiry groups, vouchers, share QR, redeem): [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-program-decided) · [customer-reward-progress.md](./customer-reward-progress.md).
+Full card facts (expiry groups, vouchers, share QR, redeem): [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-shop-decided) · [customer-reward-progress.md](./customer-reward-progress.md).
 
 ---
 
-## 5. Related locks (do not duplicate)
+## 5. Signup Bonus when several capabilities are enabled
+
+Signup Bonus remains **once per customer per Shop** on first membership join of that Shop ([Signup vs Referral](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided)). Welcome / link-Shop screens are UX only.
+
+If **both** Points Signup Bonus and Visit signup stamp are configured, they **can both fire** on that first Shop join. That is the intended consequence of independent capabilities, not a bug. Returning check-in never fires either.
+
+---
+
+## 6. Related locks (do not duplicate)
 
 | Topic | Canonical doc |
 | ----- | ------------- |
-| Signup Bonus (once per customer per Program on first join) vs Referral Bonus (`?ref=` + OTP; can stack) | [Signup vs Referral](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided) |
-| Welcome / link-program screens are **UX only** — they do not grant a bonus unless Signup Bonus is configured | [UX-76](./ui-ux-team-requests.md#ux-76--first-shop-welcome--link-program) · [customer-portal-journey.md](./customer-portal-journey.md) |
+| Signup Bonus (once per customer per Shop on first join) vs Referral Bonus (`?ref=` + OTP; can stack) | [Signup vs Referral](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided) |
+| Welcome / link-Shop screens are **UX only** — they do not grant a bonus unless Signup Bonus is configured | [UX-76](./ui-ux-team-requests.md#ux-76--first-shop-welcome--link-shop) · [customer-portal-journey.md](./customer-portal-journey.md) |
 | Catalog redeem: Available check → reserve → PENDING QR → staff scan COMPLETED (atomic) or job EXPIRED | [reward-redemption-flow.md](./reward-redemption-flow.md) |
-| Program QR / Shop QR / membership join | [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md) |
+| Shop QR / membership join | [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md) |
+| Referral points kind when Points is **disabled** | **Open** — [deferred-decisions.md](../architecture/deferred-decisions.md) |

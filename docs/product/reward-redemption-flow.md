@@ -1,13 +1,13 @@
 # Reward redemption flow (per program)
 
-**Date:** 2026-08-16  
-**Status:** DECIDED for Phase 1 lifecycle and agreed edge cases (not shipped). Four items remain **pending owner decision** — see [§14](#14-pending-owner-decisions-do-not-implement-yet).  
+**Date:** 2026-08-18  
+**Status:** DECIDED for Phase 1 lifecycle (not shipped). Former §14 items are **DECIDED** — see [§14](#14-decided-pending-edges).  
 **Audience:** Product, UI/UX, QA, backend  
-**Does not authorize** schema, APIs, or Next.js implementation ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
+**Does not authorize** schema, APIs, or Next.js implementation ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md), [ADR-016](../architecture/decisions/ADR-016-independent-programs.md)).
 
 **Sources of truth to keep in sync:** [program-model.md](./program-model.md) · [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md) · [loyalty-page.md](../frontend/loyalty-page.md#reward-redemption-lifecycle-decided) · [customer-reward-progress.md](./customer-reward-progress.md) · [G-20](../frontend/gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) · [data-contract](../backend/data-contract.md) · [api-contract](../backend/api-contract.md)
 
-The customer redeems **only** rewards that belong to the Shop in which they have membership. Points, stamps, wallet, and catalog never mix across **Shops** ([program-model.md](./program-model.md)). Shop-level wallet (`Total` / `Reserved` / `Available = Total − Reserved`), Signup Bonus, and Referral Bonus stay as documented on the [customer wallet](../frontend/loyalty-page.md#customer-wallet-per-shop-decided) and [Signup vs Referral](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided) — this file does not restate those grants.
+The customer redeems **only** rewards that belong to their **enrolled program**. Points, stamps, wallet, and catalog never mix across **Shops** or across programs except via deferred POS migration ([program-model.md](./program-model.md)). `Available = Total − Reserved`. Signup / Referral grants stay on [loyalty-page.md](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided).
 
 ---
 
@@ -40,6 +40,7 @@ Available = Total − Reserved
 Available < cost?
    ├── Yes → reject immediately (clear error; no row; no reservation)
    └── No  → reserve points (increment Reserved)
+             persist reward_snapshot (cost + conditions at create)
              create Redemption PENDING
              generate single-use QR tied to that row
              qr_expires_at = now + 10 minutes
@@ -66,7 +67,7 @@ Stored status names: `pending` · `completed` · `expired` · `rejected`. Do not
 - `expired` — scheduled job (or scan of a past-due QR) released the reservation. Not a staff action.
 - `rejected` — **not** a staff action on a valid physical QR. Retained for other / non-QR flows if a created row must be invalidated without completing. Insufficient Available at create is an **error with no row**, not `rejected`.
 
-Optional later states (`cancelled` · `reversed`) are **not** Phase 1. Refund / reversal is deferred ([§12](#12-refund--reversal-deferred--not-phase-1)).
+Optional later states (`cancelled` · `reversed`): **`cancelled` is later-phase only** (emergency force-delete). General refund / reversal is not Phase 1 ([§12](#12-refund--reversal-deferred--not-phase-1)).
 
 ---
 
@@ -97,7 +98,7 @@ A second reward costing 50 points must be **rejected immediately** (50 > 30): cl
 
 **Spendable / available** on the wallet and on redeem eligibility is this **available** figure — not a stale client total, and not a raw `customers.points` counter that ignores reservations.
 
-How reserved points interact with **lot** expiry (`points_ledger.expires_at`) is **pending** ([§14 item 14](#14-pending-owner-decisions-do-not-implement-yet)). That is independent of the 10-minute **QR** expiry ([§6b](#6b-expiry-handling-scheduled-job)).
+How reserved points interact with **lot** expiry (`points_ledger.expires_at`) is **DECIDED PM-04** ([§14](#14-decided-pending-edges)): lots are locked for the 10-minute QR TTL; unclaimed expiry then purges lots past `expires_at`. Independent of QR TTL itself ([§6b](#6b-expiry-handling-scheduled-job)).
 
 ---
 
@@ -291,7 +292,7 @@ The Reward expiring after the Redemption was created **must not** automatically 
 
 The **QR / pending-redemption TTL is 10 minutes** and is **independent** of the Reward’s `expires_at`. Do not use reward `expires_at` as the QR timer.
 
-Whether a later **catalog price change** updates a `PENDING` row’s reserved `points_cost` is **not** decided ([§14 item 1](#14-pending-owner-decisions-do-not-implement-yet)). Do not treat cost snapshot-on-create as locked.
+Whether a later **catalog price change** updates a `PENDING` row’s reserved `points_cost` is **DECIDED**: it does **not**. Persist `reward_snapshot` at create; scan uses the snapshot ([§14.1](#141-reward-snapshot-prospective-edits-versions)).
 
 ---
 
@@ -324,22 +325,22 @@ A Redemption remains **permanently** associated with the Shop under which it was
 redemption.shop_id = Shop A
 ```
 
-(Today’s schema may still store `loyalty_program_id`; target meaning is the Shop — [data-contract](../backend/data-contract.md).)
+(Today’s schema may still store `loyalty_program_id`; target meaning is the **enrolled program** under that Shop — [data-contract](../backend/data-contract.md).)
 
-If the customer later joins or uses Shop B, the existing Redemption must remain associated with Shop A.
+If the customer later joins or uses Shop B, the existing Redemption must remain associated with Shop A / that program.
 
 - The Redemption must not be transferred to Shop B.
 - The Redemption must not be covered using Shop B’s points.
-- The points reservation must remain associated with the customer’s balance / wallet for Shop A.
+- The points reservation must remain associated with the customer’s balance for that **program**.
 - The QR is valid only for that Shop. Staff/scanner must belong to that Shop.
 
 ```text
 Customer
-├── Shop A → 100 points  (Redemption #123 stays here)
-└── Shop B → 50 points   (must not pay for #123)
+├── Shop A / Program 1 → 100 points  (Redemption #123 stays here)
+└── Shop B / Program 2 → 50 points   (must not pay for #123)
 ```
 
-No cross-Shop balance aggregation. Points, Visit, and Tier **inside Shop A** share that Shop’s membership — they are not separate redemption wallets.
+No cross-Shop balance aggregation. Scan uses `reward_snapshot`, not the live catalog.
 
 ---
 
@@ -393,11 +394,11 @@ Existing authentication and authorization / security rules still apply (includin
 
 ## 12. Refund / reversal (deferred — not Phase 1)
 
-Refund / Reversal is **not** part of the Phase 1 Redemption flow.
+General Refund / Reversal is **not** part of the Phase 1 Redemption flow.
 
-Do **not** implement it. Do **not** make it part of Phase 1 APIs, UI, or state machine.
+Do **not** implement `COMPLETED → REVERSED` in Phase 1 APIs, UI, or state machine.
 
-A future phase may introduce a proper reversal mechanism rather than manually modifying the points balance. Until then, do not document a Phase 1 `COMPLETED → REVERSED` path as required.
+**Later phase (specified):** emergency program `soft_deleted` may **cancel** remaining `PENDING` rows, auto-refund reserved points, and notify customers. That is not a merchant “reverse a completed redeem” tool.
 
 ---
 
@@ -409,53 +410,70 @@ Viewing the same record on two devices is allowed ([§5](#5-duplicate-protection
 
 ---
 
-## 14. Pending owner decisions (do not implement yet)
+## 14. Decided pending edges
 
-Do **not** finalize implementation for these items. Do **not** invent a product default.
+Former “do not invent” items. **DECIDED 2026-08-18.**
 
-### 1. Reward price changes while Redemption is PENDING
+### 14.1 Reward snapshot, prospective edits, versions
 
-**Status:** Pending Product Owner decision.
+At Redeem create, persist **`reward_snapshot`** (JSON): `reward_id`, `reward_version`, `point_cost`, fulfillment conditions, display name.
 
-Whether a pending Redemption should keep the original `points_cost` from the time it was created if the Reward price later changes is **not** decided.
+Staff scan **must** consume using the snapshot + reserved lots, not the live `rewards` row.
 
-### 2. Reward is disabled or deleted while Redemption is PENDING
+Program / reward **edits are prospective only**. They apply to new earn and new Redeem creates. They must not rewrite `points_ledger` lots, `spendable_points`, `period_points_earned` (PM-08), or existing `PENDING` rows.
 
-**Status:** Pending Product Owner decision.
+**Material** catalog cuts (large `point_cost` increase, tighter conditions) = new **reward version**. Already-earned spendable points stay honourable against the version they were earned under. This is **inside one program**, not independent-program migration.
 
-Whether an existing valid pending Redemption can still be completed after the Reward is disabled / deleted, or whether it should be cancelled with the reserved points returned, is **not** decided.
+### 14.2 Reward disabled / deleted while PENDING
 
-### 3. Shop loyalty is disabled while it has PENDING Redemptions
+**DECIDED:** cannot `DELETE` / `DISABLE` / `DRAFT` a reward (or its program) while `EXISTS` pending claims — [program-model mutation guards](./program-model.md#7-mutation-guards-phase-1). **Archive** keeps PENDING completable (staff scan still works). UI 409 with pending count + Wait vs Archive.
 
-**Status:** Pending Product Owner decision.
+### 14.3 Program disabled while PENDING
 
-Whether existing pending Redemptions can still be completed after the Shop’s loyalty (or the Points capability) is disabled, or whether they should be cancelled and the reserved points released, is **not** decided.
+**Same guards.** Archive the previous ACTIVE when switching default. Do not disable a still-valid program that has members or PENDING claims.
 
-### 14. Point expiry while points are reserved
+### 14.4 Point lot expiry while reserved (PM-04)
 
-**Status:** Pending Product Owner decision.
+**Option 1 — reservation locks expiration.**
 
-What happens when points are reserved for a PENDING Redemption and those **lots** reach their `points_ledger.expires_at` is **not** decided. Decide this before implementing reservation against expiring lots. This is **not** the 10-minute QR TTL (that TTL is locked in [§6b](#6b-expiry-handling-scheduled-job)).
+While `status = pending` and `qr_expires_at > now()`, reserved lots are **locked** against `points_ledger.expires_at`. Expiry jobs skip those lots.
+
+- **Scan within TTL:** `COMPLETED`; consume reserved lots even if `expires_at` passed during the window.
+- **Unclaimed QR:** job marks redemption `expired`, releases reservation, then **purges** lots with `expires_at <= now()` — those units are **not** returned to Available. Lots still inside `expires_at` return to Available.
+
+Does not decrement `period_points_earned`. Independent of catalog reward `expires_at` ([§8](#8-reward-eligibility-at-create-agreed)).
+
+```mermaid
+stateDiagram-v2
+  [*] --> PendingLocked: Redeem reserve lots plus snapshot
+  PendingLocked --> Completed: Staff scan within QR TTL
+  PendingLocked --> QrExpired: expire-pending-redemptions job
+  QrExpired --> ReturnLiveLots: lots with expires_at in future to Available
+  QrExpired --> PurgeStaleLots: lots with expires_at passed not returned
+  Completed --> [*]
+  ReturnLiveLots --> [*]
+  PurgeStaleLots --> [*]
+```
 
 ---
 
 ## 15. Core constraints (Phase 1)
 
-1. Membership, points, stamps, wallet, and rewards are always **Shop-scoped**.
-2. A customer joins a **Shop**, never a reward.
-3. Pending redemptions **reserve** points at Redeem time; reserved points reduce **available** balance (`Available = Total − Reserved`). Concurrent Redeems check Available, not Total.
-4. Staff scan is **verification**, not approval. `PENDING → COMPLETED` is an **atomic conditional update** (`WHERE status = 'pending'`, affected rows = 1). A second scan is “already redeemed”; an expired QR is “expired”.
-5. Create-redemption is **idempotent** at the Backend / database (UI disable is UX only). Do not issue a second QR or reserve twice for the same operation.
-6. A scheduled job expires `pending` rows past the 10-minute `qr_expires_at` and **releases** reserved points. Do not rely on client-side / lazy expiry.
-7. Earn is **idempotent** per business event; concurrent earn and redeem share one consistency model.
-8. Cross-Shop points / rewards are never allowed. A redemption never moves to another Shop.
-9. Staff authorization is **Shop-level**, enforced **server-side**. Phase 1: any existing Staff or Admin role may scan/verify redemptions for that Shop. Staff cannot reject a valid, unexpired, un-redeemed QR.
-10. Reward eligibility / expiry is evaluated **at create**. Later reward `expires_at` does not auto-invalidate an existing pending redemption. QR TTL is independent (10 minutes).
-11. Refund / reversal is **not** Phase 1.
+1. Membership, points, stamps, wallet, and rewards are **program-scoped** under a Shop. Cross-Shop never mixes.
+2. A customer joins a **program** (via Shop ACTIVE QR), never a reward.
+3. Pending redemptions **reserve** points at Redeem time; concurrent Redeems check Available, not Total. Persist `reward_snapshot` at create.
+4. Staff scan is **verification**, not approval. `PENDING → COMPLETED` is atomic (`WHERE status = 'pending'`, affected rows = 1).
+5. Create-redemption is **idempotent**. Do not issue a second QR or reserve twice.
+6. A scheduled job expires `pending` past `qr_expires_at` and applies **PM-04** on release.
+7. Earn is **idempotent** per business event.
+8. A redemption never moves to another Shop or program.
+9. Staff authorization is **Shop-level**, server-side. Phase 1: any Staff or Admin may scan for that Shop.
+10. Reward eligibility / catalog `expires_at` is evaluated **at create**. Snapshot holds cost. QR TTL is 10 minutes, independent.
+11. General refund / reversal is **not** Phase 1. Emergency cancel+refund is later-phase only.
 12. Digital catalog rewards may complete instantly without QR ([§16](#16-digital-rewards-exception)).
-13. Do not implement the four pending owner items in [§14](#14-pending-owner-decisions-do-not-implement-yet).
+13. Mutation guards: no DELETE/DISABLE/DRAFT with PENDING / incomplete members / unexpired program; archive is allowed.
 
-Canonical shop → redeem diagram: [counter QR](./counter-qr-and-program-membership.md#canonical-flow).
+Canonical join → POS → redeem: [counter QR](./counter-qr-and-program-membership.md).
 
 ---
 

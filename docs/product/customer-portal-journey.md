@@ -1,6 +1,6 @@
 # Customer portal journey — all cases
 
-**Date:** 2026-08-17 (synced to Shop-capability model)  
+**Date:** 2026-08-18 (synced to independent programs + PM-06 OTP)  
 **Audience:** Product, UI/UX, QA  
 **Purpose:** One case map for every outcome when a **shop customer** opens the portal (direct, QR, or referral). This is the working journey for design. It does **not** authorize schema, APIs, or Next.js implementation ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
@@ -40,11 +40,11 @@ Legend: **Covered** = on the current diagram. **Fix** = on the diagram but wrong
 | 2 | Scanned QR / `?ref=` link | Covered (banner) | UX-09 open | Banner is the working answer for how `?ref=` is shown |
 | 3 | Invalid phone format | Covered | E.164 required ([data-contract](../backend/data-contract.md)) | **Fix label:** say `(E.164)` on the decision |
 | 4 | Channel SMS or WhatsApp | Covered | DECIDED | [UX-68](./ui-ux-team-requests.md) |
-| 5 | Send OTP + resend timer | Covered (placeholder) | TTL **not locked** | Do not treat any timer number as a product lock |
+| 5 | Send OTP + resend timer | Covered | **PM-06:** TTL **180s**; UI from `retry_after_seconds` | Do not hardcode timers in clients |
 | 6 | OTP verification screen | Covered | UX-05 / UX-06 | Paste + `autocomplete="one-time-code"` allowed |
 | 7 | Edit number | Covered | Required loop | Back to Phone Input |
-| 8 | Resend under cap | Covered | Attempt cap **not locked** | Numbers stay placeholder |
-| 9 | Resend over cap | Covered (placeholder) | Attempt cap **not locked**; HTTP **429** **is** locked ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)) | Cooldown UI **and** 429 toast are separate states |
+| 8 | Resend under cap | Covered | **PM-06:** 60s cooldown | |
+| 9 | Resend over cap | Covered | **PM-06:** 5 sends / 24h per phone → **429** `DAILY_OTP_LIMIT_REACHED`; ADR-012 IP limits may coexist | Cooldown UI **and** 429 toast are separate states |
 | 10 | Wrong or expired OTP | Covered | DECIDED: no member / no session | Same screen, not a new route |
 | 11 | OTP already used (double-submit) | Covered | DECIDED in auth brief §6 | Stay on OTP; not a raw DB error |
 | 12 | HTTP 429 on request/enroll | Covered | ADR-012 | **Fix label:** toast + **disable submit** + no silent retry |
@@ -53,7 +53,7 @@ Legend: **Covered** = on the current diagram. **Fix** = on the diagram but wrong
 | 15 | `account_status = inactive` | Covered (generic block) | Generic message — do **not** enumerate ([QA §4.1](../audit/2026-08-15-customer-auth-qa-analysis.md)) | Keep generic copy |
 | 16 | Existing user, already in **this** Shop | Covered → wallet | No second membership | Happy path (portal) |
 | 17 | Existing user, **first time in this Shop** | Covered (UX-76) | Membership for **this** Shop only; welcome is **UX only** unless Signup Bonus is configured ([Signup vs Referral](../frontend/loyalty-page.md#signup-bonus-vs-referral-bonus-decided)) | Welcome ≠ bonus |
-| 18 | New user (phone not an account) | Covered (UX-75) | Join fields optional today; enroll accepts them | Required vs optional still **PROPOSED** |
+| 18 | New user (phone not an account) | Covered (UX-75) | **UX-75 required** `full_name` / `email` / `birth_date` | Enroll 400 `ENROLL_VALIDATION_FAILED` |
 | 19 | Profile invalid | Covered | Required error on UX-75 | Highlight required fields |
 | 20 | New user **with** valid `?ref=` | Covered (referred-party) | Referred grant after OTP; **referrer** on first **paid** invoice | Do not show referrer as paid at enroll |
 | 21 | New user **without** `?ref=` | Covered → wallet | DECIDED | Happy path |
@@ -91,7 +91,7 @@ flowchart TD
   PhoneErr --> Phone
   Fmt -->|Yes| Chan["Select OTP channel: SMS or WhatsApp"]
 
-  Chan --> Send["Send OTP and start resend timer\nplaceholder — TTL not locked"]
+  Chan --> Send["Send OTP and start resend timer\nPM-06: 180s TTL; retry_after_seconds"]
   Send --> RL{"HTTP 429?"}
   RL -->|Yes| Toast["429 toast — disable submit — no silent retry"]
   Toast --> Chan
@@ -193,17 +193,18 @@ Keep layout, legend, and colors. Do not redesign.
    - Do **not** send returning members into the portal OTP funnel from this box
 
 2. **Journey B — front**  
-   - Shop QR → this Shop (no picker)  
-   - Keep unavailable for no live capability / all `draft` / `disabled`
+   - Shop QR → **ACTIVE** program (no picker)  
+   - Keep unavailable when no `active` program
+   - Footnote: **PM-06** 180s / 3 guesses / 60s / 5 per 24h; `inactive` ≠ program `disabled` ≠ member `at_risk`
 
 3. **Journey A — small adds / renames**  
    - Phone decision: `Valid phone format (E.164)?`  
    - First-time branch: `First time in this Shop?`  
    - UX-76 note: welcome is UX only; Signup Bonus only if configured  
-   - UX-07 note: one card per Shop  
+   - UX-07 note: one card per Shop (enrolled + Archived History)  
    - 429 box: include **disable submit**  
    - After valid profile + referral: self-referral / invalid `ref` → red `Referral not applied` → still wallet  
-   - Footnote: keep TTL/cap placeholders; add `inactive` ≠ capability `disabled` ≠ member `at_risk`
+   - Footnote: **PM-06** timers; add `inactive` ≠ program `disabled` ≠ member `at_risk`
 
 ### Already done on the current image (do not re-ask)
 

@@ -39,6 +39,7 @@
 13. Campaign / messaging background runtime: [ADR-013](decisions/ADR-013-campaign-messaging-runtime.md)
 14. Product data ownership + UI honesty: [ADR-014](decisions/ADR-014-product-data-ownership.md) (backend contracts under [`docs/backend/`](../backend/README.md); not a migration slice)
 15. Backend stack (NestJS / Prisma / PostgreSQL): [ADR-015](decisions/ADR-015-backend-stack.md) (Phase 2 backend program; not a migration slice)
+16. Independent loyalty programs (one ACTIVE default): [ADR-016](decisions/ADR-016-independent-programs.md) (product/backend contracts; not a migration slice)
 
 ## Recommended decision order
 
@@ -58,4 +59,4 @@
 - [Spikes ΓÇö Auth Cookie/SSR](spikes/auth-ssr-spike.md)
 - [Frontend blueprint](../frontend/README.md)
 - [Backend product-data contracts](../backend/README.md) (ADR-014 / ADR-015; not migration work)
-- [Program model](../product/program-model.md) (Shop capabilities: Points / Visit / Tier, one each, one membership per Shop)
+- [Program model](../product/program-model.md) (independent programs, one ACTIVE default — [ADR-016](decisions/ADR-016-independent-programs.md); supersedes 2026-08-17 Shop-capability lock)

@@ -43,7 +43,7 @@ There are **two separate levels**. Don't mix the screens.
 | [UX-03](./ui-ux-team-requests.md#ux-03--account-list--activeinactive)                                                      | One page, two tabs (Team = admin/staff, Customers) + active/inactive + filters (role, email, name, phone) | Merchant       | **No UI**                                                                               |
 | [UX-56](./ui-ux-team-requests.md) / [UX-19](./ui-ux-team-requests.md#ux-19--phase-1-exclusions-social-auth-2fa-pos-wallet) | MFA challenge after password on `/auth/sign-in`                     | Merchant       | Enroll exists; the login screen is **missing**. Decide: 2FA in Phase 1 or hide the card |
 | [UX-61](./ui-ux-team-requests.md#ux-61--teammate-created-email)                                                            | "Added to store" email + email + temporary password                 | Copy           | **New** — don't touch `invite.tsx`                                                      |
-| [UX-62](./ui-ux-team-requests.md#ux-62--otp-sms--whatsapp-text)                                                            | OTP message text (SMS / WhatsApp)                                   | Copy           | **New** — don't hardcode a fixed minutes figure (TTL is still not locked)               |
+| [UX-62](./ui-ux-team-requests.md#ux-62--otp-sms--whatsapp-text)                                                            | OTP message text (SMS / WhatsApp)                                   | Copy           | **New** — TTL **180s** (PM-06); UI still uses `retry_after_seconds`                     |
 
 ### 1.2 Next (P1 — same auth family)
 
@@ -225,9 +225,9 @@ Covers direct entry **and** scanned QR / referral link. Unknown phone is **not**
 1. Direct → **Phone Input**. QR / `?ref=` → **Referral Entry** + **referral banner**, then the same phone step.
 2. Invalid phone format (not E.164) → UI error, stay on phone.
 3. Chooses **SMS** or **WhatsApp**. **No password field.**
-4. Requests a code. Draw a resend timer (diagram uses 60s — **placeholder**; TTL is not locked). **UX-68**
+4. Requests a code. Draw a resend timer from **`retry_after_seconds`** (**PM-06:** 60s cooldown, 180s TTL — do not hardcode). **UX-68**
 5. If **429**: toast, button disabled, **no silent retry**.
-6. OTP screen: paste and `autocomplete="one-time-code"` allowed. **Edit number** returns to phone. Resend over cap → blocked wait (diagram uses 5 mins — **placeholder**).
+6. OTP screen: paste and `autocomplete="one-time-code"` allowed. **Edit number** returns to phone. Resend over cap → blocked wait (**PM-06:** 5 / 24h → 429 `DAILY_OTP_LIMIT_REACHED`). 3 failed guesses → 400 `OTP_MAX_ATTEMPTS_EXCEEDED`.
 7. Wrong / expired / already-used code → stay on OTP; **no** account created.
 8. Correct code → branch on account:
    - **`inactive`** → blocked state, **generic** message (do not use “account suspended — contact support”; that enumerates). **UX-06** / G-36
@@ -320,7 +320,7 @@ flowchart LR
 
 ## 6. States that must be drawn in every OTP flow
 
-Design the state, don't invent TTL/attempt numbers (still not locked in the product).
+Design the state from **PM-06** (`retry_after_seconds` / `expires_at`). Do not hardcode timers in the client.
 
 | State                              | Locked behavior                                                              |
 | ---------------------------------- | ---------------------------------------------------------------------------- |
@@ -355,7 +355,7 @@ Don't design a full customer dashboard or revenue figures. The backend is still 
 Open product questions (don't guess in the mockup):
 
 - Portal URL
-- OTP TTL and attempt count (draw the state, not the number — the case diagram's 60s / 5 min are placeholders)
+- OTP TTL **180s**, 3 guesses, 60s resend, 5/24h per phone (**PM-06**). UI uses `retry_after_seconds` / `expires_at`.
 - Whether name / email / DOB on UX-75 are all **required** (diagram says yes; join fields are optional today)
 - Whether `staff` can open the add-teammate form
 

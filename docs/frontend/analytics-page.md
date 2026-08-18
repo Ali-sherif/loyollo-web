@@ -1,6 +1,6 @@
 # Analytics Page (`/app/analytics`)
 
-Reference for all components, conditions, and edge cases on the Analytics route. Includes domain notes for frontend + backend work (one program per owner **today**; **DECIDED** up to three Shop capabilities with `draft`/`active`/`disabled` — [loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided); how tiers are stored vs assigned, segment cutoffs, revenue placeholders), plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
+Reference for all components, conditions, and edge cases on the Analytics route. Includes domain notes for frontend + backend work (one program per owner **today**; **DECIDED** independent programs with one ACTIVE — [loyalty-page.md](loyalty-page.md#independent-programs-decided); how tiers are stored vs assigned, segment cutoffs, revenue placeholders), plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
 
 **Jump to:** [one program](#one-owner--one-loyalty-program) · [how tiers work](#how-customer-tiers-actually-work) · [point ranges](#loyalty-page-point-ranges-saved-vs-ui) · [segments](#customer-segments--card) · [members by tier](#members-by-tier--card--donut) · [engagement stats](#stat-cards-4) · [visit frequency](#visit-frequency-over-time--card--emptychart-disabled) · [insights](#engagement-insights--card-suggestion-cards-not-a-report) · [most engaged / tier column](#most-engaged-members--card--table) · [engagement levels](#engagement-levels--card--horizontal-bars) · [colliding labels](#three-different-systems-do-not-mix-them) · [revenue tab](#tab-3-revenuetab) · [ROI](#roi-from-rewards) · [channel](#revenue-by-channel--what-channel-means) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
@@ -540,7 +540,7 @@ Use this when wiring frontend and backend. Analytics assumes the current product
 - App fetches with `.eq("owner_id", user.id).maybeSingle()` (expects 0 or 1 row)
 - App saves with `.upsert(..., { onConflict: "owner_id" })` — create or **overwrite** that one program
 
-**Intended (DECIDED):** a Shop has at most one Points, one Visit, and one Tier capability; each is `draft` \| `active` \| `disabled`. Analytics stay Shop-scoped. See [loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided) and [G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-one-config-per-capability).
+**Intended (DECIDED):** independent programs; at most one ACTIVE. Analytics stay **Shop-scoped**. See [loyalty-page.md](loyalty-page.md#independent-programs-decided) and [G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-independent-programs).
 
 There is **no** (today):
 
@@ -808,7 +808,7 @@ Short list:
 5. **Revenue metrics** — need orders/transactions linked to members (no equations today)
 6. **Month-over-month deltas** on stat cards — need historical snapshots
 7. **`customers.tier` never written** — enroll/check-in do not apply `loyalty_program_tiers.points_threshold`; Analytics donut will stay Untiered until backend assigns tiers (or Analytics computes from points)
-8. **One program per owner (today)** — **DECIDED:** up to three capabilities + `draft`/`active`/`disabled` ([loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided))
+8. **One program per owner (today)** — **DECIDED:** independent programs + one ACTIVE ([loyalty-page.md](loyalty-page.md#independent-programs-decided))
 9. **Segment/level cutoffs** — hardcoded in the frontend; not owner-configurable
 10. **Loyalty “Tier stats”** — member counts hardcoded `"0"` on `/app/loyalty`
 11. **Insight CTAs** — Send / Nudge / Explore / Create have no handlers; “1 visit from a reward” uses hardcoded `visits % 5 === 4`, not program `visits_required`

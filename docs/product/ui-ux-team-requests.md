@@ -149,13 +149,14 @@ Customer-portal **URLs are not locked** and are **not** on the approved route ma
 - Role **`customer`**. Never lands on `/app`.
 - Channel picker: **SMS** or **WhatsApp**. Code only. Never a password.
 - OTP **must succeed before** any member row / referral / reward is finalized. Failed or skipped OTP → no account.
-- Public new register is rate-limited: HTTP **429** must be a **visible toast**, no silent retry.
+- Public new register is rate-limited: HTTP **429** must be a **visible toast**, no silent retry. **PM-06:** 3 failed guesses → 400 `OTP_MAX_ATTEMPTS_EXCEEDED`; 60s resend cooldown; 5 sends / 24h per **phone**; TTL **180s**. UI timers from `retry_after_seconds` — **do not hardcode** 60s / 180s.
+- After successful **new-phone** OTP: [UX-75](#ux-75--customer-profile-setup-name-email-dob) **requires** name, email, DOB.
 - Owner **Add Customer** in `/app/customers` stays a merchant tool (no OTP). Do not merge those forms.
 
 **Open**
 
-- URL. TTL/cap **not locked** — design states, not numbers (diagram 60s / 5 min are placeholders).
-- Whether name / email / DOB on [UX-75](#ux-75--customer-profile-setup-name-email-dob) are all required.
+- URL. Channel empty states.
+- Gender / city / custom (G-17) remain optional — not on the required UX-75 set.
 
 **Working journey (not a new ADR):** register and login are **one OTP funnel**. Direct vs QR/`?ref=` share the phone step; referral uses a banner ([customer-portal-journey.md](./customer-portal-journey.md)). In-store returning check-in stays [UX-09](#ux-09--join-page-otp--referral-context) (no new OTP).
 
@@ -256,13 +257,13 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 **Locked**
 
 - Shown only after a **successful OTP** for a **new** phone (no `customers` row yet). Failed OTP → no profile write.
-- Fields on the diagram: **name, email, date of birth**. Invalid → highlight required fields, stay on this screen.
+- **All three required:** `full_name`, `email` (valid format), `birth_date` (ISO date). Invalid → highlight required fields, stay on this screen. Enroll **400** `ENROLL_VALIDATION_FAILED` with per-field `details`. **No** merchant optional override.
 - After valid save: wallet ([UX-07](#ux-07--customer-wallet-per-shop)). If `?ref=` was valid, **referred-party** grant only — referrer still waits for first paid invoice.
+- Owner **Add Customer** should collect the same three required fields; phone may still be omitted on owner-typed rows.
 
 **Open**
 
-- All three fields required vs optional (join stores them as optional today). Diagram treats them as required — product should confirm.
-- Gender / city / custom (G-17) on this screen or later.
+- Gender / city / custom (G-17) on this screen or later (stay **optional**).
 
 #### UX-76 — First-shop welcome + link Shop
 
@@ -281,57 +282,52 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 **Open**
 
 - Copy and whether this is a full screen vs a banner on the wallet.
-- Behavior when the Shop has no `active` capability.
+- Behavior when the Shop has no `active` **program**.
 
 ### 1.3 Loyalty operations (merchant)
 
-#### UX-10 — Loyalty capabilities settings
+#### UX-10 — Loyalty program list + ACTIVE default
 
 | | |
 |--|--|
 | **Need / priority** | Design · **P0** |
-| **Source** | [G-35](../frontend/gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-one-config-per-capability) · [program-model.md](./program-model.md) · [Shop capabilities](../frontend/loyalty-page.md#shop-loyalty-capabilities-decided) · [counter QR](./counter-qr-and-program-membership.md) |
+| **Source** | [G-35](../frontend/gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-independent-programs) · [program-model.md](./program-model.md) · [independent programs](../frontend/loyalty-page.md#independent-programs-decided) · [counter QR](./counter-qr-and-program-membership.md) |
 
 **Locked**
 
-- One loyalty system per Shop. **At most one** Points, one Visit, one Tier config. Status **`draft` \| `active` \| `disabled`** per capability (no other spellings).
-- Shop QR always this Shop. Join/check-in when **at least one** capability is `active`.
-- One membership / one wallet / one catalog per Shop ([program-model.md](./program-model.md)).
-- Today `/app/loyalty` is create+edit of **one** row (type radios, overwrite upsert). Target: **one settings surface** with three capability sections / toggles — not a multi-program list or switcher.
-- Do **not** offer “create another Points program.” Happy Hour–style rates stay rules **inside** Points.
+- Many independent programs per Shop. **At most one `ACTIVE`**. Statuses: `draft` \| `active` \| `archived` \| `disabled` \| `expired` (later `soft_deleted`).
+- Shop QR + `?ref=` always the **ACTIVE** program. Join unavailable with no ACTIVE.
+- One customer **identity** per Shop; locked `enrolled_program`; catalog/wallet **program-scoped**.
+- Today `/app/loyalty` is create+edit of **one** row. Target: a **program list** (create another Points program over time is valid). Activating B archives previous ACTIVE (allowed with members). Mutation 409: Wait vs Archive ([program-model.md](./program-model.md)).
+- Happy Hour–style rates stay rules **inside** a Points program.
 
 **Open**
 
-- Default status on create / enable.
 - Merchant UI to **print the Shop QR** (pixel layout is free; exact URL backend-owned).
-- Empty state: zero capabilities vs all disabled.
+- Empty state: zero programs vs all archived/disabled.
 - How Dashboard / Customers / Campaigns / Analytics scope to the Shop (today `maybeSingle` on one program row).
 
 #### UX-11 — Staff POS: identify · award · redeem
 
 | | |
 |--|--|
-| **Need / priority** | Design · **P1** (product Phase 1 **may exclude POS** — see [UX-19](#ux-19--phase-1-exclusions-social-auth-2fa-pos-wallet)) |
+| **Need / priority** | Design · **P1** (**staff cashier POS is Phase 1**; Square/Clover still deferred — [UX-19](#ux-19--phase-1-exclusions-social-auth-2fa-pos-wallet)) |
 | **Source** | [G-20](../frontend/gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) · [reward-redemption-flow.md](./reward-redemption-flow.md) · audit §4.1 · **DG-01** |
 
 **Locked (when built)**
 
-- Identify member (QR / phone), award visit or spend (**idempotent** on a purchase/event key). Earn ≠ redeem. Catalog **Redeem** from the customer wallet is not a staff “create redemption” click — the customer taps Redeem; staff **scans the redemption QR** at checkout.
-- Catalog redeem: customer request → if Available < cost, refuse (no row); else `pending` + reserve + **single-use QR** (10-minute `qr_expires_at`). Staff **scan verifies** (atomic `PENDING → COMPLETED` + consume reserved; `UPDATE … WHERE status = 'pending'`, affected rows = 1). Second scan / retry → **“already redeemed”** (no second deduct). Expired QR → **“expired”**. Create is idempotent (double-click / tabs / devices / retry). Viewing the same pending QR on two devices is allowed.
-- Staff scanning is **verification**, not discretionary approval. Staff **cannot** reject a valid, unexpired, un-redeemed QR. Do **not** design an Approve / Reject pending list for physical catalog rewards (previous spec — superseded).
-- Staff authz is **Shop-level**: any authorized Staff from any Branch of that Shop. `staff.branch.shop_id === redemption.shop_id`. Backend enforces independently.
-- Phase 1: any existing Staff or Admin role may perform Redemption scan/verify. Do not add extra role restrictions unless decided later.
-- Reward eligibility evaluated at create; later reward `expires_at` does not auto-invalidate a pending redemption. QR TTL is 10 minutes and independent.
-- A redemption stays on the Shop it was created under even if the customer later uses another Shop.
-- UI disable of Redeem and QR countdown are not the protection; reconcile from server. A scheduled job expires unscanned `pending` rows and releases Reserved even if the customer never reopens the app.
+- **Phase 1 cashier:** scan **customer QR** (`POST /api/pos/scan`) → optional **deferred migrate** → **Bill Amount + Invoice Number** (`POST /api/pos/transactions`). Square/Clover still deferred.
+- Identify member (QR / phone), award visit or spend (**idempotent** on `idempotency_key` / `(shop_id, invoice_number)`). Earn ≠ redeem. Catalog **Redeem** from the customer wallet is not a staff “create redemption” click — the customer taps Redeem; staff **scans the redemption QR** at checkout.
+- Catalog redeem: persist **`reward_snapshot`**; if Available < snapshot cost, refuse (no row); else `pending` + reserve + **single-use QR** (10-minute `qr_expires_at`). Staff **scan verifies** using the snapshot (atomic `PENDING → COMPLETED` + consume reserved; **PM-04**). Second scan / retry → **“already redeemed”**. Expired QR → **“expired”**. Create is idempotent.
+- Staff scanning is **verification**, not discretionary approval. Staff **cannot** reject a valid, unexpired, un-redeemed QR. Do **not** design an Approve / Reject pending list for physical catalog rewards.
+- Staff authz is **Shop-level**. Phase 1: any existing Staff or Admin role may perform Redemption scan/verify **and** cashier POS.
+- Live catalog PATCHes are **prospective only**. Material cuts → new reward version.
 - Refund / reversal is **not** Phase 1.
 
 **Open**
 
-- In or out of product Phase 1 (checklist says POS deferred; Settings still shows Connect). **Do not ship a POS UI that looks live if Phase 1 excludes it.** Scanner for catalog QR may still be required even if full POS award is deferred.
 - Device: `/app` page vs dedicated staff scanner view.
-- Success / fail / already-redeemed / expired / wrong-shop / inactive-member states. Do not add Approve / Reject copy for a valid QR.
-- **Pending Product Owner:** reward price change while PENDING; reward disabled/deleted while PENDING; program disabled while PENDING; point **lot** expiry while reserved. Do not design those outcomes until decided.
+- Success / fail / already-redeemed / expired / wrong-shop / inactive-member / **INVOICE_DUPLICATE** states. Do not add Approve / Reject copy for a valid QR.
 
 #### UX-12 — Referral Pending Review (merchant)
 
@@ -359,11 +355,12 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 
 **Locked**
 
-- Save today always returns to dashboard. Type change copy says “anytime” but does not migrate counters ([UX-47](#ux-47)).
+- Save today always returns to dashboard. Type change copy says “anytime” but does not migrate counters ([UX-47](#ux-47)) — **target:** do not change type on a live row; create a new program and activate (archives previous ACTIVE).
+- After independent programs: **`/app/loyalty` is a program list** (not three capability toggles). Status chips include `archived`. Confirm Wait vs Archive on mutation 409.
 
 **Open**
 
-- After capabilities: three sections on `/app/loyalty` (not a program list). Status chips per capability. Confirm before disabling an `active` capability that has members earning it.
+- Pixel layout of the list vs create wizard.
 
 ### 1.4 Campaigns & messaging
 
@@ -392,11 +389,11 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 **Locked**
 
 - Seven types, CRUD, unique per type. **Enabled does not send.** `config` jsonb is never used.
+- **PM-18:** Phase 1 **hide** Scheduled Automations. Writes → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1`. Do **not** hide campaign list / Launch.
 
 **Open**
 
-- Phase 1: hide the whole section, keep CRUD but hide Enable, or show “coming later” non-actionable cards.
-- If kept: per-type settings (when it fires, who, what message, timezone) — **behavior is not specified**. Do not invent trigger UX as if it were live.
+- Later-phase trigger UX. Do not invent as if live.
 
 #### UX-16 — Campaign create: personalization hints + freeze-after-send
 
@@ -462,7 +459,7 @@ These controls **already exist** and either lie, do nothing, or contradict Phase
 |------|------------|-----------|------------------------|
 | Facebook / Google / Apple **Sign-In** | **Never mentioned** | Deferred from Phase 1 | Never / later / hidden buttons on `/auth/*` |
 | **2FA** | Settings documents **real TOTP enroll**; login challenge missing (G-26) | Deferred from Phase 1 | If Phase 1 **excludes** 2FA: hide Security 2FA card. If it **includes** enroll: design the **sign-in MFA challenge** ([UX-56](#ux-56)) |
-| **POS** (Square, Clover, Toast, Lightspeed, Shopify) | Catalog + “recorded your interest” | Deferred | Hide Integrations POS rows vs interest-only |
+| **POS** (Square, Clover, Toast, Lightspeed, Shopify) | Catalog + “recorded your interest” | **Integrations** deferred | Hide Integrations POS rows vs interest-only. **Staff cashier** (Bill Amount + Invoice Number) **is Phase 1** — [UX-11](#ux-11--staff-pos-identify--award--redeem) |
 | **QR & Wallet** (Apple/Google Wallet) | Same catalog | Deferred | Hide vs interest-only. **Shop join QR on `/app/loyalty` stays in Phase 1** — different feature |
 
 Integrations tab as a whole: out of Phase 1, or visible catalog that never looks “Connectable.”
@@ -507,7 +504,7 @@ Catalog ≠ strategy. Until objects/direction/Phase are locked, treat like POS: 
 | **Need / priority** | Decision · **P1** |
 | **Source** | **DG-09** · settings General · dashboard hardcodes USD |
 
-`profiles.currency` is saved and **ignored** on Dashboard. Need: display vs billing vs points valuation; ISO 4217 select vs free text; one currency per shop; what happens to historical `*_cents` if changed. Then design the Settings control and every `$` widget to use it — or hide Currency until defined.
+`profiles.currency` is **display metadata only** (symbol/label). Changing it must **not** convert historical `*_cents`, points, or vouchers. Each `orders` / `points_ledger` row snapshots `currency_code` at write time. No FX. Design Settings + `$` widgets to use the display code — never imply conversion.
 
 #### UX-24 — Communication policy + SMS in Phase 1
 
@@ -638,7 +635,7 @@ Existing **auth/transactional/campaign templates must not be rewritten** (ADR-01
 
 Code only; never log plaintext. Channel chosen at request time. Same copy family for join, register, login, and lost-access unless product wants distinct strings.
 
-**Open:** sender name, expiry wording (TTL not locked — avoid hard-coding minutes until product sets them).
+**Open:** sender name. TTL is **180 seconds** (PM-06) — copy may say “expires in 3 minutes”; UI countdown still uses `retry_after_seconds` / `expires_at`, not a hardcoded timer.
 
 #### UX-63 — Campaign token helper copy
 
@@ -728,10 +725,10 @@ From [meeting report “Not decided”](../product-manager-meeting-report.md) an
 | UX-09 | Design | P0 | Join page: OTP + referral context; Shop QR → this Shop |
 | UX-75 | Design | P0 | Customer profile setup (name, email, DOB) |
 | UX-76 | Design | P0 | First-shop welcome + link Shop |
-| UX-10 | Design | P0 | Loyalty capabilities settings (Points / Visit / Tier, one each) |
-| UX-11 | Design | P1 | Staff POS award / redeem QR scan (pending → verify, not approve/reject) |
+| UX-10 | Design | P0 | Loyalty **program list** + one ACTIVE default |
+| UX-11 | Design | P1 | Staff cashier POS (customer QR + bill + invoice) + redemption QR scan |
 | UX-12 | Design | P1 | Referral Pending Review screen |
-| UX-13 | Design | P1 | Loyalty create vs edit (capability sections, not a program list) |
+| UX-13 | Design | P1 | Loyalty create vs edit (**program list**, not capability toggles) |
 | UX-14 | Decision | P1 | Campaign Scheduled tab: design or hide |
 | UX-15 | Decision | P1 | Automations: hide / config-only / later |
 | UX-16 | Design | P2 | Campaign token hints + freeze-after-send |
@@ -802,7 +799,7 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 | G-32 Plan contact/admin caps | UX-01, UX-17 |
 | G-33 Customer register/login | UX-05, UX-06, UX-07, UX-08, UX-09, UX-75, UX-76 |
 | G-34 Add admin/staff | UX-01, UX-02, UX-04, UX-61, UX-73 |
-| G-35 Shop capabilities (one per type) | UX-10, UX-13, UX-69 |
+| G-35 Independent programs (one ACTIVE) | UX-10, UX-13, UX-69 |
 | G-36 Account active/inactive | UX-03, UX-06 (customer blocked state), UX-65, UX-70 |
 
 ### DG-01 … DG-15 · A-01
@@ -828,7 +825,7 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 
 ### Meeting-report “not decided” → this file
 
-Portal URL → UX-08. Shop QR always this Shop → UX-09 / UX-10 ([counter QR](./counter-qr-and-program-membership.md)). Catalog redeem pending/reserve/QR → UX-07 / UX-11 ([redemption](./reward-redemption-flow.md)). Account page two tabs (Team / Customers); `admin` rows on Team → UX-03. Staff can add teammates → UX-01 (not locked). Staff subtypes → §5 (do not design a permission matrix). Phase 1 Redemption: any Staff/Admin may **scan/verify**, Shop-scoped; not Approve/Reject. Referral default days → §5. OTP TTL/cap → UX-05 states only. Pending Review screen → UX-12. SMS vs WhatsApp provider → UX-24 / §5. Automations / opens / revenue → UX-14, UX-15, UX-20.
+Portal URL → UX-08. Shop QR always **ACTIVE** program → UX-09 / UX-10 ([counter QR](./counter-qr-and-program-membership.md)). Catalog redeem pending/reserve/QR + snapshot → UX-07 / UX-11 ([redemption](./reward-redemption-flow.md)). OTP TTL/cap → **PM-06** (UX-05). Automations hidden Phase 1 → PM-18. Currency display-only → UX-23.
 
 ---
 

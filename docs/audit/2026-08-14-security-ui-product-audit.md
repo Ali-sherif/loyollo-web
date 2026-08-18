@@ -196,7 +196,7 @@ Proxy sets `redirectedFrom` from **pathname only** (safe today). Sign-in does **
 
 Dedupe is application-only ([join-service.ts](../../src/lib/server/join-service.ts) L113–128). Race: two concurrent enrolls with the same email create two rows. No unique index.
 
-**Product note (2026-08-17):** uniqueness should be per **Shop membership**, not per capability row. Target: one customer row per Shop; see [program-model.md](../product/program-model.md) · [data-contract Shop capability model](../backend/data-contract.md#shop-capability-model-decided-not-shipped).
+**Product note (2026-08-18):** uniqueness should be per **Shop identity**, not per program row. Target: one customer row per Shop + `enrolled_program_id`; see [program-model.md](../product/program-model.md) · [data-contract independent programs](../backend/data-contract.md#independent-programs-decided-not-shipped).
 
 #### S-18 — Notifications INSERT grant vs policy (Low)
 
@@ -739,19 +739,19 @@ Settings lists Mailchimp / Klaviyo. G-19: per-provider connect later. api-contra
 
 #### Currency (`DG-09`)
 
-`profiles.currency` is loaded/saved on Settings General. Dashboard **ignores it** and hardcodes USD ([dashboard-page.md](../frontend/dashboard-page.md) L184). `orders.amount_cents` in the data-contract has **no currency column**.
+`profiles.currency` is loaded/saved on Settings General. Dashboard **ignores it** and hardcodes USD ([dashboard-page.md](../frontend/dashboard-page.md) L184).
 
-**Undefined:** display vs billing vs points valuation; ISO 4217 vs free text; one currency per shop vs per order; FX; what changing currency does to historical `*_cents`.
+**Amendment 2026-08-18:** product lock — currency is **display metadata only**. Snapshot `currency_code` on `orders` / `points_ledger`. No FX; changing shop currency does not convert history. [UX-23](../product/ui-ux-team-requests.md#ux-23--currency-meaning) · [data-contract](../backend/data-contract.md).
 
 #### Scheduled automations — behavior (`DG-10`)
 
-CRUD, seven `type` values, unique `(owner_id, type)`, and “enabled does not send” are documented ([campaigns-page.md](../frontend/campaigns-page.md#scheduled-automations)). Meeting report L168: automations **not decided**.
+CRUD, seven `type` values, unique `(owner_id, type)`, and “enabled does not send” are documented ([campaigns-page.md](../frontend/campaigns-page.md#scheduled-automations)).
 
-**Missing:** trigger (event vs cron), timezone, `config` jsonb schema per type, message template, audience, idempotency, and whether automations are in product Phase 1.
+**Amendment 2026-08-18 (PM-18):** Phase 1 **hide** Scheduled Automations. Writes → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1`. Do not hide campaign list / Launch. G-09 send/opens stay deferred.
 
 #### Loyalty programs ↔ “bill types” (`DG-12`)
 
-If “bill types” means **program types** (`points` / `visit` / `tier`): relationship is documented; check-in still ignores most rules (G-10). Whether type can change after members exist is **not locked** (G-31).
+If “bill types” means **program types** (`points` / `visit` / `tier`): relationship is documented; check-in still ignores most rules (G-10). **Amendment 2026-08-18:** do not switch `program_type` after members exist; create a new independent program and activate it (G-31).
 
 If it means **POS ticket / invoice types**: **not in any doc.** The word “bill type” does not appear. `orders` has `amount_cents` / `attributed_channel` / `campaign_id`, not a ticket-class enum.
 

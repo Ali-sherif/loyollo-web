@@ -139,7 +139,7 @@ Purpose:
 
 **Today:** owner **Add Customer** in `/app/customers`, plus unauthenticated QR join/enroll (`/join/[programId]`). Owner (`admin`) manual add **remains** as a merchant tool (no customer OTP). Join/check-in remains a capture path until (and likely after) customer auth; enroll should **link** to the customer account when that identity exists.
 
-**DECIDED:** public **new** register (join and shop-customer self-register) requires **OTP via SMS or WhatsApp** before the `customers` row is finalized. [OTP](loyalty-page.md#otp-verification-decided).
+**DECIDED:** public **new** register (join and shop-customer self-register) requires **OTP via SMS or WhatsApp** before the `customers` row is finalized. **PM-06:** 180s TTL, 3 guesses, 60s resend, 5/24h per phone. **UX-75:** name, email, DOB required after new-phone OTP. [OTP](loyalty-page.md#otp-verification-decided).
 
 **DECIDED:** `customer` register, login, and recovery are **passwordless**. They never set or reset a password. Login and lost-access use a new OTP (SMS or WhatsApp). [Credential recovery](#credential-recovery-decided).
 

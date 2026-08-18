@@ -35,8 +35,8 @@ flowchart TD
 | **Owner** | Backend (writer) + Frontend (consume) |
 | **G-IDs** | G-03 |
 | **Depends on** | Existing `loyalty_program_tiers`; schema `customers.tier_id` |
-| **Deliverables** | `customers.tier_id` FK; `assign_customer_tier(p_customer_id)`; trigger `customers_reassign_tier` on `points`/`visits` update; `recompute_program_tiers(p_program_id)` after ladder CRUD ([data-contract](data-contract.md#database-functions--dynamic-tier-progression)) |
-| **Acceptance** | After enroll and any points/visits change, `customers.tier` **and** `tier_id` are set. Threshold edits recompute the program. Customers filter, Analytics donut, Campaigns VIP/Gold, Loyalty tier stats show non-zero when members qualify. |
+| **Deliverables** | `customers.tier_id` FK; membership `period_points_earned`; `assign_customer_tier` reads **period counter only** (PM-08); trigger on `period_points_earned` (not spendable); `tier_milestone_grants`; `recompute_program_tiers` after ladder CRUD ([data-contract](data-contract.md#database-functions--tier-milestones-pm-08)) |
+| **Acceptance** | After enroll and POS **earn**, displayed milestone is set from `period_points_earned`. Redeem does **not** change the period counter or cause a mid-period downgrade. Period job zeros period counter + displayed milestone only — not spendable. Threshold edits recompute display for the current period; historical grants stay. |
 
 ## Phase 2 — Visit / scan events
 
@@ -64,7 +64,7 @@ flowchart TD
 | **Owner** | Backend |
 | **G-IDs** | G-04, G-13 (branch detail), G-20, G-28 |
 | **Depends on** | Schema columns; redeem endpoint |
-| **Deliverables** | `customer_rewards.branch_id`; catalog redeem lifecycle (`pending` + reserve + QR → atomic scan `completed`, or job `expired`); `qr_code` / `qr_expires_at`; idempotency keys on create; scan `UPDATE … WHERE status = 'pending'` with affected rows = 1; expiry worker releases Reserved; `redeemed_count` only on `completed`; Shop-level staff scan authz; prefers attaching `order_id` when ticket known (full ROI in Phase 5). **Not Phase 1:** reverse/refund; staff Approve/Reject for physical rewards (superseded). **Pending PO:** price change / reward or program disable / reserved-lot expiry while PENDING |
+| **Deliverables** | `customer_rewards.branch_id`; catalog redeem lifecycle (`pending` + `reward_snapshot` + reserve + QR → atomic scan `completed`, or job `expired` + **PM-04** lot purge); `qr_code` / `qr_expires_at`; idempotency keys on create; scan `UPDATE … WHERE status = 'pending'` with affected rows = 1; expiry worker releases Reserved then purges expired reserved lots; `redeemed_count` only on `completed`; Shop-level staff scan authz; prefers attaching `order_id` when ticket known (full ROI in Phase 5). **Not Phase 1:** reverse/refund; staff Approve/Reject for physical rewards (superseded). Snapshot / PM-04 / mutation guards are **DECIDED**. |
 | **Acceptance** | Per-branch cards use `GROUP BY branch_id` (or `"—"` if null). Redeem path is explicit (earn ≠ redeem). Combined pending cannot exceed available; create refuses when Available < cost (no row). Duplicate scan / retry does not double-deduct (second scan → `already_redeemed`). Duplicate create does not insert a second row, reserve twice, or issue a second QR. Past-due `pending` is `expired` by the job and Reserved is released without the customer reopening the app. Earn retry does not double-credit. Concurrent earn+redeem is consistent. Dashboard redemption donut uses `completed` events, not earn. Main branch uniqueness enforced server-side. Do not ship staff Approve/Reject for physical catalog rewards. |
 
 ## Phase 5 — Orders + billing + POS + ROI columns
@@ -74,8 +74,8 @@ flowchart TD
 | **Owner** | Backend |
 | **G-IDs** | G-06, G-07, G-10 (rules needing spend), G-19, G-32 |
 | **Depends on** | `orders`, billing webhook, first integration |
-| **Deliverables** | `orders` (+ `attributed_channel`, `campaign_id`); `rewards.cost_cents` NOT NULL DEFAULT 0; `customer_rewards.order_id`; ROI SQL in analytics overview ([data-contract](data-contract.md#reward-roi-formula--sql), [api-contract](api-contract.md#analytics-overview-response)) |
-| **Acceptance** | Revenue widgets read `orders.amount_cents`. Revenue by channel groups `attributed_channel`. ROI card uses `(revenue − cost) / cost` with `null` when cost is 0. `profiles.plan` only changes via checkout webhook. Branch/contact caps enforced on insert/enroll. POS or manual entry can create orders. Redeem attaches `order_id` when a ticket exists. |
+| **Deliverables** | `orders` (+ `invoice_number`, `currency_code`, `attributed_channel`, `campaign_id`); staff POS `POST /api/pos/scan` + `/api/pos/transactions`; `rewards.cost_cents` NOT NULL DEFAULT 0; `customer_rewards.order_id`; ROI SQL in analytics overview ([data-contract](data-contract.md#reward-roi-formula--sql), [api-contract](api-contract.md#analytics-overview-response)) |
+| **Acceptance** | Revenue widgets read `orders.amount_cents`. Cashier Bill Amount + Invoice Number; migrate-then-earn on customer QR. Duplicate invoice → `INVOICE_DUPLICATE`. Currency is display metadata; snapshot `currency_code` at write. ROI card uses `(revenue − cost) / cost` with `null` when cost is 0. Square/Clover still deferred. |
 
 ## Phase 6 — Referrals + campaigns + insight nudges + search
 
@@ -85,7 +85,7 @@ flowchart TD
 | **G-IDs** | G-05, G-09, G-14, G-21 |
 | **Depends on** | `referrals`, `campaign_jobs` / worker, search API, `insight_actions` |
 | **Deliverables** | `POST /api/insights/:key/actions` (`send` \| `nudge` \| `create`); `insight_actions` audit table; CTA → draft campaign → optional `campaign_jobs` enqueue ([api-contract](api-contract.md#insights--nudge-automation)) |
-| **Acceptance** | OTP (SMS/WhatsApp) succeeds **before** `customers` / `referrals` / rewards exist. Enroll with `?ref=` then creates a `referrals` row and grants the **referred** reward. The **referrer** is granted only on first `Invoice.Paid` (`orders.paid_at`) **and** only if status is `pending`. Discount awards are `vouchers` (`active`/`used`/`expired`), not cart auto-apply. DB `CHECK (referrer_id <> referred_id)` and `UNIQUE (referred_id)` reject bad inserts. Same device or same public IP in the same minute → `pending_review`. Points lots carry `expires_at`. Campaign send returns 202 job; opens via ESP webhook. Header search returns results. Birthday automation can run. Analytics Send / Nudge / Create create real campaigns (and jobs for send/nudge), not no-ops. |
+| **Acceptance** | OTP **PM-06** (180s TTL, 3 guesses, 60s resend, 5/24h per phone) succeeds **before** `customers` / `referrals` / rewards exist. Enroll **UX-75** requires name/email/DOB. Enroll with `?ref=` then creates a `referrals` row and grants the **referred** reward (**PM-07:** `points` \| `voucher`). The **referrer** is granted only on first `Invoice.Paid` **and** only if status is `pending`. Voucher awards are `vouchers` (`active`/`used`/`expired`), not cart auto-apply. `UNIQUE (referred_id)` lifetime. Campaign send returns 202 job; **Scheduled Automations hidden** (PM-18 / 503). Analytics Send / Nudge / Create create real campaigns (not automations). Header search returns results. G-09 send/opens still deferred. |
 
 ## Phase 7 — Analytics / customers APIs + pagination
 

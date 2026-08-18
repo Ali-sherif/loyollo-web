@@ -104,7 +104,7 @@ flowchart TD
 ### Data loading sequence
 
 1. `profiles` — `full_name, business_name, onboarding_completed` where `id = user.id`
-2. `loyalty_programs` — `id` where `owner_id = user.id` (`maybeSingle` — **today** one program per owner). **DECIDED:** up to three capability rows (`UNIQUE (owner_id, program_type)`); [loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided) · [program-model.md](../product/program-model.md). Capability **settings** live on Loyalty / [UX-10](../product/ui-ux-team-requests.md#ux-10--loyalty-capabilities-settings), not this Overview canvas.
+2. `loyalty_programs` — `id` where `owner_id = user.id` (`maybeSingle` — **today** one program per owner). **DECIDED:** many independent programs; query the **ACTIVE** row (`status = 'active'`). Program **settings** live on Loyalty / [UX-10](../product/ui-ux-team-requests.md#ux-10--loyalty-program-list--active-default), not this Overview canvas.
 3. If a program exists, `Promise.all` of three `select("id").limit(1).maybeSingle()`:
    - `rewards` where `loyalty_program_id = program.id`
    - `customers` where `loyalty_program_id = program.id`
@@ -323,7 +323,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 4. **Live activity** — no event table
 5. **At-risk definition** — disagrees with Customers / Analytics / Campaigns
 6. **Open rate** — opens never incremented
-7. **One program per owner (today)** — **DECIDED:** up to three capabilities + `draft`/`active`/`disabled` ([loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided))
+7. **One program per owner (today)** — **DECIDED:** independent programs + one ACTIVE ([loyalty-page.md](loyalty-page.md#independent-programs-decided))
 8. **Checklist is existence-only** — a draft campaign counts as “launched”
 
 ---

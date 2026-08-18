@@ -20,6 +20,7 @@ Public join / enrollment (`enrollCustomer` and related signup/enrollment routes)
 - On limit exceeded, the server must respond with **HTTP 429**.
 - Rate limits apply to the mediated public mutation path (Backend API call or justified BFF Route Handler per [15-server-function-mapping.md](../../frontend/15-server-function-mapping.md)) — not only to UI clicks.
 - Exact numeric thresholds, keying (IP / fingerprint / program id), and provider product selection are set at implementation of the join/enrollment slice; this ADR locks the **layer, status code, and UX contract**.
+- **Additional (PM-06, 2026-08-18):** customer OTP also has **phone-keyed** caps (not IP): 3 failed guesses per challenge; 60s resend cooldown; 5 sends / 24h rolling; TTL 180s. Those coexist with this ADR’s IP/edge limits; they do not replace them. See [program-model.md](../../product/program-model.md) and [api-contract OTP](../../backend/api-contract.md#join--otp--enroll).
 
 ### Frontend handling
 

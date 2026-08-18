@@ -211,7 +211,7 @@ erDiagram
 
 ### Unique / enum
 
-- One `loyalty_programs` row per `owner_id` **today**. **DECIDED:** up to three capability rows per Shop (`UNIQUE (owner_id, program_type)`); status `draft` \| `active` \| `disabled`. Shop QR always this Shop ([loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided), [counter QR](../product/counter-qr-and-program-membership.md)). Catalog redeem is pending + reserve + QR scan ([redemption](../product/reward-redemption-flow.md)).
+- One `loyalty_programs` row per `owner_id` **today**. **DECIDED:** independent programs; **partial unique** one `status = 'active'` per Shop. Shop QR → ACTIVE ([loyalty-page.md](loyalty-page.md#independent-programs-decided), [counter QR](../product/counter-qr-and-program-membership.md)). Catalog redeem is pending + `reward_snapshot` + reserve + QR scan ([redemption](../product/reward-redemption-flow.md)).
 - `loyalty_program_type`: `points` \| `visit` \| `tier`
 - `customers.tier` is **text**, not FK to `loyalty_program_tiers`
 

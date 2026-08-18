@@ -97,14 +97,14 @@ After the teammate account exists, forgotten password is the **same** owner rese
 
 ---
 
-## 5. Shop loyalty capabilities + status
+## 5. Independent programs + one ACTIVE
 
-**Status:** DECIDED 2026-08-17 (not shipped). **Supersedes** the 2026-08-16 “many programs including same type” lock and the pending Business Owner Shop QR picker.  
-**Source of truth:** [program-model.md](product/program-model.md) · [loyalty-page.md](frontend/loyalty-page.md#shop-loyalty-capabilities-decided) · [G-35](frontend/gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-one-config-per-capability)
+**Status:** DECIDED 2026-08-18 (not shipped). **Supersedes** the 2026-08-17 Shop-capability lock.  
+**Source of truth:** [program-model.md](product/program-model.md) · [ADR-016](architecture/decisions/ADR-016-independent-programs.md) · [loyalty-page.md](frontend/loyalty-page.md#independent-programs-decided) · [G-35](frontend/gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-independent-programs)
 
-A Shop has **one loyalty system** with up to three optional **capabilities**: Points, Visit, Tier. **At most one config of each type.** Same-type duplicates are invalid. Each capability may be **`draft`**, **`active`**, or **`disabled`**. The customer has **one membership per Shop** with independent Points / Visits / Tier state. Visit does not require Points. Shop QR always resolves to this Shop.
+A Shop may own **many independent programs**. **At most one is `ACTIVE`**. Counter QR + `?ref=` resolve only to ACTIVE. Customer is **locked** to `enrolled_program` until deferred POS migration (cashier scan of **customer QR**). Catalog / wallet / ledger are program-scoped. Campaigns stay Shop-scoped.
 
-Today the DB allows only one `loyalty_programs` row per owner (`UNIQUE owner_id`). Target: `UNIQUE (owner_id, program_type)`. [counter-qr-and-program-membership.md](product/counter-qr-and-program-membership.md). Admin UI: [UX-10](product/ui-ux-team-requests.md#ux-10--loyalty-capabilities-settings).
+Today the DB allows only one `loyalty_programs` row per owner (`UNIQUE owner_id`). Target: **partial unique one ACTIVE per Shop** — do **not** use `UNIQUE (owner_id, program_type)`. Admin UI: [UX-10](product/ui-ux-team-requests.md#ux-10--loyalty-program-list--active-default).
 
 ---
 
@@ -167,7 +167,7 @@ Points belong to the **Shop** they were earned in. They do **not** mix across Sh
 |-----------|-----------|-------------------|
 | 100 points (+ stamps if Visit enabled) | 200 points | **Two** wallets: Shop A and Shop B — **not** 300 |
 
-Each Shop card: name, then by **enabled capability** — Points: spendable / **available** (`total − pending reserved`) + progress to next reward; Visit: stamp-icon counter; Tier: current tier + progress to next. Plus expiry date(s) (split by lot if mixed), vouchers + their dates, personal share link + QR. Never aggregate across Shops. [program-model.md](product/program-model.md#4-customer-membership-and-wallet) · [customer-reward-progress.md](product/customer-reward-progress.md). Portal **URL** still not locked. Pixel layout not locked.
+Each Shop card: enrolled program + **Archived History**. Points: spendable / **available** (`total − pending reserved`) — distinct from **`period_points_earned`** (PM-08). Visit: stamps. Tier: highest **milestone this period**. Plus expiry groups, vouchers, personal share link + QR of **ACTIVE** join URL. Never aggregate across Shops.
 
 ---
 
@@ -176,15 +176,13 @@ Each Shop card: name, then by **enabled capability** — Points: spendable / **a
 **Status:** DECIDED (not shipped)  
 **Source of truth:** [reward-redemption-flow.md](product/reward-redemption-flow.md) · [G-20](frontend/gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn)
 
-The customer redeems only rewards in the Shop they belong to. Redeem → if Available < cost, refuse (no row); else `pending` (reserves points) + single-use QR (10-minute expiry) → staff **scan** (`completed`, consume reserved from Total) or scheduled job (`expired`, release). `Available = Total − Reserved`. Combined pending cost cannot exceed available; concurrent Redeems check Available. Staff scanning is verification, not discretionary approval — staff cannot reject a valid QR. Digital catalog rewards may complete instantly.
+The customer redeems only rewards on their **enrolled program**. Redeem → persist **`reward_snapshot`**; if Available < snapshot cost, refuse (no row); else `pending` + single-use QR (10-minute expiry) → staff **scan** using the snapshot (`completed`, **PM-04**) or scheduled job (`expired`, release + purge expired reserved lots).
 
-A redemption stays on the Shop it was created under even if the customer later uses Shop B. Scan is one server transaction (`UPDATE … WHERE status = 'pending'`, affected rows = 1). Second scan → “already redeemed”; expired QR → “expired”. Create is Backend-idempotent (UI disable is UX only). Earn is idempotent per business event; concurrent earn and redeem share one consistency model. Reward eligibility is evaluated at create — later reward expiry does not auto-invalidate a pending row; QR TTL is independent. Staff authz is **Shop-level** (`staff.branch.shop_id === redemption.shop_id`); any Staff/Admin of that Shop in Phase 1. Refund / reversal is **not** Phase 1. **Gap:** previous notes described staff Approve/Reject — superseded; do not implement that.
-
-**Pending Product Owner — do not implement:** reward price change while PENDING; reward disabled/deleted while PENDING; Shop loyalty disabled while PENDING redemptions exist; point **lot** expiry while reserved. [redemption §14](product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet). **Open:** tier downgrade if activity drops; tier metric source ([program-model.md](product/program-model.md)).
+**Closed:** §14.1 snapshot; prospective program/reward edits; PM-04 reserved-lot expiry; Phase 1 mutation guards. **Not Phase 1:** emergency cancel+refund. **PM-08** is decided (period vs spendable). **PM-07** voucher-only when ACTIVE is not points.
 
 ---
 
 ## Not decided in this discussion
 
-Open tracking, SMS delivery, automations, campaign revenue (G-09 / G-06). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever (Phase 1 Redemption: any existing Staff or Admin may **scan/verify**, Shop-scoped). Whether `staff` can also use the add-teammate form. Customer-portal **URLs** (wallet **contents** are locked in §8). Default referral expiry **day counts**. OTP challenge TTL and attempt cap. Merchant UI for **Pending Review** (status and backend review path are locked; the screen is not). Device-fingerprint algorithm (hashes and same-minute rule are locked). SMS vs WhatsApp **provider** (channel enum is locked; adapters stay stubs). **Pending Product Owner:** reward price change / reward disable-delete / Shop loyalty disable / reserved-point **lot** expiry while PENDING ([redemption §14](product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet)). **Open:** tier downgrade if activity drops; tier metric source; referral points kind when Points is off ([program-model.md](product/program-model.md)). Refund / reversal is deferred (not Phase 1). Shop QR / multiple ACTIVE programs is **resolved** (2026-08-17 capability model).
+Open tracking, SMS delivery, campaign **send/opens** (G-09 send — automations **hidden** PM-18). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever. Whether `staff` can also use the add-teammate form. Customer-portal **URLs**. Default referral expiry **day counts**. Merchant UI for **Pending Review**. Device-fingerprint algorithm. SMS vs WhatsApp **provider**. Gender/city on UX-75 (G-17). General `COMPLETED → REVERSED`. Refund / reversal is deferred (not Phase 1). **Resolved 2026-08-18:** independent programs; PM-06 OTP limits; UX-75 required fields; PM-07/08/04; currency display-only; customer soft-delete; staff cashier POS.
 

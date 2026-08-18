@@ -4,11 +4,25 @@
 
 **Stack (DECIDED):** NestJS 11.x + Prisma 7.x + PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md), [README.md](README.md#target-stack-decided)). **Auth is NestJS from Phase 1** (local JWT for `admin` / `staff` / `customer`; no Supabase Auth — [ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Other paths below are Nest HTTP contracts; remaining non-auth domains may still follow the Phase 2 cutover in [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md).
 
-**Related:** [data-contract.md](data-contract.md) · [remediation-roadmap.md](remediation-roadmap.md) · [gaps-and-solutions.md](../frontend/gaps-and-solutions.md) · [program-model.md](../product/program-model.md)
+**Related:** [data-contract.md](data-contract.md) · [remediation-roadmap.md](remediation-roadmap.md) · [gaps-and-solutions.md](../frontend/gaps-and-solutions.md) · [program-model.md](../product/program-model.md) · [ADR-016](../architecture/decisions/ADR-016-independent-programs.md)
 
-Authz unless noted: **owner session** = **`admin`** (buyer of Loyollo; [data-contract glossary](data-contract.md#unified-glossary)). **`staff`** uses the same `/app` APIs with **the same permissions as `admin` for now**. Scope to the caller’s Shop (`owner_id`; `loyalty_program_id` as transitional alias). Service-role only in workers and public enroll.
+Authz unless noted: **owner session** = **`admin`** (buyer of Loyollo; [data-contract glossary](data-contract.md#unified-glossary)). **`staff`** uses the same `/app` APIs with **the same permissions as `admin` for now**. Scope to the caller’s Shop (`owner_id`). Service-role only in workers and public enroll.
 
 **Shop-customer session (DECIDED, not shipped):** register/login for role **customer** is a separate authz plane from `admin` / `staff`. It must not authorize `/app` merchant APIs. **Passwordless:** login and lost access use OTP (SMS/WhatsApp), never merchant `/auth/forgot-password`. Endpoints and identity are backend-owned ([G-33](../frontend/gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows), [credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided)).
+
+### Error envelope
+
+Mutation, POS, OTP, and enroll errors use:
+
+```json
+{
+  "code": "PROGRAM_MUTATION_BLOCKED_PENDING_CLAIMS",
+  "message": "human-readable",
+  "details": {}
+}
+```
+
+**Phase 1 codes:** `PROGRAM_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_MUTATION_BLOCKED_ACTIVE_MEMBERS`, `PROGRAM_MUTATION_BLOCKED_NOT_EXPIRED`, `REWARD_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_ACTIVE_LIMIT`, `INVOICE_DUPLICATE`, `REFERRAL_POINTS_REQUIRES_POINTS_ENABLED`, `OTP_MAX_ATTEMPTS_EXCEEDED`, `OTP_RESEND_COOLDOWN`, `DAILY_OTP_LIMIT_REACHED`, `AUTOMATIONS_NOT_AVAILABLE_PHASE1`, `ENROLL_VALIDATION_FAILED`. OTP 429 bodies include `retry_after_seconds` (in `details` or top-level — UI must not hardcode timers).
 
 ---
 
@@ -19,23 +33,26 @@ Authz unless noted: **owner session** = **`admin`** (buyer of Loyollo; [data-con
 | Method | Path | Purpose | Request | Response (shape) | Unlocks |
 |--------|------|---------|---------|------------------|---------|
 | GET | `/api/customers` | Paginated list + server filters | Query: `cursor`, `q`, `status`, `tier`, `limit` | `{ items: CustomerSummary[], next_cursor? }` | G-11, G-12 scale |
-| GET | `/api/customers/:id` | Detail with rewards + activity | Path id (ownership check) | `{ customer, rewards[], visits_summary, ltv_cents?, referrals_count, referral_code }` | G-13, G-14 |
-| POST | `/api/customers/:id/redeem` | Staff-facing alias for **scan/verify** of a catalog redemption **in that customer’s program**. Prefer `POST /api/redemptions/scan` below. Not a discretionary approve/reject. | Body: `{ qr_code, branch_id?, order_id?, amount_cents?, idempotency_key }` | `{ customer_reward, redeemed_count, order? }` or specific error (`already_redeemed` / `expired`) | G-20, ROI |
+| GET | `/api/customers/:id` | Detail with rewards + activity | Path id (ownership check) | `{ customer, rewards[], visits_summary, ltv_cents?, referrals_count, referral_code, enrolled_program }` | G-13, G-14 |
+| POST | `/api/customers` | Owner Add Customer | Body: `full_name`, `email`, `birth_date` required (UX-75); `phone` optional until filled | `{ customer }` or `400` `ENROLL_VALIDATION_FAILED` | UX-75 |
+| POST | `/api/customers/:id/erase` | GDPR purge + retain `phone_hash`; `status=deleted` | — | `{ customer_id, status: "deleted" }` | soft-delete |
+| DELETE | `/api/customers/:id` | Soft-delete only (erase-lite). **405/409** if a hard delete is attempted | — | `204` or error | never HARD DELETE |
+| POST | `/api/customers/:id/redeem` | Staff-facing alias for **scan/verify** of a catalog redemption **in that customer’s enrolled program**. Prefer `POST /api/redemptions/scan` below. Not a discretionary approve/reject. | Body: `{ qr_code, branch_id?, order_id?, amount_cents?, idempotency_key }` | `{ customer_reward, redeemed_count, order? }` or specific error (`already_redeemed` / `expired`) | G-20, ROI |
 | GET | `/api/customers/export` | CSV export (optional BFF) | Same filters as list | `text/csv` stream | G-11 |
 
 **Redeem write rules** (see [data-contract](data-contract.md#binding-write-rules) · [reward-redemption-flow.md](../product/reward-redemption-flow.md)):
 
-1. Customer creates a catalog redemption **in that Shop only**. If `Available < cost`: **refuse immediately** with a clear error — no row, no reservation. If valid: status `pending`, **reserve** `points_cost` (increment Reserved), issue a **single-use QR** tied to the row with `qr_expires_at = now + 10 minutes`. Do **not** permanently deduct until staff scan (physical) or instant complete (digital exception). The row stays on that Shop even if the customer later uses another Shop.
-2. `Available = Total − Reserved`. Concurrent creates must check **Available**, not Total. Refuse create when required cost > available, or when a disallowed duplicate `pending` already exists for customer+shop+reward.
+1. Customer creates a catalog redemption **on their enrolled program only**. Snapshot live reward into `reward_snapshot`. If `Available < snapshot cost`: **refuse immediately** with a clear error — no row, no reservation. If valid: status `pending`, **reserve** snapshot `points_cost`, issue a **single-use QR** with `qr_expires_at = now + 10 minutes`. Do **not** permanently deduct until staff scan (physical) or instant complete (digital exception).
+2. `Available = Total − Reserved`. Concurrent creates must check **Available**, not Total. Refuse create when required cost > available, or when a disallowed duplicate `pending` already exists for customer+program+reward.
 3. Same `idempotency_key` / business operation returns the existing redemption; do not insert a second row, do not reserve points again, and do not issue a second QR (double-click, tabs, devices, network retry). Viewing the same pending row (same QR) from multiple devices is allowed.
-4. Staff **scan / verify** is one transaction: still `pending` **and** `qr_expires_at > now()` → consume reserved from Total → `completed`, set `redeemed_at`, increment `rewards.redeemed_count`, optional `branch_id` / `order_id`. The write **must** be `UPDATE … WHERE status = 'pending'` (and QR still valid) with **affected row count = 1**. Already `completed` → reject with **“already redeemed”** (no second deduct). `expired` or past `qr_expires_at` → reject with **“expired”**. State transition and points consumption cannot partially succeed. Enforced on Backend/database; Frontend disable / countdown is UX only. Staff scanning is **verification**, not discretionary approval — do not ship `approve` / `reject` for a valid physical QR.
-5. A **scheduled job** (not client-side / lazy expiry) finds `pending` rows with `qr_expires_at <= now()`, marks them `expired` (same class of conditional update), and **releases** reserved points. Expired reservations must be released even if the customer never reopens the app.
+4. Staff **scan / verify** is one transaction: still `pending` **and** `qr_expires_at > now()` → consume reserved using **`reward_snapshot`** (ignore live `point_cost` if it diverged) → `completed`, set `redeemed_at`, increment `rewards.redeemed_count`, optional `branch_id` / `order_id`. **PM-04:** complete even if reserved lot `expires_at` passed during the QR window. The write **must** be `UPDATE … WHERE status = 'pending'` (and QR still valid) with **affected row count = 1**. Already `completed` → reject with **“already redeemed”**. `expired` or past `qr_expires_at` → reject with **“expired”**. Staff scanning is **verification**, not discretionary approval — do not ship `approve` / `reject` for a valid physical QR.
+5. A **scheduled job** finds `pending` rows with `qr_expires_at <= now()`, marks them `expired`, **releases** Reserved, then **purges** lots with `expires_at <= now()` (not returned to Available). Live lots return to Available. Do not decrement `period_points_earned`.
 6. When a ticket exists on complete: create or attach `orders` and set `customer_rewards.order_id` in the **same** scan/complete transaction. Rows without `order_id` are valid operationally but **excluded from ROI** until linked.
 7. Authz is **Shop-level**: `staff.branch.shop_id === redemption.shop_id`. Any authorized Staff from any Branch of that Shop may scan. Staff from another Shop must not. Do not authorize on `redemption_id` or `qr_code` alone. Frontend exposes a scanner; Backend enforces independently. Phase 1: any existing Staff or Admin role may perform Redemption scan/verify.
-8. Reward eligibility / expiry is evaluated **at create**. Later reward `expires_at` must not auto-invalidate a pending redemption. QR TTL (10 minutes) is independent. Refuse spend of a `points_ledger` lot when `expires_at` is set and `now() >= expires_at` (expired lots), subject to the still-pending reservation-vs-lot-expiry policy ([§14 item 14](../product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet)).
-9. Referral **discount** redeem is `POST /api/vouchers/:id/redeem` on `vouchers` (`active` only; refuse `used` / `expired` / `now() >= expires_at`). Do not auto-apply to a cart. Not this catalog state machine.
+8. Reward eligibility / expiry is evaluated **at create** and stored in `reward_snapshot`. Later live `rewards` PATCHes must not rewrite PENDING. QR TTL (10 minutes) is independent of lot `expires_at` (PM-04).
+9. Referral **voucher** redeem is `POST /api/vouchers/:id/redeem` on `vouchers` (`active` only; refuse `used` / `expired` / `now() >= expires_at`). Do not auto-apply to a cart. Not this catalog state machine.
 10. **Digital exception:** a purely digital catalog reward may complete in the create transaction (no QR, no staff scan). Physical / in-person handoff uses the QR path. [§16](../product/reward-redemption-flow.md#16-digital-rewards-exception).
-11. **Not Phase 1:** refund / reverse. **Do not implement** pending Product Owner items: price change while PENDING; reward disabled/deleted while PENDING; program disabled while PENDING; reserved-lot expiry. **Do not implement** staff Approve/Reject for physical catalog rewards (previous spec — superseded; [Gaps](../product/reward-redemption-flow.md#gaps-design-vs-implementation)).
+11. **Not Phase 1:** refund / reverse; emergency cancel+refund (`cancelled`). **Do not implement** staff Approve/Reject for physical catalog rewards (previous spec — superseded). Snapshot / PM-04 / mutation guards are **DECIDED** — implement them.
 
 ### Catalog redemption lifecycle (DECIDED, not shipped)
 
@@ -43,7 +60,7 @@ Paths are illustrative (backend-owned). Shop-**`customer`** session for create; 
 
 | Method | Path | Purpose | Request | Response |
 |--------|------|---------|---------|----------|
-| POST | `/api/me/shops/:shopId/redemptions` | Customer Redeem; if Available ≥ cost: `pending` + reserve + single-use QR (`qr_expires_at` +10 min). If Available < cost: error, no row | `{ reward_id, idempotency_key }` | `{ redemption }` including `qr_code`, `qr_expires_at`, `status` (same row on retry; do not reserve or re-issue QR). `4xx` with a clear error when Available < cost |
+| POST | `/api/me/shops/:shopId/redemptions` | Customer Redeem; persist `reward_snapshot`; if Available ≥ snapshot cost: `pending` + reserve + single-use QR (`qr_expires_at` +10 min). If Available < cost: error, no row | `{ reward_id, idempotency_key }` | `{ redemption }` including `qr_code`, `qr_expires_at`, `status`, `reward_snapshot` (same row on retry). `4xx` when Available < cost |
 | GET | `/api/me/redemptions/:id` | Customer reconcile (QR + remaining TTL) | — | `{ redemption }` (`pending` / `completed` / `expired`) |
 | POST | `/api/redemptions/scan` | Staff verification; atomic `PENDING → COMPLETED` | `{ qr_code, branch_id?, order_id?, idempotency_key }` | `{ redemption }` on success. Specific errors: `already_redeemed`, `expired`, wrong shop/program, QR unknown |
 | — | (worker) `expire-pending-redemptions` | Find `pending` with `qr_expires_at <= now()`; mark `expired`; release Reserved | — | `{ expired_count }` |
@@ -108,7 +125,10 @@ Visit metrics in the same response (or nested under `engagement`) must use the P
 
 | Method | Path | Purpose | Request | Response | Unlocks |
 |--------|------|---------|---------|----------|---------|
-| POST | `/api/campaigns/:id/send` | Enqueue send (**202**) | Body optional | `{ job_id }` — worker outside Next ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)) | G-09 |
+| POST | `/api/campaigns/:id/send` | Enqueue send (**202**) | Body optional | `{ job_id }` — worker outside Next ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)) | G-09 send (opens still deferred) |
+| POST/PATCH/DELETE | `/api/campaign_automations` … | **PM-18:** Phase 1 **hidden**. Writes return **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or omit routes → 404). Do **not** hide campaign list / Launch | — | `{ code, message }` | DG-10 |
+
+Do **not** hide campaign list or Launch. G-09 **automations** = resolved hidden; G-09 send/opens stay deferred.
 
 ### Insights / nudge automation
 
@@ -145,7 +165,7 @@ CTA click → POST /api/insights/:key/actions
          → 200 { insight_action_id, campaign_id, job_id? }
 ```
 
-Persist `audience_filter` jsonb on `insight_actions` (see [data-contract](data-contract.md#insight_actions)). Frontend navigates to `/app/campaigns/{campaign_id}` on `create`, or shows “Queued” toast when `job_id` is present.
+Persist `audience_filter` jsonb on `insight_actions` (see [data-contract](data-contract.md#insight_actions)). Frontend navigates to `/app/campaigns/{campaign_id}` on `create`, or shows “Queued” toast when `job_id` is present. Insight CTAs are **campaign send/nudge/create**, not Scheduled Automations (PM-18).
 
 Example audience for `at_risk_churn` (must live in shared rules module, not only the UI):
 
@@ -156,21 +176,50 @@ WHERE loyalty_program_id = :program_id
   AND last_activity_at >= now() - interval '60 days';
 ```
 
+### Programs (independent; DECIDED, not shipped)
+
+Canonical product: [program-model.md](../product/program-model.md). Paths illustrative.
+
+| Method | Path | Purpose | Request | Response |
+|--------|------|---------|---------|----------|
+| GET | `/api/programs` | List Shop programs | — | `{ items: Program[] }` including `status` |
+| POST | `/api/programs` | Create `draft` | Body: type + rules | `{ program }` or `409` `PROGRAM_ACTIVE_LIMIT` if attempting a second ACTIVE without archive |
+| PATCH | `/api/programs/:id` | Prospective rule/catalog edits | Body | `{ program }`. Does **not** rewrite ledger / PENDING / `reward_snapshot` |
+| POST | `/api/programs/:id/activate` | Atomically archive previous ACTIVE; set this `active` | — | `{ program, archived_id? }`. **PM-07:** **400** `REFERRAL_POINTS_REQUIRES_POINTS_ENABLED` if activating non-points while referral kinds include `points` |
+| POST | `/api/programs/:id/archive` | Allowed **with** members / PENDING | — | `{ program }` |
+| DELETE / PATCH disable or draft | `/api/programs/:id` | **Mutation guards** | — | **409** with counts + Wait vs Archive: `PROGRAM_MUTATION_BLOCKED_*` |
+| POST | `/api/programs/:id/force-soft-delete` | **Not Phase 1** — documented stub | — | `501` / omit until later phase |
+| PATCH | `/api/referral-settings` | **PM-07** kinds `points` \| `voucher` | Body | `{ settings }` or **400** `REFERRAL_POINTS_REQUIRES_POINTS_ENABLED` |
+
+Reward CRUD on a program: **409** `REWARD_MUTATION_BLOCKED_PENDING_CLAIMS` while PENDING exist. Material catalog cuts insert a `reward_version`.
+
+### Staff POS (Phase 1 cashier)
+
+Square/Clover still deferred (UX-19). Authz: `admin` / `staff`, Shop-scoped.
+
+| Method | Path | Purpose | Request | Response |
+|--------|------|---------|---------|----------|
+| POST | `/api/pos/scan` | Customer QR → membership + eligibility + optional **deferred migrate** | `{ qr_payload }` | `{ customer, enrolled_program, migrated?: boolean }` |
+| POST | `/api/pos/transactions` | Bill Amount + Invoice Number; earn on **locked** program after migrate decision | `{ customer_id, amount_cents, invoice_number, idempotency_key, branch_id?, currency_code? }` | `{ order, membership, ledger[] }` or **409** `INVOICE_DUPLICATE` |
+
+Idempotency: `idempotency_key` and/or `(shop_id, invoice_number)`. Snapshot `currency_code` on the order. Display currency on `profiles` is metadata only.
+
 ### Join — OTP + enroll
 
 Public, unauthenticated. Rate-limit OTP request **and** enroll (ADR-012). New members are **not** written until OTP succeeds.
 
 | Method | Path | Change | Unlocks |
 |--------|------|--------|---------|
-| GET | `/api/join/shop/:shopSlug` | **Primary Shop join resolve.** Always this Shop — no picker. Return Shop payload + enabled capabilities. 404 / unavailable if no `active` capability | G-35 |
-| GET | `/api/join/program` | Transitional: today’s printed `/join/{programId}`. Log `visit_events` (`source=qr_view`); accept `branch` query; if `ref` present, persist invite telemetry. Resolve the UUID to the Shop. 404 if no `active` capability | G-01, G-14 |
-| POST | `/api/join/otp/request` | Start SMS or WhatsApp OTP. Insert `otp_verifications` only — **no** `customers` / `referrals` / ledger / vouchers | G-14, G-33, G-18 |
-| POST | `/api/join/enroll` | Verify OTP then atomically create **this Shop’s** membership (and referral grant). Existing account, first time in this Shop → one new membership. Returning phone in Shop = check-in only (no new OTP, no second membership, no second referral) | G-01, G-02, G-03, G-14, G-18, G-35 |
+| GET | `/api/join/shop/:shopSlug` | **Primary Shop join resolve.** Always this Shop’s **ACTIVE** program — no picker. 404 / unavailable if no `active` program | G-35 |
+| GET | `/api/join/program` | Transitional: today’s printed `/join/{programId}`. Log `visit_events` (`source=qr_view`); accept `branch` query; if `ref` present, persist invite telemetry. Resolve UUID → Shop **ACTIVE** (do not enroll into archived). 404 if no `active` program | G-01, G-14 |
+| POST | `/auth/otp/send` | **Canonical PM-06 send/resend.** Insert `otp_verifications` only — **no** `customers` / `referrals` / ledger / vouchers. Alias: `POST /api/join/otp/request` **must** share limiter + store | G-14, G-33, G-18 |
+| POST | `/auth/otp/verify` | **Canonical PM-06 verify.** 3 failed guesses → **400** `OTP_MAX_ATTEMPTS_EXCEEDED` and invalidate challenge | G-14 |
+| POST | `/api/join/enroll` | Verify OTP then atomically create membership on **ACTIVE**. **UX-75:** require `full_name`, `email`, `birth_date`. Existing account, first time in this Shop → one new identity. Returning phone in Shop = check-in only (no new OTP, no second identity, no second referral) | G-01, G-02, G-03, G-14, G-18, G-35 |
 | POST | `/api/vouchers/:id/redeem` | Mark voucher `used`; attach `order_id`. Shop-customer or staff/admin POS. Never auto-apply at issue | G-14, G-20 |
 
 #### `GET /api/join/shop/:shopSlug`
 
-**Primary Shop join entry** (DECIDED). Always resolves to this Shop. No program picker. Exact slug vs UUID is backend-owned; today’s `/join/{programId}` may keep working as a Shop alias.
+**Primary Shop join entry (DECIDED).** Always resolves to this Shop’s **ACTIVE** program. No program picker. Exact slug vs UUID is backend-owned; today’s `/join/{programId}` may keep working as a Shop alias that still lands on ACTIVE.
 
 Illustrative shape:
 
@@ -179,17 +228,17 @@ Illustrative shape:
   "shop_slug": "string",
   "shop_id": "uuid",
   "name": "string",
-  "capabilities": {
-    "points": { "status": "active" },
-    "visit": { "status": "draft" },
-    "tier": null
+  "active_program": {
+    "id": "uuid",
+    "program_type": "points",
+    "status": "active"
   }
 }
 ```
 
-`capabilities.<type>` is `null` when that config does not exist. Join is unavailable when every present capability is missing or not `active`.
+Join is unavailable when there is no `active` program (`404`).
 
-#### `POST /api/join/otp/request`
+#### `POST /auth/otp/send` (alias `POST /api/join/otp/request`)
 
 ```json
 {
@@ -205,15 +254,31 @@ Transitional clients may still send `program_id`; the backend resolves it to the
 
 ```json
 {
+  "challenge_id": "uuid",
   "otp_id": "uuid",
   "expires_at": "2026-08-14T19:15:00Z",
-  "channel": "sms"
+  "channel": "sms",
+  "retry_after_seconds": 60
 }
 ```
 
-Errors: `429` rate limit; `400` invalid phone/channel; `404` Shop has no `active` capability. Transport failure (stub SMS/WhatsApp) → `503` with a generic message — do not leak provider errors.
+`expires_at` is **now + 180 seconds** (PM-06). UI timers use `retry_after_seconds` — do **not** hardcode 60s / 180s.
+
+Errors: **429** `OTP_RESEND_COOLDOWN` or `DAILY_OTP_LIMIT_REACHED` + `retry_after_seconds`; `400` invalid phone/channel; `404` Shop has no `active` program. Transport failure (stub SMS/WhatsApp) → `503` with a generic message — do not leak provider errors. ADR-012 IP limits may coexist.
 
 Send the code through [messaging contracts](../frontend/17-messaging-templates.md). Store `code_hash` only.
+
+#### `POST /auth/otp/verify`
+
+```json
+{
+  "challenge_id": "uuid",
+  "phone": "+201000000000",
+  "otp_code": "123456"
+}
+```
+
+Wrong code on a live challenge increments `attempts`. 3rd failure: invalidate challenge; **400** `OTP_MAX_ATTEMPTS_EXCEEDED`. Expired challenge → `400`/`410` (do not count as a guess). Default: omit remaining-guesses from the response.
 
 #### `POST /api/join/enroll`
 
@@ -225,7 +290,7 @@ Send the code through [messaging contracts](../frontend/17-messaging-templates.m
   "phone": "+201000000000",
   "ref": "ABC123",
   "branch_id": "uuid",
-  "name": "string",
+  "full_name": "string",
   "email": "string",
   "birth_date": "date",
   "gender": "string",
@@ -234,7 +299,7 @@ Send the code through [messaging contracts](../frontend/17-messaging-templates.m
 }
 ```
 
-`otp_id` + `otp_code` + matching `phone` are **required** for a **new** member. Returning member (same phone/email in this Shop): treat as check-in; OTP fields may be omitted.
+`otp_id` + `otp_code` + matching `phone` are **required** for a **new** member. **UX-75:** `full_name`, `email` (valid format), `birth_date` (ISO date) are **required** on new-phone enroll — **400** `ENROLL_VALIDATION_FAILED` with per-field `details`. `gender` / `city` / `custom_field_value` stay optional. Returning member (same phone/email in this Shop): treat as check-in; OTP fields may be omitted.
 
 Success (new member):
 
@@ -248,16 +313,16 @@ Success (new member):
     "referrer_granted": false
   },
   "reward": {
-    "kind": "discount",
+    "kind": "voucher",
     "voucher_id": "uuid",
     "expires_at": "2026-09-13T19:10:00Z"
   }
 }
 ```
 
-`referral` is `null` when `ref` is absent or invalid. `status` may be `"pending_review"`. `reward.kind` is `"points"` \| `"discount"` from `referral_settings.referred_reward_kind`. Invalid/expired OTP → **`401` / `410` and no member row**. Self-invite or duplicate `referred_id` → **`409`** (DB constraint).
+`referral` is `null` when `ref` is absent or invalid. `status` may be `"pending_review"`. `reward.kind` is `"points"` \| `"voucher"` from `referral_settings` (**PM-07**). Invalid/expired OTP → **`401` / `410` and no member row**. Self-invite or duplicate `referred_id` → **`409`** (DB constraint). Missing UX-75 fields → **400** `ENROLL_VALIDATION_FAILED`.
 
-Also: log check-in `visit_events`; `assign_customer_tier`; stamp lot `expires_at`; device/IP compare for `pending_review`.
+Also: log check-in `visit_events`; `assign_customer_tier` (period metric); stamp lot `expires_at`; device/IP compare for `pending_review`; Sign-up Bonus on **this program enrollment**.
 
 ### Invoice.Paid (referrer release)
 
@@ -313,14 +378,18 @@ Response:
 {
   "shop_id": "uuid",
   "name": "string",
+  "enrolled_program_id": "uuid",
+  "program_type": "points",
   "points": {
     "total": 100,
     "reserved": 0,
     "spendable": 100,
+    "period_points_earned": 80,
     "lots": [{ "amount": 100, "expires_at": "timestamptz|null" }]
   },
   "visits": { "current": 3, "required": 8 },
   "tier": { "current": "Silver", "next": "Gold", "remaining": 200 },
+  "archived_history": [{ "program_id": "uuid", "program_type": "points", "spendable_points": 40, "archived_at": "timestamptz" }],
   "vouchers": [{ "voucher_id": "uuid", "discount_pct": 15, "status": "active", "expires_at": "timestamptz" }],
   "referral_code": "string",
   "share_url": "{shopJoinUrl}?ref={referral_code}",
@@ -345,7 +414,7 @@ Response:
 }
 ```
 
-Rules: one object per **Shop** membership. `points` / `visits` / `tier` are `null` when that capability is not enabled. **Do not** include a top-level summed points field across Shops. `points.spendable` is **available** (`total − reserved`) for that Shop. `lots` grouped by `expires_at`. `progress` is an array of enabled-capability sections on **this Shop’s** card. `state`: `in_progress` · `ready` · `none`. Pending catalog redemptions must be reconcilable from the server. [program-model.md](../product/program-model.md#4-customer-membership-and-wallet) · [loyalty-page.md](../frontend/loyalty-page.md#customer-wallet-per-shop-decided) · [customer-reward-progress.md](../product/customer-reward-progress.md) · [reward-redemption-flow.md](../product/reward-redemption-flow.md).
+Rules: one object per **Shop** identity. Show the **enrolled** program card plus `archived_history` (non-spendable). `points` / `visits` / `tier` reflect that enrolled program’s type (`null` when N/A). **Do not** include a top-level summed points field across Shops. `points.spendable` is **available** (`total − reserved`) for the enrolled program; `period_points_earned` is ladder-only (PM-08). `share_url` is this Shop’s **ACTIVE** join URL `?ref=`. Pending catalog redemptions must be reconcilable from the server. [program-model.md](../product/program-model.md#4-customer-membership-and-wallet) · [reward-redemption-flow.md](../product/reward-redemption-flow.md).
 
 ### Billing / integrations (backend-owned)
 

@@ -48,7 +48,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Customers tier column/filter; Dashboard top-customer colors; Analytics donut; Loyalty tier stats `"0"`; Campaigns VIP/Gold |
 | **Blocked by** | Ladder saved; enroll/check-in never write `customers.tier` |
-| **Solution** | Shared assign function on enroll + check-in (`tier` or `tier_id`) for the Shop’s **single** Tier capability. **Open:** spendable counters vs lifetime metric ([program-model.md](../product/program-model.md#open--tier-metric-source)) |
+| **Solution** | Shared assign function on earn that reads **`period_points_earned` only** (PM-08). Insert `tier_milestone_grants` (one payout per milestone per period). **Forbidden:** ladder reading spendable / Available. Redeem must not change the period counter. Period job zeros period counter + displayed milestone only. |
 | **Status** | `DEFERRED-BACKEND` |
 | **Owner** | Backend program |
 | **Phase** | 1 |
@@ -118,7 +118,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Campaigns performance, Dashboard open rate, Automations Enable |
 | **Blocked by** | Fan-out in Next request (ADR-013); `opened_count` unused; automations CRUD only |
-| **Solution** | `campaign_jobs` + worker; ESP webhooks; automation runner. **Lifecycle DECIDED (2026-08-14):** campaigns start as Draft (never Active); Active = send in progress (working); when all emails/SMS are processed write `completed` (`sent_count > 0`) or `failed` (`sent_count === 0`). Enable must not write `active` without sending (restore draft). Do not drop the Completed tab. Performance (`% Open` / `% Redeemed`) is a results column, not a status — see [campaigns-page.md](campaigns-page.md#product-meanings-decided) |
+| **Solution** | `campaign_jobs` + worker; ESP webhooks. **PM-18 / DG-10:** **hide Scheduled Automations** in Phase 1; writes to `campaign_automations` → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or 404). Do **not** hide campaign list / Launch. G-09 **automations** = resolved hidden; G-09 **send/opens** stay deferred. **Lifecycle DECIDED (2026-08-14):** campaigns start as Draft (never Active); Active = send in progress (working); when all emails/SMS are processed write `completed` (`sent_count > 0`) or `failed` (`sent_count === 0`). Enable must not write `active` without sending (restore draft). Do not drop the Completed tab. Performance (`% Open` / `% Redeemed`) is a results column, not a status — see [campaigns-page.md](campaigns-page.md#product-meanings-decided) |
 | **Status** | `DEFERRED-BACKEND` |
 | **Owner** | Backend program |
 | **Phase** | 6 |
@@ -177,7 +177,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Loyalty Referrals tab; Customer detail Referrals = 0 |
 | **Blocked by** | `referral_settings` only; no `referrals` events |
-| **Solution** | `otp_verifications` then atomic enroll; `referrals` + `?ref=` / personal QR **Shop-scoped**; both-party grants (referred after OTP, referrer **only** on first **paid** invoice / `Invoice.Paid`); discount → `vouchers` (`active`/`used`/`expired`); `CHECK (referrer_id <> referred_id)`; `UNIQUE (referred_id)` per Shop membership; same device/IP in the same minute → `pending_review`. **Open:** referral `points` kind when Points is disabled. [DECIDED](loyalty-page.md#referral-rewards-decided) · [fraud](loyalty-page.md#referral-fraud-controls-decided) · [OTP](loyalty-page.md#otp-verification-decided). Schema: [data-contract](../backend/data-contract.md#referrals) · [program-model.md](../product/program-model.md) |
+| **Solution** | `otp_verifications` then atomic enroll; `referrals` + `?ref=` / personal QR on Shop **ACTIVE**; both-party grants (referred after OTP, referrer **only** on first **paid** invoice / `Invoice.Paid`); **voucher** → `vouchers` (`active`/`used`/`expired`); **PM-07** `points` only when ACTIVE is points else **400** `REFERRAL_POINTS_REQUIRES_POINTS_ENABLED`; `CHECK (referrer_id <> referred_id)`; `UNIQUE (referred_id)` **lifetime**; same device/IP in the same minute → `pending_review`. **PM-06** OTP limits. **UX-75** required name/email/DOB. [DECIDED](loyalty-page.md#referral-rewards-decided) · [OTP](loyalty-page.md#otp-verification-decided). Schema: [data-contract](../backend/data-contract.md#referrals) · [program-model.md](../product/program-model.md) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED**, not shipped) |
 | **Owner** | Backend program |
 | **Phase** | 6 |
@@ -243,8 +243,8 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Dashboard redemption donut; Loyalty catalog; customer wallet redeem |
 | **Blocked by** | Check-in inserts `earned`; no redeem lifecycle (pending / reserve / QR scan). Previous spec described staff approve/reject — **superseded**; do not implement that path. |
-| **Solution** | Customer Redeem → if Available < cost, error (no row); else `pending` + reserve + single-use QR (10 min). Staff **scan** atomically (`UPDATE … WHERE status = 'pending'`, affected rows = 1) → `completed` + consume reserved. Already completed → “already redeemed”; expired → “expired”. Scheduled job marks past-due `pending` as `expired` and releases Reserved (not client-side only). `Available = Total − Reserved`; concurrent Redeems check Available. Idempotent create and earn (unique business reference); concurrent earn+redeem same consistency model; Shop-level scan authz; Phase 1 any Staff/Admin; eligibility at create. Digital catalog rewards may complete instantly. Donut uses `completed` events. Do not implement staff Approve/Reject for physical rewards, pending PO items, or Phase 1 reverse. [reward-redemption-flow.md](../product/reward-redemption-flow.md) · [loyalty-page.md](loyalty-page.md#reward-redemption-lifecycle-decided) |
-| **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-16 for Phase 1 lifecycle; pending PO items in [redemption §14](../product/reward-redemption-flow.md#14-pending-owner-decisions-do-not-implement-yet)) |
+| **Solution** | Customer Redeem → persist **`reward_snapshot`**; if Available < snapshot cost, error (no row); else `pending` + reserve + single-use QR (10 min). Staff **scan** uses snapshot (`UPDATE … WHERE status = 'pending'`, affected rows = 1) → `completed` + consume reserved (**PM-04:** even if lot `expires_at` passed during TTL). Already completed → “already redeemed”; expired → “expired”. Job marks past-due `pending` as `expired`, releases Reserved, **purges** expired reserved lots (not returned to Available). `Available = Total − Reserved`. Idempotent create and earn; Shop-level scan authz; Phase 1 any Staff/Admin. Digital catalog rewards may complete instantly. Donut uses `completed` events. Do not implement staff Approve/Reject. Snapshot / PM-04 / mutation guards are **DECIDED**. Not Phase 1: reverse / emergency cancel. [reward-redemption-flow.md](../product/reward-redemption-flow.md) · [loyalty-page.md](loyalty-page.md#reward-redemption-lifecycle-decided) |
+| **Status** | `DEFERRED-BACKEND` (product **DECIDED** including §14.1 snapshot + PM-04) |
 | **Owner** | Backend program |
 | **Phase** | 4 |
 
@@ -362,13 +362,13 @@ These widgets are visible in production UI and systematically show **zero, even 
 | **Owner** | Frontend |
 | **Phase** | — |
 
-### G-31 — Capability type change after members exist
+### G-31 — Program type change after members exist
 
 | Field | Value |
 |-------|--------|
 | **Where** | Loyalty copy “change anytime” |
 | **Blocked by** | No lock / migration path; today’s upsert overwrites the single row’s type |
-| **Solution** | Do not switch a row’s `program_type` after members exist. Enable/disable a **sibling** capability instead (`UNIQUE (owner_id, program_type)`). Copy: lock type on an existing capability row. |
+| **Solution** | Do not switch a row’s `program_type` after members exist. Create a **new independent program** and activate it (archives previous ACTIVE). Members stay locked until **deferred POS migrate**. Mutation guards on delete/disable/draft. Copy: type is locked on an existing program row. |
 | **Status** | `DEFERRED-BACKEND` (copy: `FRONTEND-FIXABLE`) |
 | **Owner** | Backend program |
 | **Phase** | — |
@@ -390,7 +390,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | `/app/customers` Add Customer; public `/join/[programId]`; Dashboard / Analytics KPIs |
 | **Blocked by** | No shop-customer auth. Rows are owner-created or anonymous join. KPIs use denormalized / owner-typed fields |
-| **Solution** | Customer **register/login** (role **customer**, not `admin` / `staff` `/app`). **Passwordless:** register, login, and recovery never use a password. Public new register uses **OTP** (SMS/WhatsApp) before the member row is finalized. Lost access = **new OTP** (same channel), never `/auth/forgot-password` or the merchant `recovery` email. After OTP: inactive → generic block; existing in this Shop → wallet; existing **first time in this Shop** → link Shop (welcome is UX only — no implied bonus unless Signup Bonus is configured); new phone → profile (name / email / DOB). Store customer-owned profile + activity. **Calculate KPIs** from that data. Owner manual add remains (no OTP). Wallet: **one card per Shop** with sections for enabled Points / Visit / Tier (Points: available + next-reward progress; Visit: stamp icons; Tier: current + next; plus expiry groups + `vouchers` + share link/QR); never a cross-Shop total. Routes not locked. [program-model.md](../product/program-model.md) · [customer-portal-journey.md](../product/customer-portal-journey.md) · [customer-reward-progress.md](../product/customer-reward-progress.md) · [11-authentication-migration.md](11-authentication-migration.md#shop-customer-register-and-login-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) · [loyalty-page.md](loyalty-page.md#customer-wallet-per-shop-decided) · [OTP](loyalty-page.md#otp-verification-decided) |
+| **Solution** | Customer **register/login** (role **customer**, not `admin` / `staff` `/app`). **Passwordless:** register, login, and recovery never use a password. Public new register uses **OTP** (SMS/WhatsApp, **PM-06**) before the member row is finalized. Lost access = **new OTP**. After OTP: inactive → generic block; existing in this Shop → wallet; existing **first time in this Shop** → link Shop (welcome is UX only); **new phone → UX-75 required `full_name` / `email` / `birth_date`**. Store customer-owned profile + activity. **Calculate KPIs** from that data. Owner manual add remains (no OTP) but should collect the same three fields. Wallet: **one card per Shop** (enrolled program + Archived History); never a cross-Shop total. Soft-delete only. Routes not locked. [program-model.md](../product/program-model.md) · [customer-portal-journey.md](../product/customer-portal-journey.md) · [OTP](loyalty-page.md#otp-verification-decided) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
 | **Owner** | Backend program |
 | **Phase** | Later (customer portal; not product Phase 1 merchant roles) |
@@ -406,16 +406,16 @@ These widgets are visible in production UI and systematically show **zero, even 
 | **Owner** | Backend program |
 | **Phase** | Later (merchant team; after role names) |
 
-### G-35 — Shop loyalty is one row, not one config per capability
+### G-35 — Shop loyalty is one row, not independent programs
 
 | Field | Value |
 |-------|--------|
 | **Where** | `/app/loyalty` upsert; Dashboard / Customers / Campaigns / Analytics `maybeSingle` |
 | **Blocked by** | `UNIQUE (owner_id)` on `loyalty_programs`; no `status` column; changing `program_type` overwrites the only row |
-| **Solution** | Target **`UNIQUE (owner_id, program_type)`** — at most one Points, one Visit, one Tier per Shop (up to three rows). Drop unique-on-owner-alone (that blocks Points+Visit). Do **not** drop uniqueness entirely (that would allow two Points configs). Optional `status` **`draft` \| `active` \| `disabled`** per capability. Stop overwrite-upsert. Join/check-in when **at least one** capability is `active`. One membership / wallet / catalog per Shop. Shop QR always this Shop. [program-model.md](../product/program-model.md) · [loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided) · [counter QR](../product/counter-qr-and-program-membership.md) |
-| **Status** | `DEFERRED-BACKEND` (Shop capabilities + one-per-type **DECIDED** 2026-08-17; supersedes 2026-08-16 many-programs / same-type / pending Shop QR picker) |
+| **Solution** | **Independent programs** ([ADR-016](../architecture/decisions/ADR-016-independent-programs.md)). Drop unique-on-owner-alone and **do not** use `UNIQUE (owner_id, program_type)`. **Partial unique:** one `status = 'active'` per Shop. Statuses include `archived`. Stop overwrite-upsert. Join/check-in when an **ACTIVE** program exists. Customer locked to `enrolled_program`; deferred POS migrate. Catalog/wallet program-scoped; campaigns Shop-scoped. [program-model.md](../product/program-model.md) · [loyalty-page.md](loyalty-page.md#independent-programs-decided) · [counter QR](../product/counter-qr-and-program-membership.md) |
+| **Status** | `DEFERRED-BACKEND` (independent programs **DECIDED** 2026-08-18; **supersedes** 2026-08-17 Shop-capability `UNIQUE (owner_id, program_type)`) |
 | **Owner** | Backend program |
-| **Phase** | Later (capability rows) |
+| **Phase** | Later (program list + ACTIVE) |
 
 ### G-36 — No admin account list or active/inactive for staff/customer
 

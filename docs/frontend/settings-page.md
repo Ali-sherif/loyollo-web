@@ -64,6 +64,8 @@ flowchart TD
 
 `full_name, email, phone, business_name, business_category, business_type, industry, website, currency, avatar_url`
 
+**UX-23:** `currency` is **display metadata only**. Changing it must not convert historical amounts. Snapshot `currency_code` lives on `orders` / `points_ledger`.
+
 Email falls back to `user.email`. Email input is **disabled** and **not** included in save payload (Auth email change is a different flow).
 
 ### Label vs column mismatch

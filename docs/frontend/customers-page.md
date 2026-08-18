@@ -228,6 +228,8 @@ No pagination. No bulk select.
 
 Shared `AddCustomerDialog`. Fields: `full_name`, `email`, `phone`, `birth_date`.
 
+**UX-75 (intended):** `full_name`, `email`, `birth_date` are **required** (same as new-phone enroll). `phone` may still be omitted on owner-typed rows until filled. No merchant flag that makes the three optional. `gender` / `city` / `custom_field_value` stay optional (G-17 still open).
+
 **Insert** (requires `programId`):
 
 ```ts
@@ -248,7 +250,7 @@ Join enroll **does** persist `gender`, `city`, `custom_field_value`. The owner d
 
 ## Delete
 
-`AlertDialog` then `customers.delete().eq("id", …)`. Copy says points and activity history are removed. Related `customer_rewards` / `campaign_recipients` depend on FK `ON DELETE` in migrations (cascade vs restrict — confirm before relying on this in production).
+`AlertDialog` then **today** `customers.delete().eq("id", …)` — **forbidden in target spec**. **Never HARD DELETE.** Soft-delete: `status = deleted`; keep E.164 until GDPR then salted SHA-256 `phone_hash`; `UNIQUE (referred_id)` lifetime. API: `DELETE /api/customers/:id` or `POST /api/customers/:id/erase` (405/409 if a hard delete is attempted). Copy must not promise that history is physically removed.
 
 ---
 
@@ -365,7 +367,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 5. **No pagination**
 6. **Detail analytics** — rewards, LTV, referrals, charts, health all placeholders
 7. **Join-only fields** not visible to the owner
-8. **One program per owner (today)** — all customers hang off that program; no branch_id. **DECIDED:** one Shop membership with up to three capabilities ([loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided))
+8. **One program per owner (today)** — all customers hang off that program; no branch_id. **DECIDED:** one Shop identity + locked `enrolled_program` ([loyalty-page.md](loyalty-page.md#independent-programs-decided))
 
 ---
 

@@ -6,6 +6,8 @@
 
 **See also (2026-08-16):** portal case map with every UI branch — [customer-portal-journey.md](../product/customer-portal-journey.md). Use that file for functional coverage of the customer funnel; this audit stays the security/QA analysis.
 
+**Amendment 2026-08-18:** OTP limits are **PM-06** (180s TTL, 3 guesses, 60s resend, 5/24h per phone). UX-75 required name/email/DOB. Uniqueness is per Shop identity (independent programs, ADR-016). Do not treat “TTL not locked” as current.
+
 **Scope sources:** [ADR-005](../architecture/decisions/ADR-005-authentication.md), [11-authentication-migration.md](../frontend/11-authentication-migration.md), [auth-ssr-spike.md](../architecture/spikes/auth-ssr-spike.md), [ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md), [api-contract.md](../backend/api-contract.md), [data-contract.md](../backend/data-contract.md), [settings-page.md](../frontend/settings-page.md), [17-messaging-templates.md](../frontend/17-messaging-templates.md), and the [2026-08-14 security/UI/product audit](./2026-08-14-security-ui-product-audit.md).
 
 **Important framing — there are two separate, non-overlapping auth systems, at very different maturity levels:**
@@ -65,7 +67,7 @@ Every test case below is tagged **[SHIPPED]**, **[DECIDED-NOT-SHIPPED]**, or **[
 | **High** | International phone numbers for OTP: non-E.164 formats, numbers with country-code ambiguity (e.g. `+1` vs local), numbers with letters | `otp_verifications.phone` is documented as **E.164, required**. Test rejection of malformed numbers, and correct channel routing (`sms` vs `whatsapp`) for numbers that only support one channel in a given country. |
 | **Medium** | Unicode/RTL text in name fields (Arabic given the merchant base) mixed with LTR punctuation | Loyollo's audience is Arabic-first (`نشط`/`غير نشط` used in product docs for active/inactive). Test bidi rendering in emails and UI, not just storage. |
 | **Low** | Case sensitivity in email (`User@Example.com` vs `user@example.com`) creating duplicate accounts | Supabase Auth normally lower-cases emails; confirm this is not bypassable via sign-up API directly. |
-| **High** | Duplicate `customers` row race: two concurrent enroll requests with the same email/phone in the same Shop | **Confirmed gap** (`S-17`): "No unique `(loyalty_program_id, email\|phone)` index... two concurrent enrolls with the same email create two rows." Uniqueness is per **Shop membership** (2026-08-17 capability model). This is a documented, unresolved defect — write a load-test case for it specifically. |
+| **High** | Duplicate `customers` row race: two concurrent enroll requests with the same email/phone in the same Shop | **Confirmed gap** (`S-17`). Uniqueness is per **Shop identity** (2026-08-18 independent programs; phone unique per Shop when present). Still an unresolved defect — write a load-test case. |
 
 ### 2.2 Concurrency, timeouts, duplicate requests, device switching
 

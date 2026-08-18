@@ -1,6 +1,6 @@
 # Campaigns Page (`/app/campaigns`)
 
-Reference for all components, conditions, and edge cases on the Campaigns list route, plus the linked detail page (`/app/campaigns/[campaignId]`), send pipeline, audience matching, and automations. Includes domain notes for frontend + backend work, plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions). **Today** campaigns hang off the owner’s single `loyalty_programs` row. **DECIDED:** campaigns are **Shop-scoped** (`loyalty_program_id` is a transitional alias — [data-contract](../backend/data-contract.md#shop-capability-model-decided-not-shipped)).
+Reference for all components, conditions, and edge cases on the Campaigns list route, plus the linked detail page (`/app/campaigns/[campaignId]`), send pipeline, audience matching, and automations. Includes domain notes for frontend + backend work, plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions). **Today** campaigns hang off the owner’s single `loyalty_programs` row. **DECIDED:** campaigns are **Shop-scoped** (`owner_id`; `loyalty_program_id` is a transitional alias — [data-contract](../backend/data-contract.md#independent-programs-decided-not-shipped)). **PM-18:** hide **Scheduled Automations** in Phase 1; do **not** hide campaign list / Launch.
 
 **Jump to:** [product meanings](#product-meanings-decided) · [route](#route-structure) · [page flow](#high-level-page-flow) · [stat cards](#stat-cards-4) · [status tabs](#status-tabs) · [filters](#search--filters--sort) · [table](#campaign-table) · [row menu](#row-menu) · [create / edit](#create--edit-dialog) · [send](#launch--send-pipeline) · [audience](#how-audience-actually-resolves) · [status machine](#campaign-status-machine) · [automations](#scheduled-automations) · [detail page](#detail-page-appcampaignscampaignid) · [performance](#performance--open--redeemed) · [personalization](#personalization-tokens) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
@@ -169,7 +169,7 @@ Unlike Analytics, there is **no empty-state for “no loyalty program”** on th
 ### Data loading sequence
 
 1. Fetch `profiles` (`full_name`, `onboarding_completed`) for current user
-2. Fetch `loyalty_programs` where `owner_id = user.id` (expects 0 or 1 **today** — unique on `owner_id`). **DECIDED:** up to three capability rows ([loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided))
+2. Fetch `loyalty_programs` where `owner_id = user.id` (expects 0 or 1 **today** — unique on `owner_id`). **DECIDED:** independent programs; **partial unique** one ACTIVE; Shop-scoped campaigns ([loyalty-page.md](loyalty-page.md#independent-programs-decided))
 3. If program exists, fetch `campaigns` ordered by `created_at` descending
 
 Columns loaded:
@@ -635,7 +635,9 @@ Alert dialog. Hard `DELETE` from `campaigns`. Recipients cascade (`ON DELETE CAS
 
 ## Scheduled automations
 
-`AutomationsSection` is always rendered when `user` exists (including when there is no loyalty program). It is **CRUD for config rows only**. No worker, no schedule, no send.
+**PM-18 / DG-10 (DECIDED Phase 1):** **hide** this section in merchant UI. Writes to `campaign_automations` return **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or omit routes → 404). Do **not** hide the campaign list or Launch. G-09 send/opens stay deferred.
+
+`AutomationsSection` today is always rendered when `user` exists (including when there is no loyalty program). It is **CRUD for config rows only**. No worker, no schedule, no send. Until Phase 1 hide ships, treat the UI as dishonest.
 
 Table: `campaign_automations`. Unique `(owner_id, type)` — **one row per type per owner**.
 
@@ -860,7 +862,7 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 | — | **Lovable `enqueue_email`** | n/a | Still RPC | Queue TBD | Withdraw per ADR-009/013 |
 | — | **Personalization UX** | Tokens undocumented | Tokens work on send | n/a | Hint + sample preview |
 | — | **Edit after send** | Allowed, silent | No versioning | Message overwritten | Freeze or snapshot |
-| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Automations** | Look live | No runner | `config` unused | Worker or hide |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Automations** | Look live | No runner | `config` unused | **PM-18:** **hide** in Phase 1; writes **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1`. Do not hide campaign list / Launch |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Detail Top Engaged / Rewards** | Empty / `0` | No events | No opens/clicks | Engagement events |
 | [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **Detail donut** | Other = untiered | Uses stored `tier` | Same as Analytics | Tier-write |
 | — | **List loads all campaigns** | Client filter/sort | No list API | OK at small N | Paginated list when volume grows |
@@ -915,7 +917,7 @@ Short list:
 12. **Messaging** — send service duplicates campaign HTML helpers instead of contracts
 13. **Detail engagement / rewards redeemed** — placeholders
 14. **Personalization tokens** — work on send, hidden in the UI
-15. **One program per owner (today)** — campaigns belong to that program; no program switcher. **DECIDED:** Shop-scoped campaigns ([loyalty-page.md](loyalty-page.md#shop-loyalty-capabilities-decided))
+15. **One program per owner (today)** — campaigns belong to that program; no program switcher. **DECIDED:** Shop-scoped campaigns ([loyalty-page.md](loyalty-page.md#independent-programs-decided))
 
 ---
 

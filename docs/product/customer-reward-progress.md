@@ -7,7 +7,7 @@
 
 **Source of truth:** [program-model.md](./program-model.md) · [loyalty-page.md — customer wallet](../frontend/loyalty-page.md#customer-wallet-per-shop-decided) · [UX-07](./ui-ux-team-requests.md#ux-07--customer-wallet-per-shop) · [reward-redemption-flow.md](./reward-redemption-flow.md)
 
-Progress toward a reward lives on the **same per-Shop wallet card** as points, expiry, vouchers, and the personal share QR. A customer may hold **several Shop memberships**; each card is independent — never aggregate across Shops. Within a Shop, enabled capabilities (Points / Visit / Tier) are **sections on that one card** ([program-model.md](./program-model.md#4-customer-membership-and-wallet)).
+Progress toward a reward lives on the **same per-Shop wallet card** as points, expiry, vouchers, and the personal share QR. A customer may hold **several Shop identities**; each card is independent — never aggregate across Shops. Show the **enrolled program** plus Archived History ([program-model.md](./program-model.md#4-customer-membership-and-wallet)).
 
 ---
 
@@ -17,24 +17,22 @@ Progress toward a reward lives on the **same per-Shop wallet card** as points, e
 
 - Joining / scanning into Shop A never shows Shop B’s catalog or stamps.
 - Never mix points + stamps **across Shops**.
-- Do mix enabled capabilities **on the same Shop card** (points section + stamp section + tier section).
+- Do **not** mix balances from archived programs into ACTIVE spendable.
 - Do not use the merchant stamp-card **preview** (it always fills 3 stamps). Customer progress must be real membership numbers.
 
 ---
 
-## What the customer sees (by enabled capability)
+## What the customer sees (enrolled program)
 
-| Capability | Progress on the card | Ready / claim |
+| Program type | Progress on the card | Ready / claim |
 | ------------ | -------------------- | ------------- |
-| **Visit** | Stamp card: filled / empty stamp icons — current stamps / `visits_required` toward this Shop’s completion reward (name from catalog when linked; until then the `reward_on_completion` label) | Card full → that reward is **earned** / ready to show at the counter (counter **resets** at target — [capability types](./program-model.md#3-capability-types-v1)) |
-| **Points** | Numeric **available** balance plus a bar to the **next live catalog reward** they have not earned: **available** points / `point_cost`, plus remaining | Enough **available** (unexpired, after pending reserved) points → reward is **available** to request, not auto-spent |
-| **Tier** | Current tier + progress toward the next tier threshold | Tier is **status** (standing perks), not a catalog redeem. Downgrade-if-inactive is **not decided** |
+| **Visit** | Stamp card: filled / empty stamp icons — current stamps / `visits_required` toward this **program’s** completion reward | Card full → that reward is **earned** / ready to show at the counter (counter **resets** at target — [program types](./program-model.md#3-program-types-v1)) |
+| **Points** | Numeric **available** balance plus a bar to the **next live catalog reward**: **available** / snapshot `point_cost`, plus remaining | Enough **available** (unexpired, after pending reserved) points → reward is **available** to request, not auto-spent |
+| **Tier** | Highest **milestone this period** + remaining to next threshold (`period_points_earned`, PM-08) | One-time payout when the threshold is crossed; **not** standing VIP. Redeem does not drop the period counter |
 
-If several catalog rewards exist, the card shows **one primary**: the cheapest `live` reward in this Shop the member has not earned yet. A “See all rewards” list for **this Shop only** may sit under it. Pixel layout of bar vs stamps vs list is **not** locked.
+Show the **enrolled** program only, plus Archived History (non-spendable). If no live reward is configured → honest empty: no fake bar.
 
-If a capability is not enabled → omit that section. If no live reward is configured → honest empty: no fake bar.
-
-**Spendable points** (already locked) are the progress numerator for Points — **available** after pending reservations (`Total − Reserved`), not a raw counter that hides expiry or in-flight redeems.
+**Spendable points** are the progress numerator for Points — **available** after pending reservations (`Total − Reserved`). Do **not** use `period_points_earned` as the wallet spendable number.
 
 ---
 

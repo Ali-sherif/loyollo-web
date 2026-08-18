@@ -26,7 +26,7 @@ flowchart TD
 | | |
 |--|--|
 | **Owner** | Frontend |
-| **G-IDs** | G-05 (hide search), G-06 (hide/dash revenue), G-08 (fix `at-risk` string), G-12 (relabel or dash), G-04 (stop even-split; show `"—"`), Analytics/Dashboard dead buttons |
+| **G-IDs** | G-05 (hide search), G-06 (hide/dash revenue), G-08 (customer status sync — **done**), G-12 (relabel or dash), G-04 (stop even-split; show `"—"`), Analytics/Dashboard dead buttons |
 | **Depends on** | Nothing |
 | **Acceptance** | No widget shows a fabricated even %, proxy labeled as revenue, or clickable dead search/export without disable/hide. Campaign audience uses `at_risk` consistently with DB. Insight CTAs disabled/hidden until Backend Remediation P6 wires `POST /api/insights/:key/actions`. |
 

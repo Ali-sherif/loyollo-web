@@ -600,7 +600,8 @@ Keep name / threshold / color. Add `one_time_reward_id` (FK voucher template or 
 | `tier_id` | uuid FK → `loyalty_program_tiers` | yes | ON DELETE SET NULL — current period milestone |
 | `branch_id` | uuid FK → `branches` | yes | home / last check-in branch |
 | `referral_code` | text | no | stable per member; unique per Shop; generated at enroll. Share URL is this Shop’s **ACTIVE** join URL `?ref={referral_code}` and personal QR encode that URL |
-| `status` | text | no | includes `deleted` (soft-delete). **Never HARD DELETE** |
+| `status` | text | no | membership record status: `active`, `churned`, `deleted` (soft-delete). **Distinct from `lifecycle_state`** — see below |
+| `lifecycle_state` | computed | — | **Not stored (target).** Evaluated at query time by `compute_customer_lifecycle_state(created_at, last_activity_at)` → `'new'` \| `'active'` \| `'at_risk'`. Mutually exclusive. Full spec: [customer-lifecycle.md](customer-lifecycle.md) |
 | `phone` | text | no* | E.164. *Required on public join / self-register (OTP). Owner Add Customer may still omit until filled. GDPR erasure: null; uniqueness via `phone_hash` |
 | `phone_hash` | text | yes | salted SHA-256 of E.164; unique per Shop; retained after erasure |
 | `phone_verified_at` | timestamptz | yes | set in the OTP-verified enroll transaction; null for owner-typed rows until the customer verifies |
@@ -873,10 +874,14 @@ One meaning everywhere (Dashboard, Customers, Analytics, Campaigns). Do not mix 
 
 | Term | Canonical meaning | Source of truth |
 |------|-------------------|-----------------|
-| **At risk** | No `last_activity_at` in the last **30 days** (configurable later, same module) | Shared rules module; optionally nightly job writes `customers.status = 'at_risk'` |
-| **Active (member)** | `customers.status = 'active'` **or** activity within the at-risk window — pick one and document in the rules module | Same module; Campaigns audience string must be `at_risk` (underscore), not `at-risk` |
+| **`lifecycle_state`** | Exactly **one** primary state per customer: `'new'` \| `'active'` \| `'at_risk'`. **Mutually exclusive** — New + Active + At-Risk = 100%. | [customer-lifecycle.md](customer-lifecycle.md) · `compute_customer_lifecycle_state()` (DB) + `src/lib/customer-lifecycle.ts` (TS, target). Priority: **at_risk** > **new** > **active** |
+| **New (`lifecycle_state = 'new'`)** | `created_at` within the last **14 days** AND not at_risk | Same function; Analytics Overview + Engagement lifecycle cards; campaign audience “New Customers” |
+| **Active (`lifecycle_state = 'active'`)** | `last_activity_at` within the last **30 days** AND not new/at_risk | Same function; Dashboard “Active Customers”; campaign audience “Active Customers” |
+| **At risk (`lifecycle_state = 'at_risk'`)** | `last_activity_at` more than **30 days** ago (priority 1). Fallback when no activity on record beyond the 14-day new window. | Same function; Dashboard + Analytics; campaign audience “At Risk”. **Not** `customers.status`. |
+| **At risk (legacy `customers.status`)** | Deprecated for segmentation — use `lifecycle_state` instead | Do not write `status = 'at_risk'` for lifecycle; keep `status` for churn/deleted only |
+| **Active (member `customers.status`)** | Record is not churned/deleted — default `'active'` on enroll | `customers.status`; unrelated to lifecycle “Active” unless explicitly mapped |
 | **Champion / Gold / VIP** | Displayed **highest milestone this period** from `loyalty_program_tiers` / `customers.tier` + `tier_id` (PM-08; not standing VIP) | Not visit-count engagement buckets; not spendable balance |
-| **Engagement buckets** (Champions / Loyal / … on Analytics Engagement) | Visit + recency heuristics — **labels must not reuse tier names** if cutoffs differ | Shared module; exclusive buckets |
+| **Engagement buckets** (withdrawn) | ~~Champions / Loyal / Occasional / Dormant~~ — use **`lifecycle_state`** only for segmentation counts | [customer-lifecycle.md](customer-lifecycle.md) |
 | **Revenue** | `sum(orders.amount_cents)` in period | Never `campaigns.revenue_cents` as GMV |
 | **ROI from Rewards** | `(attributed order revenue − Σ cost_cents) / Σ cost_cents` for linked redemptions | [Reward ROI](#reward-roi-formula--sql) |
 | **Admin** (`admin`) | Buys Loyollo. Uses `/app`. Same as today’s **owner**. Never a shop customer. | Implicit on `profiles`; `owner_id`. [locked role matrix](../frontend/11-authentication-migration.md#locked-role-matrix) |
@@ -901,7 +906,7 @@ One meaning everywhere (Dashboard, Customers, Analytics, Campaigns). Do not mix 
 | **Reserved points** | Sum of snapshot `points_cost` on `pending` catalog redemptions in that program | [reward-redemption-flow.md](../product/reward-redemption-flow.md) |
 | **Catalog redemption** | Customer request for a program reward: `pending` (QR, 10-min TTL, `reward_snapshot`) → `completed` (staff scan) \| `expired` (job + PM-04 lot purge). `rejected` only for other / non-QR invalidation | `customer_rewards` (catalog path) |
 
-Full collision history: [analytics-page.md](../frontend/analytics-page.md#three-different-systems-do-not-mix-them).
+Full collision history: [customer-lifecycle.md](customer-lifecycle.md) · [analytics-page.md](../frontend/analytics-page.md#lifecycle-vs-tiers-do-not-mix).
 
 ---
 

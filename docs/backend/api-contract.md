@@ -142,7 +142,7 @@ Analytics Engagement insight cards expose CTAs (**Send**, **Nudge**, **Create**)
 
 | `insight_key` | Audience (illustrative) | Typical CTA |
 |---------------|-------------------------|-------------|
-| `at_risk_churn` | `last_activity_at` in insight at-risk window (e.g. 20–60 days) | Send / Nudge |
+| `at_risk_churn` | `last_activity_at` **> 30 days** ago (insight at-risk window) | Send / Nudge |
 | `one_visit_from_reward` | Members one visit/stamp from reward per program rules | Nudge |
 | `tier_upgrade` | Members within threshold distance of next `loyalty_program_tiers` row | Create |
 
@@ -172,8 +172,8 @@ Example audience for `at_risk_churn` (must live in shared rules module, not only
 ```sql
 SELECT id FROM customers
 WHERE loyalty_program_id = :program_id
-  AND last_activity_at < now() - interval '20 days'
-  AND last_activity_at >= now() - interval '60 days';
+  AND last_activity_at IS NOT NULL
+  AND last_activity_at < now() - interval '30 days';
 ```
 
 ### Programs (independent; DECIDED, not shipped)

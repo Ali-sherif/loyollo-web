@@ -171,18 +171,18 @@ Header: “Welcome Back, {fullName}”. Right side: a **This month** button (no 
 
 Computed in the browser from the three arrays. Every card shows `delta = "—"` (“vs last month”).
 
-| Label | Formula | Source of truth |
-|-------|---------|-----------------|
-| Total Customers | `customers.length` | `customers` rows |
-| Active Customers | `status === "active"` | `customers.status` |
-| At-Risk Customers | `last_activity_at` older than **30 days** | recency, **not** `status` |
-| Points Redeemed | `Σ redeemed_count × (point_cost ?? 0)` | `rewards` counters, not a ledger |
-| Total Revenue | `Σ campaigns.revenue_cents / 100` formatted USD | campaign column, **not** orders |
+| Label | Formula today | Target ([customer-lifecycle.md](../backend/customer-lifecycle.md)) |
+|-------|---------------|---------------------------------------------------------------------|
+| Total Customers | `customers.length` | same |
+| Active Customers | `status === "active"` | `lifecycle_state === "active"` |
+| At-Risk Customers | `last_activity_at` older than **30 days** | `lifecycle_state === "at_risk"` |
+| Points Redeemed | `Σ redeemed_count × (point_cost ?? 0)` | same |
+| Total Revenue | `Σ campaigns.revenue_cents / 100` formatted USD | same |
 
 ### Conditions / edge cases
 
-- At-risk here is **30-day recency**. Customers page “At-Risk” tab filters `status === "at_risk"`. Analytics uses yet another cutoff. See [analytics-page.md](analytics-page.md#three-different-systems-do-not-mix-them).
-- Members with `last_activity_at = null` are **not** counted as at-risk.
+- **G-08:** Today, at-risk here is 30-day recency; Customers tab uses `status === "at_risk"` (empty). Target: shared `lifecycle_state` everywhere.
+- Members with `last_activity_at = null` are **not** counted as at-risk **today**; target fallback assigns `at_risk` when created > 14 days ago.
 - Revenue is USD hardcoded (`en-US`), ignoring `profiles.currency`.
 - `campaigns.revenue_cents` is never written by send ([campaigns-page.md](campaigns-page.md)) — card stays `$0`.
 - Month-over-month deltas need historical snapshots (TODO in source).
@@ -307,7 +307,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 | [G-05](gaps-and-solutions.md#g-05--header-search-does-nothing) | **Header Search** | Input does nothing | No search endpoint | No `tsvector` / FTS | Shared search BFF, or hide until then |
 | — | **This month** | Button, no period | No period query | All-time counters | Same period model as Analytics; until then hide/disable (Phase 0 honesty) |
 | — | **Stat deltas** | Always `"—"` | No previous-period totals | No daily snapshots | Store period aggregates (Phase 7) |
-| [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **At-risk** | 30-day recency here; `status` on Customers | Three different rules | `status` vs computed recency | One shared module ([data-contract glossary](../backend/data-contract.md#unified-glossary)) |
+| [G-08](gaps-and-solutions.md#g-08--customer-lifecycle-single-state-decided-not-shipped) | **At-risk / Active counts** | Recency vs `status` mismatch | No lifecycle field on API | No DB function | [customer-lifecycle.md](../backend/customer-lifecycle.md) |
 | [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Total Revenue** | Shows campaign `revenue_cents` | No orders API | No `orders` table | Ship 1: **comment out** card; post–Ship 1: orders + attribution |
 | [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **Points Redeemed** | `redeemed_count × point_cost` | No ledger / pending lifecycle | No `points_ledger` | Ledger on earn/redeem; donut uses `completed` only (QR scan, not staff approve) |
 | [G-01](gaps-and-solutions.md#g-01--qr-scan-tracking-is-always-0) | **Live Activity** | Empty forever | No activity API | No event log | `visit_events` + reward events; feed last 24h |
@@ -323,7 +323,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 2. **This month / MoM deltas** — not wired
 3. **Revenue** — campaign column, usually `$0`
 4. **Live activity** — no event table
-5. **At-risk definition** — disagrees with Customers / Analytics / Campaigns
+5. **At-risk definition** — recency views aligned; Customers tab / campaign send still read stored `status` (not auto-written)
 6. **Open rate** — opens never incremented
 7. **One program per owner (today)** — **DECIDED:** independent programs + one ACTIVE ([loyalty-page.md](loyalty-page.md#independent-programs-decided))
 8. **Checklist is existence-only** — a draft campaign counts as “launched”

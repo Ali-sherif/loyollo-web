@@ -2,7 +2,7 @@
 
 Reference for all components, conditions, and edge cases on the Analytics route. Includes domain notes for frontend + backend work (**today:** one program per owner in shipped code; **DECIDED:** independent programs with one ACTIVE, Analytics **Shop-scoped** — [ADR-016](../architecture/decisions/ADR-016-independent-programs.md) · [loyalty-page.md](loyalty-page.md#independent-programs-decided); how tiers are stored vs assigned, segment cutoffs, revenue placeholders), plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
 
-**Jump to:** [independent programs](#independent-programs-decided-adr-016) · [one program today](#one-owner--one-loyalty-program-today) · [how tiers work](#how-customer-tiers-actually-work) · [point ranges](#loyalty-page-point-ranges-saved-vs-ui) · [segments](#customer-segments--card) · [members by tier](#members-by-tier--card--donut) · [engagement stats](#stat-cards-4) · [visit frequency](#visit-frequency-over-time--card--emptychart-disabled) · [insights](#engagement-insights--card-suggestion-cards-not-a-report) · [most engaged / tier column](#most-engaged-members--card--table) · [engagement levels](#engagement-levels--card--horizontal-bars) · [colliding labels](#three-different-systems-do-not-mix-them) · [revenue tab](#tab-3-revenuetab) · [ROI](#roi-from-rewards) · [channel](#revenue-by-channel--what-channel-means) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
+**Jump to:** [independent programs](#independent-programs-decided-adr-016) · [one program today](#one-owner--one-loyalty-program-today) · [how tiers work](#how-customer-tiers-actually-work) · [point ranges](#loyalty-page-point-ranges-saved-vs-ui) · [lifecycle](#customer-lifecycle--card) · [members by tier](#members-by-tier--card--donut) · [engagement stats](#stat-cards-4) · [visit frequency](#visit-frequency-over-time--card--emptychart-disabled) · [insights](#engagement-insights--card-suggestion-cards-not-a-report) · [most engaged / tier column](#most-engaged-members--card--table) · [lifecycle states](#lifecycle-states--card--horizontal-bars) · [lifecycle vs tiers](#lifecycle-vs-tiers-do-not-mix) · [revenue tab](#tab-3-revenuetab) · [ROI](#roi-from-rewards) · [channel](#revenue-by-channel--what-channel-means) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
 **Source files:**
 
@@ -245,22 +245,23 @@ Then:
 | Length ≤ 2 (emoji) | Renders emoji |
 | Otherwise | Lucide fallback icon by index (`Coffee`, `Percent`, `Cookie`, `Gift`, `Crown`) |
 
-### Customer segments — `Card`
+### Customer lifecycle — `Card` (target)
 
-Grouped by **recency** (`created_at` / `last_activity_at`) and **visit frequency** (`visits`). Counts are **real** (from Supabase customer rows). The cutoffs are **hardcoded in the frontend** — not configurable, not stored in program settings, same for every business.
+> **Today:** Overview shows overlapping **Customer segments** (Champions, Loyal, New 30d, At risk) — client-side only. **Target:** replace with this card per [customer-lifecycle.md](../backend/customer-lifecycle.md).
+
+Grouped by **`lifecycle_state`** — **mutually exclusive** states from `created_at` and `last_activity_at`. **New + Active + At-Risk always equals 100%** of the customer base.
 
 Percentage is of total customers; shows `"—"` if no customers.
 
-| Segment | Rule | Fields used |
-|---------|------|-------------|
-| **Champions** | `visits >= 10` | `visits` |
-| **Loyal regulars** | `3 <= visits < 10` | `visits` |
-| **New members** | Joined in the last **30 days** | `created_at` |
-| **At risk** | `last_activity_at` exists AND more than **60 days** ago | `last_activity_at` |
+| State | Rule (priority order) | Fields used |
+|-------|----------------------|-------------|
+| **At-Risk** | `last_activity_at` more than **30 days** ago (priority 1). Fallback: no activity on record and created > **14 days** ago | `last_activity_at`, `created_at` |
+| **New** | Joined within the last **14 days** AND not At-Risk | `created_at` |
+| **Active** | Activity within the last **30 days** AND not New/At-Risk | `last_activity_at` |
 
-> **Note:** Segments can **overlap** (e.g. new + champion). **At risk** excludes never-active customers (`last_activity_at` null).
+> **Note:** Target segments do **not** overlap. Visit-count buckets (Champions, Loyal, etc.) are **withdrawn** — tier milestones remain on the Members-by-tier donut only.
 
-These numbers are not demo placeholders: a customer with 12 visits really counts as a Champion. The `10` / `3` / `30` / `60` values are product defaults in code.
+**Target implementation:** `countByLifecycleState()` in shared module; campaign send uses same rules server-side.
 
 ### Revenue impact (within Overview) — `Card`
 
@@ -333,7 +334,7 @@ Four always-visible tips. Buttons do **not** open campaigns or member lists.
 
 | Insight | What the number is | CTA | Wired? |
 |---------|--------------------|-----|--------|
-| At risk of churning | Same **Engagement levels** At risk: `last_activity_at` **20–60 days** ago (not Overview > 60 days, not `customers.status`) | Send | No |
+| At risk of churning | **Target:** `lifecycle_state === 'at_risk'`. **Today:** recency > 30 days on `last_activity_at` | Send | No |
 | 1 visit from a reward | `visits > 0 && visits % 5 === 4` (4, 9, 14…). The `5` is hardcoded, **not** program `visits_required` | Nudge | No |
 | Peak hour | Static “coming soon” — needs visit timestamps | Explore | No |
 | Tier upgrade nudges | Static “coming soon” — would use `loyalty_program_tiers` once wired | Create | No |
@@ -358,41 +359,34 @@ Pluralization: `"1 member"` vs `"N members"`.
 | `vip`, `gold`, `silver`, `bronze` | Colored pill + crown icon |
 | anything else | Default gray pill |
 
-### Engagement levels — `Card` + horizontal bars
+### Lifecycle states — `Card` + horizontal bars (target)
 
-**Only on this Analytics card.** Not stored in the DB. Not the same as **tiers**. Computed here from `visits` + `last_activity_at`. If `last_activity_at` is null → treated as never → **Dormant**.
+> **Today:** Engagement tab shows overlapping **Engagement levels** (Champions, Loyal, Occasional, At risk, Dormant). **Target:** replace with this card per [customer-lifecycle.md](../backend/customer-lifecycle.md).
 
-| Level | Visits | Last activity |
-|-------|--------|----------------|
-| **Champions** | ≥ 10 | within **30** days |
-| **Loyal** | 5–9 | within **30** days |
-| **Occasional** | 2–4 | within **60** days |
-| **At risk** | any | **20–60** days ago |
-| **Dormant** | any | **> 60** days or never |
+**Mutually exclusive** member states. Same three states as Overview lifecycle card. **New + Active + At-Risk = 100%.**
 
-Cutoffs are hardcoded. Buckets can **overlap** (e.g. 12 visits and last seen 25 days ago = Champions **and** At risk).
+| State | Rule (priority order) |
+|-------|----------------------|
+| **At-Risk** | `last_activity_at` **> 30 days** ago (priority 1). Fallback: no activity and created **> 14 days** ago |
+| **New** | `created_at` within **14 days** AND not At-Risk |
+| **Active** | `last_activity_at` within **30 days** AND not New/At-Risk |
 
 | Condition | Result |
 |-----------|--------|
 | `totalMembers === 0` | `EmptyChart("No members yet.")` |
-| Otherwise | Bar chart + summary footer |
+| Otherwise | Bar chart + per-state count footer |
 
-**Summary footer:**
+**Summary footer:** count per state (not visit averages — visit-count buckets withdrawn).
 
-| Metric | Empty case |
-|--------|------------|
-| Champion avg visits | `"—"` if no champions |
-| Occasional avg visits | `"—"` if none |
-| Dormant last seen | `"—"` / `"Never active"` / `"N+ days ago"` (most recent dormant `last_activity_at`) |
-
-**Not the same as other pages** (similar words, different rules):
+**Distinct from tiers:** `customers.tier` / Members-by-tier donut is the loyalty ladder, not lifecycle.
 
 | Place | Meaning |
 |-------|---------|
-| Overview **Customer segments** | Champions = `visits >= 10` only; At risk = last activity **> 60 days** |
-| Dashboard “at risk” | last activity **> 30 days** |
-| Customers page / campaign audience | `customers.status` `at_risk` / `at-risk` |
-| **Tiers** | Loyalty rank (points ladder / `customers.tier`) |
+| Overview **Customer lifecycle** | `countByLifecycleState()` |
+| Engagement **Lifecycle states** | same module |
+| Dashboard stat cards | same module |
+| Customers tabs / campaign send | same module (server-side in `campaigns-service`) |
+| **Tiers** | Loyalty rank (`customers.tier`) — orthogonal to lifecycle |
 
 ---
 
@@ -623,39 +617,32 @@ The owner **can** add, edit, and delete tiers (name, color, threshold, benefits)
 
 **Intended rule (copy on the edit dialog, not implemented):** “Customers will enter this tier once they reach the specified point balance.”
 
-### Customer segments vs engagement levels
+### Customer lifecycle (target — single system)
 
-Both use hardcoded frontend cutoffs on real customer fields. They are **not** the same buckets.
+> **Today:** three conflicting systems (see [lifecycle vs tiers](#lifecycle-vs-tiers-do-not-mix)). **Target:** all surfaces below use [customer-lifecycle.md](../backend/customer-lifecycle.md).
 
-| | Overview **Customer segments** | Engagement **Engagement levels** |
-|--|-------------------------------|----------------------------------|
-| Champions | `visits >= 10` (no recency) | `visits >= 10` AND active ≤ 30 days |
-| Loyal | `3 <= visits < 10` | `5 <= visits < 10` AND active ≤ 30 days |
-| Occasional | — | `2 <= visits < 5` AND active ≤ 60 days |
-| New | joined last 30 days | — |
-| At risk | last activity **> 60 days** (must have timestamp) | last activity **20–60 days** |
-| Dormant | — | last activity **> 60 days** or never |
+| State | Rule |
+|-------|------|
+| **At-Risk** | Last activity **> 30 days** ago (highest priority) |
+| **New** | Joined **≤ 14 days** ago (and not At-Risk) |
+| **Active** | Activity **≤ 30 days** ago (and not New/At-Risk) |
 
-### Three different systems (do not mix them)
-
-Same English words appear in several screens. They are **not** one shared model.
+### Lifecycle vs tiers (do not mix)
 
 | System | Stored? | Based on | Where |
 |--------|---------|----------|-------|
-| **Tiers** (loyalty rank) | Config: `loyalty_program_tiers`. Member label: `customers.tier` (usually null) | Intended: points vs threshold. Today: unused string | `/app/loyalty`, Overview donut, Most engaged **Tier** column |
-| **Activity groups** (Engagement levels) | **No** — computed only on Analytics Engagement | `visits` + `last_activity_at` | That card only |
-| **Customer status** | `customers.status` (`active`, `at_risk`, …) | Whatever wrote that column (not this page’s visit math) | Customers list, campaign “at risk” audience |
+| **`lifecycle_state`** | Computed at query time | `created_at` + `last_activity_at` | Dashboard, Analytics, Customers tabs, campaign audiences |
+| **Tiers** (loyalty rank) | Config: `loyalty_program_tiers`. Member label: `customers.tier` | Points ladder (when wired) | `/app/loyalty`, Overview donut, Most engaged **Tier** column |
+| **`customers.status`** | Stored on row | Enroll/churn/deleted writers | Operational record status — **not** used for lifecycle segmentation |
 
-A VIP who has not visited in 70 days can still be **Dormant** on Engagement levels. A Champion there can still show **—** for tier.
-
-**“At risk” is four different rules:**
+**Canonical rule** ([data-contract glossary](../backend/data-contract.md#unified-glossary)): one `lifecycle_state` per customer; campaign targeting filters on computed state so audiences never overlap.
 
 | Place | Rule |
 |-------|------|
-| Analytics Overview **Customer segments** | `last_activity_at` **> 60 days** (timestamp required) |
-| Analytics Engagement **levels + insights** | `last_activity_at` **20–60 days** |
-| Dashboard | `last_activity_at` **> 30 days** |
-| Customers page / campaigns | `customers.status` is `at_risk` / `at-risk` |
+| Analytics Overview + Engagement | `countByLifecycleState()` |
+| Dashboard | same |
+| Customers page tabs | same |
+| Campaign send (`campaigns-service`) | same (includes `last_activity_at` + `created_at` in query) |
 
 ### Missing scan / visit event log
 
@@ -798,8 +785,8 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 | [G-11](gaps-and-solutions.md#g-11--customer-list-will-not-scale) | **Active members / repeat rate** | Works | Client loads **all** customers | OK | Move aggregation to backend |
 | [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **Redemption rate / points chart** | Redeemed series always 0 | No points ledger / pending lifecycle | No per-transaction log | `points_ledger`; donut uses `completed` only |
 | [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **Members by tier / Most engaged Tier** | Usually Untiered | Check-in never sets `tier` | Free text, ladder unused | Write `tier` / `tier_id` |
-| [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **Customer segments vs Engagement levels** | Two cutoffs; overlap | Logic only in React | Nothing stored | Shared rules module + glossary |
-| [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **“At risk” / Champion labels** | Four meanings across pages | Campaigns use `status` | `status` vs recency | One source of truth |
+| [G-08](gaps-and-solutions.md#g-08--customer-lifecycle-single-state-decided-not-shipped) | **Customer lifecycle** | Overlapping segments today | No shared module / API field | No DB function yet | [customer-lifecycle.md](../backend/customer-lifecycle.md) |
+| [G-08](gaps-and-solutions.md#g-08--customer-lifecycle-single-state-decided-not-shipped) | **Campaign lifecycle audiences** | Send uses `status` / 30d New | Wrong filters in BFF | — | Shared module + optional RPC |
 | [G-02](gaps-and-solutions.md#g-02--visit--stamp-progress-is-always-empty) | **Avg. visits per member** | All-time; ignores period | No | `visits` counter | All-time or derive from events |
 | [G-01](gaps-and-solutions.md#g-01--qr-scan-tracking-is-always-0) | **QR scans / days between / frequency / peak** | Empty | Check-in does not append events | No event table | `visit_events` |
 | — | **Insights CTAs** | Send / Nudge / Explore / Create do nothing | No create-from-insight | N/A | Prefill campaign or hide |
@@ -847,11 +834,11 @@ Short list:
 6. **Month-over-month deltas** on stat cards — need historical snapshots
 7. **`customers.tier` never written** — enroll/check-in do not apply `loyalty_program_tiers.points_threshold`; Analytics donut will stay Untiered until backend assigns tiers (or Analytics computes from points)
 8. **One program per owner (today)** — Analytics reads one program’s customers/rewards. **DECIDED (ADR-016):** Shop-scoped queries across all program ids ([Independent programs](#independent-programs-decided-adr-016), [G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-independent-programs))
-9. **Segment/level cutoffs** — hardcoded in the frontend; not owner-configurable
+9. **Lifecycle cutoffs** — 14-day new / 30-day windows **DECIDED** in [customer-lifecycle.md](../backend/customer-lifecycle.md); not implemented
 10. **Loyalty “Tier stats”** — member counts hardcoded `"0"` on `/app/loyalty`
 11. **Insight CTAs** — Send / Nudge / Explore / Create have no handlers; “1 visit from a reward” uses hardcoded `visits % 5 === 4`, not program `visits_required`
-12. **Engagement level overlap** — At risk (20–60 days) can also match Champions/Loyal/Occasional; not a single exclusive assignment
-13. **Colliding “at risk” / “Champion” labels** — Overview, Engagement, Dashboard, and Customers/campaigns each use different rules (see [three systems](#three-different-systems-do-not-mix-them))
+12. **Engagement level overlap** — Champions/Loyal/Occasional/Dormant overlap today; **target:** lifecycle states only
+13. **`customers.status` vs recency** — Dashboard/Analytics compute at-risk; Customers/campaigns read stored `status` (G-08)
 
 ---
 
@@ -874,14 +861,14 @@ Page (analytics/page.tsx)
                 │   ├── Card (points chart) + EmptyChart?
                 │   ├── Card (tier donut) + Donut + EmptyChart?
                 │   ├── Card (top rewards) + RewardIcon
-                │   ├── Card (segments)
+                │   ├── Card (lifecycle)
                 │   └── Card (revenue placeholder)
                 ├── EngagementTab
                 │   ├── StatCard × 4
                 │   ├── Card (visit chart) + EmptyChart
                 │   ├── Card (insights)
                 │   ├── Card (most engaged) + TierPill
-                │   └── Card (engagement levels)
+                │   └── Card (lifecycle states)
                 └── RevenueTab
                     ├── StatCard × 6
                     ├── Card (revenue over time) + EmptyChart

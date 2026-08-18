@@ -201,7 +201,7 @@ These do **not** block Ship 1 UI exclusion lock but must close before shipping c
 
 Track in [ui-ux-team-requests.md](./ui-ux-team-requests.md) and [deferred-decisions.md](../architecture/deferred-decisions.md).
 
-**Resolved (2026-08-18):** `DG-01` (hide 2FA, POS, Wallet), `DG-02` (hide Integrations tab), `DG-03` (hide Revenue UI).
+**Resolved (2026-08-18):** `DG-01` (hide 2FA, POS, Wallet), `DG-02` (hide Integrations tab), `DG-03` (hide Revenue UI), `DG-14` (at risk = **> 30 days** inactivity; snake_case `at_risk`).
 
 ---
 

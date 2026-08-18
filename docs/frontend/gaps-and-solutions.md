@@ -103,16 +103,16 @@ These widgets are visible in production UI and systematically show **zero, even 
 | **Owner** | Backend program |
 | **Phase** | 5 |
 
-### G-08 — Three “at risk” definitions
+### G-08 — Customer lifecycle single state (DECIDED — not shipped)
 
 | Field | Value |
 |-------|--------|
-| **Where** | Dashboard 30-day; Customers `status`; Analytics buckets; Campaigns `"at-risk"` vs `"at_risk"` |
-| **Blocked by** | No shared rules; `status` never written for at-risk |
-| **Solution** | One rules module + glossary; fix hyphen immediately (Frontend) |
-| **Status** | `DEFERRED-BACKEND` (hyphen: `FRONTEND-FIXABLE`) |
-| **Owner** | Backend program / Frontend string |
-| **Phase** | 3 (string: 0) |
+| **Where** | Dashboard, Analytics, Customers tabs, campaign lifecycle audiences |
+| **Blocked by** | Three conflicting systems today (recency vs `status` vs overlapping visit buckets) |
+| **Solution** | [customer-lifecycle.md](../backend/customer-lifecycle.md) — enum + DB function + shared TS module; mutually exclusive `new` / `active` / `at_risk`; campaign send filters on computed state |
+| **Status** | `DECIDED` — docs only; **not implemented** |
+| **Owner** | Frontend / Supabase (P3) |
+| **Phase** | 3 |
 
 ### G-09 — Campaign send / opens / automations
 
@@ -470,7 +470,7 @@ Canonical glossary: [data-contract.md § Unified glossary](../backend/data-contr
 
 | Phrase | Dashboard | Customers | Analytics | Campaigns |
 |--------|-----------|-----------|-----------|-----------|
-| At risk | 30-day `last_activity_at` | `status === "at_risk"` | Recency buckets (different cutoffs) | Audience string `"at-risk"` |
+| At risk | stored `status` (`new` / `active` / `at_risk`) | `status === "at_risk"` | stored `status` | `.eq("status", "at_risk")` |
 | Champion / Gold / VIP | Avatar color from `tier` text | Filter on `tier` text | Segments vs engagement levels vs `tier` | Audience by `tier` |
 | Revenue | Sum of campaign cents | Column `"—"` | Empty tab | `revenue_cents` unused |
 | Active | `status === "active"` | Same | Mix of status and recency | **Campaign status:** Active = currently sending (working); Completed = all messages processed. Unrelated to member `active`. See [campaigns-page.md](campaigns-page.md#product-meanings-decided) |

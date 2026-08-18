@@ -144,7 +144,7 @@ Computed from the **unfiltered** `customers` array.
 | Active Customers | `status === "active"` | OK vs stored status |
 | **New this month** | Count of `tier` gold **or** vip | **Wrong metric** — not `created_at` this month |
 | **Returning Rate** | Count of `tier === "silver"` | **Wrong metric** — not a rate |
-| At-Risk Customers | `status === "at_risk"` | Differs from Dashboard 30-day recency |
+| At-Risk Customers | `status === "at_risk"` | Same enum as campaign send; differs from Dashboard/Analytics recency until `status` is written |
 
 Gold/VIP and Silver counts are useful, but the **labels do not match the math**. Until `customers.tier` is written (almost always `null`), both cards show `0`.
 
@@ -162,16 +162,16 @@ When `customers.length === 0`:
 
 ## Status tabs
 
-| Tab | Filter | Count badge |
-|-----|--------|-------------|
-| All | none | `customers.length` |
-| Active | `status === "active"` | matching rows |
-| At-Risk | `status === "at_risk"` | matching rows |
-| Churned | `status === "churned"` | matching rows |
+| Tab | Filter today | Target filter ([customer-lifecycle.md](../backend/customer-lifecycle.md)) | Count badge |
+|-----|--------------|------------------------------------------------------------------------|-------------|
+| All | none | none | `customers.length` |
+| Active | `status === "active"` | `lifecycle_state === "active"` | matching rows |
+| At-Risk | `status === "at_risk"` | `lifecycle_state === "at_risk"` | matching rows |
+| Churned | `status === "churned"` | *(unchanged — operational status, not lifecycle)* | matching rows |
 
-Manual add always inserts `status: "active"`. Join enroll also inserts `"active"`. **Nothing in the app writes `at_risk` or `churned`.** Those tabs stay at `0` unless rows are edited in SQL.
+**Today:** only `status === "active"` is written on enroll/add; At-Risk and Churned tabs stay empty. Dashboard and Analytics may compute recency for display widgets separately (G-08).
 
-Dashboard “at risk” uses 30-day `last_activity_at` and **does not** set `status`. Campaigns audience `"at-risk"` queries a **different string** than `"at_risk"` ([campaigns-page.md](campaigns-page.md)).
+**Target:** tabs New / Active / At-Risk filter on computed `lifecycle_state`; table shows Lifecycle pill.
 
 ---
 
@@ -345,7 +345,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 | G-ID | Widget | UI gap | API gap | DB gap | Recommended fix |
 |------|--------|--------|---------|--------|-----------------|
 | [G-12](gaps-and-solutions.md#g-12--stat-card-label-bugs-on-customers) | **New this month / Returning Rate** | Labels ≠ formulas (Gold/VIP and Silver counts) | No | OK | Relabel or compute correctly; return rate from `visit_events` |
-| [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **At-risk tab vs Dashboard** | Tab uses `status`; Overview uses 30-day recency | No shared rules | `status` never updated | One module; optional job from recency |
+| [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **At-risk tab vs Dashboard** | Tab uses stored `status`; views use 30-day recency | Recency aligned | `status` never updated from recency | Optional job from recency |
 | [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Revenue column / sort** | `"—"`; sort uses points | No spend API | No `orders` | Ship 1: **comment out** column + sort |
 | [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **Tier column / filter** | Usually empty / Bronze-on-detail | Enroll/check-in never set `tier` | Free text, not FK | Write `tier` / `tier_id` on check-in |
 | [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **Churned / At-Risk tabs** | Always 0 | No writer | Enum unused | Job or drop tabs until written |

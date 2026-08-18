@@ -29,6 +29,10 @@ Do not confuse with:
 
 | Term | Meaning |
 | --- | --- |
+| **`lifecycle_state`** | Mutually exclusive segment: `new` (≤14 days since join), `active` (activity ≤30 days), `at_risk` (>30 days inactive). One state per customer; counts sum to 100%. **DECIDED, not shipped.** | [customer-lifecycle.md](docs/backend/customer-lifecycle.md) |
+| **New (lifecycle)** | Customer joined within the last **14 days** and is not at_risk |
+| **Active (lifecycle)** | Customer had activity within the last **30 days** and is not new/at_risk |
+| **At-Risk (lifecycle)** | Customer's last activity was **more than 30 days** ago (highest priority rule) |
 | **Shop join QR** | Merchant-printable QR on `/app/loyalty` linking to public enroll — **in** Product MVP (Ship 1) |
 | **Wallet QR** | Customer membership QR scanned at staff POS — **in** Product MVP (Ship 1); distinct from Apple/Google Wallet passes |
 | **Staff cashier POS** | Bill Amount + Invoice Number earn flow — **in** Product MVP (Ship 1) |

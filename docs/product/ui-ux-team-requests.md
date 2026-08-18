@@ -536,21 +536,21 @@ If SMS is out of Product MVP (Ship 1), hide the channel picker. If it stays, des
 
 | | |
 |--|--|
-| **Need / priority** | Decision · **P1** |
-| **Source** | **DG-14**, **DG-15**, [G-08](../frontend/gaps-and-solutions.md#g-08--three-at-risk-definitions) |
+| **Need / priority** | Decision · **P1** (cutoff **resolved**; exclusivity open) |
+| **Source** | **DG-14** (resolved), **DG-15**, [G-08](../frontend/gaps-and-solutions.md#g-08--three-at-risk-definitions) |
 
-Four published rules:
+**Canonical rule (DG-14, 2026-08-18):** **At risk** = no activity for **> 30 consecutive days** (`last_activity_at` required; null excluded). Snake_case `at_risk` everywhere in DB/API (campaign send fixed).
 
 | Place | Rule |
 |-------|------|
-| Analytics Overview | `last_activity_at` **> 60 days** |
-| Analytics Engagement | **20–60 days** |
-| Dashboard | **> 30 days** |
-| Customers / campaigns | stored `status` `at_risk` (send wrongly queries `at-risk`) |
+| Analytics Overview | `last_activity_at` **> 30 days** |
+| Analytics Engagement | `last_activity_at` **> 30 days** |
+| Dashboard | `last_activity_at` **> 30 days** |
+| Customers / campaigns | stored `status` `at_risk` (send queries same value) |
 
-Engagement buckets: specs allow **overlap**; glossary wants **exclusive**.
+Engagement buckets: specs allow **overlap** with Champions/Loyal/Occasional; glossary wants **exclusive** (**DG-15** still open).
 
-**Need:** one glossary for Product MVP (Ship 1), and whether Overview vs Engagement may keep different cutoffs. Then restyle labels so “At risk” / “Champion” are not four products.
+**Remaining:** optional nightly job to write `status` from recency; restyle labels so “At risk” / “Champion” are not confused with tier names.
 
 #### UX-26 — Loyalty ↔ “bill types”
 
@@ -619,7 +619,7 @@ Existing widgets that train the merchant to distrust numbers. Prefer relabel or 
 | **UX-60c** | Notification toggles save but in-app bell ignores them | Disable toggles, or annotate “email only / not applied yet” | G-15 |
 | **UX-60d** | Delete last / **main** branch allowed; no reassign | Confirm + block, or force pick a new main | G-28 |
 | **UX-60e** | Reward performance dialog: revenue and per-tier counts are 0 | `"—"` / hide until redeem + orders | G-06, G-20 |
-| **UX-60f** | Campaign “At Risk” audience matches nobody (`at-risk` vs `at_risk`) | Empty-state copy must not look like a data problem the owner caused; fix is also engineering (G-08) | campaigns-page |
+| **UX-60f** | Campaign “At Risk” audience matches nobody when `status` not written | Empty-state copy must not look like a data problem the owner caused; snake_case query fixed (G-08 partial); nightly status job still deferred | campaigns-page |
 | **UX-60g** | Visit `VisitsProgressSection` / stamp stats always empty | Hide telescope-on-purpose until events, or derive buckets from `visits` vs `visits_required` | G-02 |
 
 ---

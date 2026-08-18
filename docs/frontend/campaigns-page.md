@@ -442,7 +442,7 @@ Hardcoded labels stored as **free text** on `campaigns.audience`. Not an enum, n
 |----------|---------------------------------------------------------------------|
 | All customers | No extra customer filter |
 | Birthday Customers | `birth_date` month = current month |
-| At Risk | `customers.status === "at-risk"` |
+| At Risk | `customers.status === "at_risk"` |
 | VIP Members | `tier` ILIKE `vip` |
 | Gold Members | `tier` ILIKE `gold` |
 | Silver Members | `tier` ILIKE `silver` |
@@ -464,7 +464,7 @@ flowchart TD
   B -->|contains vip| C["tier ILIKE vip"]
   B -->|else contains gold| D["tier ILIKE gold"]
   B -->|else contains silver| E["tier ILIKE silver"]
-  B -->|else contains at risk| F["status = at-risk"]
+  B -->|else contains at risk| F["status = at_risk"]
   B -->|else contains new| G["created_at >= now - 30d"]
   B -->|else| H[No extra SQL filter]
   C --> I{contains birthday?}
@@ -487,25 +487,21 @@ flowchart TD
 
 ### Important mismatches
 
-**At Risk vs Customers page.** Send queries `status = "at-risk"`. Customers list / enroll use `"at_risk"` (underscore) and default new members to `"active"`. Nothing in join/check-in writes `"at-risk"`. An “At Risk” campaign will usually match **zero** rows even when the Customers tab shows At-Risk people.
+**At Risk vs recency vs lifecycle (G-08).** **Today:** Dashboard and Analytics compute at-risk from `last_activity_at` (> 30 days). Customers tabs and campaign send query `customers.status === 'at_risk'` — but nothing writes that value. **Target:** all surfaces use computed `lifecycle_state` per [customer-lifecycle.md](../backend/customer-lifecycle.md). **`churned`** remains manual-only on `customers.status`.
 
-This is one of the four colliding “at risk” rules ([analytics-page.md](analytics-page.md#three-different-systems-do-not-mix-them)):
+| Place | Rule today | Target rule |
+|-------|------------|-------------|
+| Analytics Overview segments | Overlapping visit/recency buckets | `lifecycle_state` (exclusive) |
+| Analytics Engagement levels | Overlapping Champions/Loyal/Dormant | `lifecycle_state` (exclusive) |
+| Dashboard | `last_activity_at` > 30 days | `lifecycle_state === 'at_risk'` |
+| Customers UI / **Campaign send** | `customers.status === "at_risk"` | `lifecycle_state === 'at_risk'` |
+| **New Customers** audience | `created_at` >= 30 days | `lifecycle_state === 'new'` (14 days) |
 
-| Place | Rule |
-|-------|------|
-| Analytics Overview segments | `last_activity_at` **> 60 days** |
-| Analytics Engagement levels | `last_activity_at` **20–60 days** |
-| Dashboard | `last_activity_at` **> 30 days** |
-| Customers UI | `customers.status === "at_risk"` |
-| **Campaign send** | `customers.status === "at-risk"` |
+**All customers.** Includes every row regardless of lifecycle. Only the channel contact field is required.
 
-**VIP / Gold / Silver.** Same as Analytics: `customers.tier` is usually **null** because enroll/check-in never apply `loyalty_program_tiers`. Those audiences are empty until tier assignment exists.
+**VIP / Gold / Silver.** `customers.tier` is usually **null** — tier audiences empty until ladder writer ships.
 
-**Birthday.** `isCurrentMonth(birth_date)` — **month only**, not day. Timezone is the **server’s** local `Date`. Customers without `birth_date` are dropped. Join can store birthday; it is optional.
-
-**New Customers.** Same 30-day `created_at` window as Analytics “New members.” Not `last_activity_at`.
-
-**All customers.** Includes every status (active, at_risk, churned, …). Only the channel contact field is required.
+**Birthday.** `isCurrentMonth(birth_date)` — month only; server local timezone.
 
 **No recipients** → send throws before marking `sending`. Toast: “No recipients match this audience with an email address” (or phone). Campaign stays **draft**.
 
@@ -891,7 +887,7 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Performance % Open** | Shows `0%` after send | No open webhook | `opened_count` unused | ESP/pixel; until then `"—"` |
 | [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **SMS “% Redeemed”** | Misleading label | No redemption join | No `campaign_id` on rewards | Hide until tracked |
 | [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Campaign Revenue** | `$0.00` looks real | Never written | No orders | Ship 1: **comment out**; post–Ship 1: orders + `campaign_id` |
-| [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **At Risk audience** | Label matches Customers | Query `"at-risk"` | DB `"at_risk"` | One status value |
+| [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **At Risk audience** | Query uses stored `at_risk` status | Synced nightly + on activity | — | — |
 | [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **VIP / Gold / Silver audience** | Options exist | `ilike` on empty `tier` | `tier` unset | Write tier on enroll/check-in |
 | [G-21](gaps-and-solutions.md#g-21--birthday-stored-automation-unused) | **Birthday audience** | Month-only, server TZ | Filter in JS | `birth_date` optional | SQL + owner TZ |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **SMS send** | Channel selectable | Throws per recipient | n/a | Stub transport; messaging contracts |
@@ -946,7 +942,7 @@ Short list:
 2. **Revenue** — `revenue_cents` never written; UI shows `$0.00`
 3. **SMS** — provider not configured; all SMS launches fail
 4. **Fan-out in Next** — violates ADR-013; timeout / partial send risk
-5. **At Risk audience** — queries `"at-risk"`; customers use `"at_risk"`
+5. **At Risk audience** — queries stored `status = 'at_risk'` (populated by nightly sync + check-in)
 6. **Tier audiences** — `customers.tier` usually null
 7. **Scheduled / Completed** — tabs with no writer
 8. **Enable without send** — sets `active` and blocks Launch

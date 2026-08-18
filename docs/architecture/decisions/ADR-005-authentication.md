@@ -50,7 +50,7 @@ Locked stored names: **`admin`** · **`staff`** · **`customer`**. No other logg
 
 **Admin adds teammate:** an `admin` form creates `admin` or `staff`, generates a random temp password, emails added + email + password. **First login must change that password.** Implemented in NestJS, not Supabase invite. [11-authentication-migration.md](../../frontend/11-authentication-migration.md#admin-adds-admin-or-staff-decided).
 
-**Account active/inactive:** `admin` sets `staff` and `customer` to `active` \| `inactive`. **One page, two tabs:** Team (`admin` + `staff`) and Customers (`customer`). Filters: role (Team tab), email, name, phone; active/inactive on both. [11-authentication-migration.md](../../frontend/11-authentication-migration.md#account-active--inactive-decided).
+**Account active/inactive/pending:** persisted on `profiles.account_status` as `active` \| `inactive` \| `pending`. `admin` sets `staff` and `customer` to `active` \| `inactive`. `pending` = teammate awaiting first-login password change. **One page, two tabs:** Team (`admin` + `staff`) and Customers (`customer`). Filters: role (Team tab), email, name, phone; active/inactive on both. [11-authentication-migration.md](../../frontend/11-authentication-migration.md#account-active--inactive-decided) · [data-contract](../../backend/data-contract.md#profiles--role-and-account-status-s-01-g-33-g-34-g-36).
 
 **Credential recovery:** `admin` / `staff` use the owner email reset (`/auth/forgot-password`); `admin` may re-issue a temp password. Both are NestJS-native. `customer` is passwordless — lost access is a new OTP (SMS/WhatsApp) issued by NestJS, never merchant recovery. [credential recovery](../../frontend/11-authentication-migration.md#credential-recovery-decided).
 

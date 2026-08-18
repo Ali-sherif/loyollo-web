@@ -2,6 +2,8 @@
 
 Aligned with [ADR-004](../architecture/decisions/ADR-004-data-and-state.md) and [ADR-006](../architecture/decisions/ADR-006-server-boundaries.md).
 
+**Auth vs data (standard terms — [11-authentication-migration.md](11-authentication-migration.md#auth-terminology-standard-across-docs)):** **NestJS** handles authentication and JWT issuance. **Supabase** on leftover client paths is the **database storage + RLS** layer only — not an IdP. Do not conflate Supabase queries with Supabase Auth.
+
 ## Current
 
 Most protected routes fetch directly from Supabase in `useEffect`. React Query is globally provided but materially used only by the public join route. Six server functions cover privileged/public workflows.

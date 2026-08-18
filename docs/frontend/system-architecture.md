@@ -24,27 +24,30 @@ flowchart TB
     LibServer[lib/server/*]
   end
 
-  subgraph supabase [Supabase]
-    Auth[Auth]
+  subgraph supabase [Supabase — database and RLS only]
     RLS[Postgres + RLS]
     Storage[Storage avatars / qr-branding]
     RPC[RPCs enqueue_email mint_unsubscribe_token]
   end
 
-  Pages -->|cookie session getAuthSupabase| RLS
-  Pages -->|auth.mfa / updateUser| Auth
+  subgraph nest [NestJS Auth API]
+    Auth[Authentication and JWT issuance]
+  end
+
+  Pages -->|Nest JWT + anon key| RLS
+  Pages -->|auth endpoints| Auth
   Pages -->|upload| Storage
   Pages -->|fetch| BFF
   Join -->|GET/POST no cookie| BFF
   AuthUI --> Auth
-  Shell -->|getUser cookies| Auth
+  Shell -->|validate Nest JWT| Auth
   BFF --> LibServer
-  LibServer -->|user client| Auth
+  LibServer -->|user client + Nest JWT| RLS
   LibServer -->|service role admin| RLS
   LibServer --> RPC
 ```
 
-**Rule of thumb today:** most owner CRUD is **browser → Supabase (anon key + user JWT + RLS)**. Next BFF is used when the browser must not hold the service role: public enroll, campaign send, account delete, password-changed email, owner notification insert, email webhooks/queue.
+**Rule of thumb today:** **NestJS Auth API** issues identity and JWTs ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Most owner CRUD is **browser → Supabase PostgreSQL (anon key + Nest-issued JWT + RLS)** — a **data layer**, not authentication. Legacy shipped code may still call withdrawn Supabase Auth until cutover. Next BFF is used when the browser must not hold the service role: public enroll, campaign send, account delete, password-changed email, owner notification insert, email webhooks/queue.
 
 ADR-006 still says the **existing backend remains the primary API**. These BFF routes are the residual mediation layer from the TanStack server functions ([15-server-function-mapping.md](15-server-function-mapping.md)).
 
@@ -67,11 +70,13 @@ flowchart TD
 
 | Layer | Mechanism |
 |-------|-----------|
+| IdP | **NestJS Auth API** — issues and validates JWTs for all roles ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Supabase Auth is withdrawn. |
 | Proxy | Cookie refresh (D-28 still documented until proven) |
 | Server | `requireUser()` in `src/app/app/(shell)/layout.tsx` |
 | Client | `useAuth()`: session, `email_confirmed_at` → `isVerified` |
 | Onboarding | Each feature page (except Settings) reads `profiles.onboarding_completed` |
-| Authorization | RLS on tables. Locked roles: **`admin`** (`/app`), **`staff`** (`/app`, same permissions as `admin` for now), **`customer`** (customer login, not `/app`). BFF uses `getUser()` then **admin** client for writes that bypass RLS. [locked role matrix](11-authentication-migration.md#locked-role-matrix) |
+| Data reads | Supabase PostgreSQL + RLS on leftover direct client paths ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md)) — **not** authentication |
+| Authorization | NestJS policies are final source of truth. RLS on transitional client paths. Locked roles: **`admin`** (`/app`), **`staff`** (`/app`, same permissions as `admin` for now), **`customer`** (customer login, not `/app`). BFF uses validated Nest JWT then **admin** client for writes that bypass RLS. [locked role matrix](11-authentication-migration.md#locked-role-matrix) |
 
 Settings skips the onboarding redirect. Branch detail redirects unauthenticated users to `/auth` instead of `/signin`.
 

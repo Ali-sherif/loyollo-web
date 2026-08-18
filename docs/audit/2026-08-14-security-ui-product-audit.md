@@ -21,7 +21,7 @@ Until those three keystones exist, the locked product rules cannot be enforced, 
 
 | # | Risk | Why it matters now |
 |---|------|--------------------|
-| 1 | **No `role` or `account_status` in schema or code** | Locked rules (“`customer` must never open `/app`”, inactive staff blocked) are **unenforceable**. Every logged-in user is an undifferentiated merchant. `G-33`, `G-34`, `G-36`. |
+| 1 | **No `role` or `account_status` in schema or code** | Locked rules (“`customer` must never open `/app`”, inactive staff blocked) are **unenforceable** until Backend Remediation **P0a** ships. Every logged-in user is an undifferentiated merchant today. **Docs spec:** [data-contract § profiles](../backend/data-contract.md#profiles--role-and-account-status-s-01-g-33-g-34-g-36). `G-33`, `G-34`, `G-36`. |
 | 2 | **Email delivery is a stub; queue drain is not scheduled** | Next transport always returns `ok: false`. Failed messages are **not deleted**. There is no `vercel.json` / GitHub Action / `cron.schedule('process-email-queue')` in this repo. At Lovable cutover, verification and password-reset mail stop — **total lockout**. |
 | 3 | **No staff or customer credential recovery** | No invite API, no team table, `customers` has no `user_id`. A locked-out staff member or enrolled customer has **no login to recover**. `G-33`, `G-34`. |
 | 4 | **Points have no integrity** | No `CHECK (points >= 0)`, no ledger, check-in is a non-atomic read-modify-write, **redemption does not exist**. `rewards.redeemed_count` is never written. Concurrent QR scans can double-award. `G-20`. |
@@ -33,7 +33,7 @@ Until those three keystones exist, the locked product rules cannot be enforced, 
 ```mermaid
 flowchart LR
   subgraph today [What exists today]
-    OwnerAuth[Owner Supabase Auth]
+    OwnerAuth[NestJS Auth API]
     CRUD[Merchant CRUD UI]
     JoinQR[Public QR enroll]
     Enqueue[enqueue_email RPC]
@@ -75,7 +75,7 @@ Locked product rules ([product-manager-meeting-report.md](../product-manager-mee
 - Inactive `staff` cannot use `/app`; inactive `customer` cannot use customer login.
 - Member `customers.status` / `tier` are **not** auth roles.
 
-**Runtime reality:** `profiles` has no `role` and no `account_status` ([types.ts](../../src/integrations/supabase/types.ts) L680–706). Grep of `src/` for `purchaser`, `account_status`, `user_role` returns **zero** product matches.
+**Runtime reality:** `profiles` has no `role` and no `account_status` in the shipped schema ([types.ts](../../src/integrations/supabase/types.ts) L680–706). **Target spec (docs-only, not shipped):** [data-contract § profiles](../backend/data-contract.md#profiles--role-and-account-status-s-01-g-33-g-34-g-36) · [api-contract § auth](../backend/api-contract.md#auth--session) · [11-auth route guards](../frontend/11-authentication-migration.md#route-guards-app). Grep of `src/` for `purchaser`, `account_status`, `user_role` returns **zero** product matches.
 
 | Layer | File | Login | Email verified | Role | Account status | Tenant / ownership |
 |-------|------|-------|----------------|------|----------------|--------------------|
@@ -86,7 +86,7 @@ Locked product rules ([product-manager-meeting-report.md](../product-manager-mee
 | Next APIs (user) | `src/app/api/**` | `getUser()` | No | No | No | Campaigns: `owner_id` check |
 | RLS | `supabase/migrations/*` | `auth.uid()` | N/A | **No role column** | **No account_status** | `owner_id` / program owner |
 
-**Implication:** A shop customer who somehow obtained a Supabase Auth session (or any future customer-auth user) would be treated as a merchant. The rule is not violated by a specific if-statement — **the data to evaluate the rule does not exist**.
+**Implication:** A shop customer who somehow obtained a merchant JWT session (or any future customer-auth user without role enforcement) would be treated as a merchant. The rule is not violated by a specific if-statement — **the data to evaluate the rule does not exist**.
 
 ### 2.2 Categorized security findings
 
@@ -531,7 +531,7 @@ Owners: **Frontend** = this repo (honesty, guards, BFF hygiene). **Backend** = s
 | ID | Action | Owner | Primary files / contracts | Maps to |
 |----|--------|-------|---------------------------|---------|
 | C1 | **Do not cut over off Lovable** until a real email transport + scheduled drain exist. Stub + no cron = lockout. | Frontend + messaging | [transport.ts](../../src/lib/server/messaging/transport.ts); [queue/process/route.ts](../../src/app/api/email/queue/process/route.ts) — on failure: retry/DLQ/`delete_email`, never infinite re-read | ADR-009/010, S-02 |
-| C2 | Ship **role + account_status** (backend) and enforce in proxy + `requireUser` + every `/api/*` that is merchant-only. Customer sessions must fail `/app`. | Backend then Frontend | data-contract; [guards.ts](../../src/lib/server/auth/guards.ts); [update-session.ts](../../src/integrations/supabase/update-session.ts) | G-33, G-34, G-36, S-01 |
+| C2 | Ship **role + account_status** (backend P0a) and enforce in proxy + `requireUser` + every `/api/*` that is merchant-only. Customer sessions must fail `/app`. | Backend then Frontend | [data-contract § profiles](../backend/data-contract.md#profiles--role-and-account-status-s-01-g-33-g-34-g-36); [api-contract § auth](../backend/api-contract.md#auth--session); [11-auth route guards](../frontend/11-authentication-migration.md#route-guards-app) | G-33, G-34, G-36, S-01 |
 | C3 | Customer register/login (passwordless OTP plane) + link to `customers` row; staff invite + temp password + first-login change; staff then use owner `/auth/forgot-password`. | Backend then Frontend | 11-auth [credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided); api-contract shop-customer session | G-33, G-34, S-03 |
 | C4 | **Points ledger + atomic check-in + redeem API** with `CHECK (points >= 0)` and insufficient-balance errors. Stop owner arbitrary point updates or wrap them as audited adjustments. | Backend | data-contract `points_ledger`; join-service becomes a client of the API | G-20, S-04 |
 | C5 | Sanitize Next notifications like TanStack: allow-list `prefKey`, `sanitizeLinkPath`, honor prefs. | Frontend | [api/notifications/owner/route.ts](../../src/app/api/notifications/owner/route.ts); copy from [notifications.functions.ts](../../src/lib/notifications.functions.ts) L26–34 | S-05, G-15 |
@@ -622,10 +622,10 @@ Owners: **Frontend** = this repo (honesty, guards, BFF hygiene). **Backend** = s
 - Sentry / audit_log — **not found**
 - Social auth (Facebook / Google / Apple Sign-In) — **not found in any doc** (`DG-01`)
 - Subscription no-downgrade rule — **not found** (`DG-04`)
-- `profiles.currency` meaning + multi-currency — **not found** (`DG-09`)
+- `profiles.currency` meaning + multi-currency — **RESOLVED** (UX-23 / DG-09: display metadata only; set once at onboarding; locked after `onboarding_completed`) ([data-contract](../backend/data-contract.md#profiles--merchant-display-currency-ux-23--dg-09))
 - Marketing-tool integration strategy — **not found** (`DG-07`)
-- Automation `config` schema / trigger schedule — **not found** (`DG-10`)
-- Customer share/refer UX — **DECIDED** (link/QR on wallet card); default expiry days + portal URL still open (`DG-11`)
+- Automation `config` schema / trigger schedule — **DECIDED Product MVP (Ship 1) Hidden** (PM-18 / DG-10: hide Scheduled Automations UI; writes → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1`; G-09 send/opens stay deferred)
+- Customer share/refer UX — **DECIDED** (link/QR on wallet card; both-party rewards); default expiry **day counts** + portal **URL** still open (`DG-11`)
 
 ---
 
@@ -637,7 +637,7 @@ Owners: **Frontend** = this repo (honesty, guards, BFF hygiene). **Backend** = s
 
 **Sources scanned:** [product-manager-meeting-report.md](../product-manager-meeting-report.md), [settings-page.md](../frontend/settings-page.md), [analytics-page.md](../frontend/analytics-page.md), [campaigns-page.md](../frontend/campaigns-page.md), [loyalty-page.md](../frontend/loyalty-page.md), [11-authentication-migration.md](../frontend/11-authentication-migration.md), [17-messaging-templates.md](../frontend/17-messaging-templates.md), [system-architecture.md](../frontend/system-architecture.md), [dashboard-page.md](../frontend/dashboard-page.md), [data-contract.md](../backend/data-contract.md), [api-contract.md](../backend/api-contract.md), [deferred-decisions.md](../architecture/deferred-decisions.md), [ADR-005](../architecture/decisions/ADR-005-authentication.md), [gaps-and-solutions.md](../frontend/gaps-and-solutions.md). **No standalone PRD** exists in `docs/`.
 
-**Phase-name collision (read first):** Bare **“Phase 1”** collided across four tracks (product ship, Frontend Migration, Backend Remediation, feature scope). **Resolved:** canonical labels and scope live in [phase-1-scope.md](../product/phase-1-scope.md). Use **Product MVP (Ship 1)**, **Frontend Migration** (ADR-011 Phase 1), **Backend Remediation P[N]**, or **In/Out of Product MVP (Ship 1)** — never bare “Phase 1”. The checklist below is **Product MVP (Ship 1)**. **`DG-01`, `DG-02`, `DG-03` resolved (2026-08-18):** Ship 1 UI exclusions = **comment out** blocks per [phase-1-scope.md § Implementation](../product/phase-1-scope.md#implementation--comment-out-do-not-refactor-decided) — not feature flags. Remaining open items: [deferred-decisions.md](../architecture/deferred-decisions.md).
+**Phase-name collision (read first):** Bare **“Phase 1”** collided across four tracks (product ship, Frontend Migration, Backend Remediation, feature scope). **Resolved:** canonical labels and scope live in [phase-1-scope.md](../product/phase-1-scope.md). Use **Product MVP (Ship 1)**, **Frontend Migration** (ADR-011 Phase 1), **Backend Remediation P[N]**, or **In/Out of Product MVP (Ship 1)** — never bare “Phase 1”. The checklist below is **Product MVP (Ship 1)**. **`DG-01`, `DG-02`, `DG-03`, `DG-09`, `DG-10` resolved/decided (2026-08-18):** Ship 1 UI exclusions = **comment out** blocks per [phase-1-scope.md § Implementation](../product/phase-1-scope.md#implementation--comment-out-do-not-refactor-decided) — not feature flags. Remaining open items: [deferred-decisions.md](../architecture/deferred-decisions.md).
 
 **Legend:** **Covered** = the rule is stated as product intent or as current UI behavior, with enough detail to implement or treat as a known gap. **Ambiguous** = mentioned, but missing lock, enum, formula, or Product MVP (Ship 1) exclusion. **Missing** = not found.
 
@@ -671,7 +671,9 @@ These checklist items are specified in page specs / glossary with enough technic
 | **Credential recovery** (`admin`/`staff` = owner email reset + admin re-issue; `customer` = new OTP, no password) | Covered as **DECIDED, not shipped** | [credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided); G-33, G-34, S-03 |
 | Admin **activates/deactivates `staff` and `customer`** (one page, two tabs: Team / Customers) | Covered as **DECIDED, not shipped** | 11-auth account status; G-36 |
 | Loyalty **program types** `points` \| `visit` \| `tier` | Covered | [loyalty-page.md](../frontend/loyalty-page.md); [system-architecture.md](../frontend/system-architecture.md) L215 |
-| Referral **share** (personal link or QR on that program’s wallet card) + **both-party** rewards (points vs discount voucher; referrer gated on first paid invoice) | Covered as **DECIDED, not shipped** | loyalty-page [referral rewards](../frontend/loyalty-page.md#referral-rewards-decided); data-contract write rule 12. Remaining: default expiry **day counts** and portal **URL**. |
+| Referral **share** (personal link or QR on that program’s wallet card) + **both-party** rewards (points vs discount voucher; referrer gated on first paid invoice) | Covered as **DECIDED, not shipped** | loyalty-page [referral rewards](../frontend/loyalty-page.md#referral-rewards-decided); data-contract write rule 12. Remaining: default expiry **day counts** and portal **URL** (`DG-11`). |
+| Merchant **display currency** (`profiles.currency` display metadata; onboarding writer; Settings lock; ledger/order snapshot) | Covered as **DECIDED, not shipped** | [UX-23](../product/ui-ux-team-requests.md#ux-23--currency-meaning); [data-contract](../backend/data-contract.md#profiles--merchant-display-currency-ux-23--dg-09); [dashboard-page.md](../frontend/dashboard-page.md#merchant-display-currency) (`DG-09` ✓) |
+| Scheduled **automations** hidden in Product MVP (Ship 1); writes → 503 | Covered as **DECIDED, not shipped** | [campaigns-page PM-18](../frontend/campaigns-page.md#pm-18--hide-scheduled-automations-product-mvp-ship-1); [deferred-decisions.md](../architecture/deferred-decisions.md) (`DG-10` ✓) |
 
 ---
 
@@ -719,7 +721,7 @@ Covered: admin creates admin/staff; admin sets staff/customer active/inactive.
 - Whether `staff` can use the add-teammate form is **not locked**.
 - Account list is **one page, two tabs** (Team / Customers). `admin` rows **are listed** on Team. Toggling another `admin` remains **out**.
 - Route for team UI is **not locked**.
-- Schema (`profiles.role`, `account_status`) is **not shipped** (this audit §2.1).
+- Schema (`profiles.role`, `account_status`) is **specified in docs** ([data-contract](../backend/data-contract.md#profiles--role-and-account-status-s-01-g-33-g-34-g-36)) but **not shipped** in code (this audit §2.1). Backend Remediation **P0a** owns the migration.
 
 “Proper RBAC” is therefore **product-intent for two flows**, not a permission model.
 
@@ -735,17 +737,13 @@ Settings lists Mailchimp / Klaviyo. G-19: per-provider connect later. api-contra
 
 **Missing as “channel rules”:** marketing vs transactional; opt-in/consent storage (join disclaimer is copy-only — this audit §4.1); frequency caps; quiet hours; preferred channel; unsubscribe vs `suppressed_emails`; whether SMS **campaigns** are in Product MVP (Ship 1) at all (UI still offers the channel).
 
-#### Currency (`DG-09`)
+#### Currency (`DG-09`) — **RESOLVED 2026-08-18**
 
-`profiles.currency` is loaded/saved on Settings General. Dashboard **ignores it** and hardcodes USD ([dashboard-page.md](../frontend/dashboard-page.md) L184).
+**DECIDED (UX-23 / DG-09):** `profiles.currency` is **display metadata only** (ISO 4217 symbol/label). Set **once at onboarding**; **read-only** in Settings after `onboarding_completed`. Changing it does not convert historical `*_cents`, points, or vouchers. Ledger/orders snapshot `currency_code` at write time. Dashboard + Analytics use dynamic formatting — no hardcoded `$` / `USD`. [UX-23](../product/ui-ux-team-requests.md#ux-23--currency-meaning) · [data-contract](../backend/data-contract.md#profiles--merchant-display-currency-ux-23--dg-09) · [dashboard-page.md](../frontend/dashboard-page.md#merchant-display-currency).
 
-**Amendment 2026-08-18:** product lock — currency is **display metadata only**. Snapshot `currency_code` on `orders` / `points_ledger`. No FX; changing shop currency does not convert history. [UX-23](../product/ui-ux-team-requests.md#ux-23--currency-meaning) · [data-contract](../backend/data-contract.md).
+#### Scheduled automations — behavior (`DG-10`) — **DECIDED 2026-08-18**
 
-#### Scheduled automations — behavior (`DG-10`)
-
-CRUD, seven `type` values, unique `(owner_id, type)`, and “enabled does not send” are documented ([campaigns-page.md](../frontend/campaigns-page.md#scheduled-automations)).
-
-**Amendment 2026-08-18 (PM-18):** Product MVP (Ship 1) **hide** Scheduled Automations. Writes → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1`. Do not hide campaign list / Launch. G-09 send/opens stay deferred.
+**DECIDED (PM-18 / DG-10):** Product MVP (Ship 1) **hide** Scheduled Automations in merchant UI. Writes to `campaign_automations` → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or omit routes → 404). Do **not** hide campaign list / Launch. G-09 send/opens stay deferred. Worker `config` schema / trigger schedule is a **later release** — not a Ship 1 blocker. [campaigns-page.md](../frontend/campaigns-page.md#pm-18--hide-scheduled-automations-product-mvp-ship-1) · [deferred-decisions.md](../architecture/deferred-decisions.md).
 
 #### Loyalty programs ↔ “bill types” (`DG-12`)
 
@@ -783,9 +781,9 @@ Lock remaining open `DG-*` items in [phase-1-scope.md](../product/phase-1-scope.
 | **DG-06** | Admin-on-admin activate/deactivate; resource-level RBAC; staff using add-teammate | 11-auth; ADR-005 | Checklist asks for RBAC; docs freeze staff = admin |
 | **DG-07** | Marketing-tool strategy (Mailchimp/Klaviyo: objects, direction, Phase) | settings-page; api-contract integrations | Catalog ≠ strategy |
 | **DG-08** | Communication **policy** (consent, caps, SMS in/out of Product MVP (Ship 1)) | 17-messaging; campaigns-page; join | Channel enum ≠ rules |
-| **DG-09** | What **Currency** is; ISO list; one-per-shop; `orders` currency | settings-page; data-contract `orders` | Field is a write-only string |
-| **DG-10** | Automation **execution** (`config`, triggers, worker) **or** explicit Product MVP (Ship 1) “config only / hide Enable” | campaigns-page automations; G-09 | Types exist; behavior does not |
-| **DG-11** | Referral **share mechanic** + discount vs points for **both** parties | loyalty-page; data-contract `referrals` | **DECIDED** — remaining: default expiry days + portal URL |
+| ~~**DG-09**~~ | ~~What **Currency** is; ISO list; one-per-shop; `orders` currency~~ | — | **Resolved 2026-08-18** — UX-23 / [data-contract](../backend/data-contract.md#profiles--merchant-display-currency-ux-23--dg-09): display metadata; onboarding writer; Settings lock |
+| ~~**DG-10**~~ | ~~Automation **execution** (`config`, triggers, worker) **or** explicit Product MVP (Ship 1) “config only / hide Enable”~~ | — | **Decided 2026-08-18** — PM-18: hide UI; writes → 503; worker deferred |
+| **DG-11** | Referral default expiry **day counts** + customer-portal **URL** | loyalty-page; G-33 | Share mechanic + both-party rewards **DECIDED**; only expiry defaults + portal URL remain open |
 | **DG-12** | Loyalty program ↔ **bill/ticket type** (if that is a POS concept) | loyalty-page; data-contract `orders` | Word “bill type” does not appear |
 | **DG-13** | Confirm analytics fetch: page-level both tables vs tab-conditional `rewards` | analytics-page | Spec vs checklist wording |
 | **DG-14** | Single At-risk definition for Product MVP (Ship 1) (30 vs 60 vs 20–60) | data-contract glossary; G-08 | Four rules still published |
@@ -813,9 +811,9 @@ Lock remaining open `DG-*` items in [phase-1-scope.md](../product/phase-1-scope.
 4. Allowed plan transitions: upgrade only? downgrade blocked even on placeholder Billing?  
 5. Canonical Business Type list and which `profiles` column stores it. Is the control a fixed `<select>`? Mutable after onboarding?  
 6. May an `admin` deactivate **another `admin`**? May `staff` create teammates?  
-7. What does Settings **Currency** affect (display, billing, points-to-cash, orders)? Multi-currency: yes/no.  
-8. Per automation type: **when** it fires, **who** gets the message, **what** is sent, owner TZ. In Product MVP (Ship 1): config-only, hidden, or live?  
-9. Referral remaining: default expiry **day counts** and customer-portal **URL**. Share mechanic and both-party grants are DECIDED.  
+7. ~~What does Settings **Currency** affect (display, billing, points-to-cash, orders)? Multi-currency: yes/no.~~ **Resolved** — display metadata only; one ISO code per shop at onboarding; locked after onboarding; orders/ledger snapshot `currency_code` (`DG-09` ✓).  
+8. ~~Per automation type: **when** it fires, **who** gets the message, **what** is sent, owner TZ. In Product MVP (Ship 1): config-only, hidden, or live?~~ **Decided** — hide Scheduled Automations UI; writes → 503; worker/config deferred (`DG-10` ✓).  
+9. Referral remaining: default expiry **day counts** and customer-portal **URL**. Share mechanic and both-party grants are **DECIDED** (`DG-11` partial).  
 10. Does “bill type” mean `program_type` (`points` / `visit` / `tier`), or a POS ticket class?  
 11. Product MVP (Ship 1): is **SMS** a real send path, a visible-fail stub, or hidden?  
 12. After glossary lock, do Overview “At risk” and Engagement “At risk” **keep different cutoffs** (analytics-page documents both) or converge?
@@ -833,11 +831,11 @@ Lock remaining open `DG-*` items in [phase-1-scope.md](../product/phase-1-scope.
 | **2.3** | Admin add / deactivate with RBAC | Add + staff/customer status **yes**; admin-on-admin and RBAC matrix **no** | **Partial** (`DG-06`) |
 | **3.1** | Marketing tools strategy | Provider names **yes**; strategy **no** | **Missing** (`DG-07`) |
 | **3.2** | Communication channel rules | Channel enum **yes**; policy **no** | **Partial** (`DG-08`) |
-| **3.3** | Currency definition | Field **yes**; meaning **no** | **Missing** (`DG-09`) |
-| **4.1** | Scheduled automation execution | CRUD **yes**; worker/config schema **no** | **Partial** (`DG-10`) |
+| **3.3** | Currency definition | **Yes** — display metadata; onboarding writer; Settings lock; ledger/order snapshot | **Covered** (`DG-09` ✓) |
+| **4.1** | Scheduled automation execution | **Yes** — Ship 1 hide UI; writes → 503; worker deferred | **Covered** (`DG-10` ✓) |
 | **4.2** | Completed / Performance / 0% opens / SMS label | **Yes** | **Covered** |
 | **4.3** | Loyalty ↔ bill types | Program types **yes**; POS bill types **no** | **Ambiguous / missing** (`DG-12`) |
-| **4.4** | Referral share + both-party rewards | **Yes** (DECIDED) | **Covered** (`DG-11` remaining: default expiry days / portal URL) |
+| **4.4** | Referral share + both-party rewards | **Yes** (DECIDED) | **Covered** (`DG-11` partial: default expiry days / portal URL remain) |
 | **5.1** | Shared fetch: Overview+Engagement→customers; only Overview→rewards; Revenue→nothing; no “This month” filter | Usage **yes**; tab-conditional `rewards` fetch **no** | **Covered** on formulas / Revenue / date filter; fetch wording `DG-13` |
 | **5.2** | Overview 6 sections (formulas as listed) | **Yes** | **Covered** (Revenue card **commented out** Ship 1; at-risk 60d vs glossary `DG-14`) |
 | **5.3** | Engagement 5 sections (formulas as listed) | **Yes** | **Covered** (overlap `DG-15`) |

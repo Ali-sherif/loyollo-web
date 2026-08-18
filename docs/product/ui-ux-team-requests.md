@@ -519,7 +519,7 @@ Catalog ≠ strategy. Until objects/direction/Phase are locked, treat like POS: 
 | **Need / priority** | Decision · **P1** |
 | **Source** | **DG-09** · settings General · dashboard hardcodes USD |
 
-`profiles.currency` is **display metadata only** (symbol/label). Changing it must **not** convert historical `*_cents`, points, or vouchers. Each `orders` / `points_ledger` row snapshots `currency_code` at write time. No FX. Design Settings + `$` widgets to use the display code — never imply conversion.
+`profiles.currency` is **display metadata only** (ISO 4217 symbol/label). The merchant selects it **once during onboarding**; it is saved to `profiles.currency` and shown **read-only** in Settings after account setup. Changing it must **not** convert historical `*_cents`, points, or vouchers. Each `orders` / `points_ledger` row snapshots `currency_code` at write time. No FX. Dashboard, Analytics, and Settings must use the stored code via a shared formatter — **never** hardcode `$` or `USD`.
 
 #### UX-24 — Communication policy + SMS in Product MVP (Ship 1)
 

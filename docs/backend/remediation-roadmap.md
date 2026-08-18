@@ -10,7 +10,8 @@
 
 ```mermaid
 flowchart TD
-  P0[Backend_Remediation_P0_UI_honesty] --> P1[Backend_Remediation_P1_tier_write]
+  P0[Backend_Remediation_P0_UI_honesty] --> P0a[Backend_Remediation_P0a_role_account_status]
+  P0a --> P1[Backend_Remediation_P1_tier_write]
   P1 --> P2[Backend_Remediation_P2_visit_events]
   P2 --> P3[Backend_Remediation_P3_at_risk_rules]
   P3 --> P4[Backend_Remediation_P4_branch_id_redeem]
@@ -18,6 +19,18 @@ flowchart TD
   P5 --> P6[Backend_Remediation_P6_referrals_campaigns_insights]
   P6 --> P7[Backend_Remediation_P7_pagination_APIs]
 ```
+
+---
+
+## Backend Remediation P0a — Role + account status (S-01)
+
+| | |
+|--|--|
+| **Owner** | Backend (+ Frontend middleware) |
+| **G-IDs** | G-33, G-34, G-36, S-01 |
+| **Depends on** | NestJS auth scaffold ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C) |
+| **Deliverables** | Prisma migration: `profiles.role` enum (`admin` \| `staff` \| `customer`, default `customer`) and `profiles.account_status` enum (`active` \| `inactive` \| `pending`, default `active`). Backfill existing merchant sign-ups to `role = admin`, `account_status = active`. Nest JWT claims + `/auth/me` include both fields ([api-contract](api-contract.md#auth--session)). Nest guards reject merchant APIs when `role === 'customer'` or `account_status !== 'active'`. Next.js `/app/*` middleware matches ([11-authentication-migration.md](../frontend/11-authentication-migration.md#route-guards-app)). |
+| **Acceptance** | A `customer` session cannot load any `/app/*` page or merchant API (403). An `inactive` or `pending` `staff` session cannot load `/app/*` after sign-in or password reset until status is `active`. Merchant sign-up writes `role = admin`. Teammate create writes `pending` until first password change. |
 
 ---
 

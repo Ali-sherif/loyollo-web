@@ -2,7 +2,7 @@
 
 Reference for all components, conditions, and edge cases on the Overview (Dashboard) route. Covers the setup checklist, the post-setup “Welcome Back” dashboard, shared chrome (`DashboardShell`), and a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
 
-**Jump to:** [route](#route-structure) · [page flow](#high-level-page-flow) · [checklist](#setup-checklist-view) · [setup complete](#setupcompletedashboard) · [stat cards](#stat-cards-5) · [growth chart](#customer-growth--card) · [redemptions](#redemption-breakdown--card) · [live activity](#live-activity--card) · [campaigns](#active-campaigns--card) · [top customers](#top-customers--card) · [at risk](#customers-at-risk--card) · [shell](#dashboardshell-shared-chrome) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
+**Jump to:** [route](#route-structure) · [page flow](#high-level-page-flow) · [checklist](#setup-checklist-view) · [setup complete](#setupcompletedashboard) · [merchant currency](#merchant-display-currency) · [stat cards](#stat-cards-5) · [growth chart](#customer-growth--card) · [redemptions](#redemption-breakdown--card) · [live activity](#live-activity--card) · [campaigns](#active-campaigns--card) · [top customers](#top-customers--card) · [at risk](#customers-at-risk--card) · [shell](#dashboardshell-shared-chrome) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
 **Source files:**
 
@@ -103,7 +103,7 @@ flowchart TD
 
 ### Data loading sequence
 
-1. `profiles` — `full_name, business_name, onboarding_completed` where `id = user.id`
+1. `profiles` — `full_name, business_name, onboarding_completed, currency` where `id = user.id`
 2. `loyalty_programs` — `id` where `owner_id = user.id` (`maybeSingle` — **today** one program per owner). **DECIDED:** many independent programs; query the **ACTIVE** row (`status = 'active'`). Program **settings** live on Loyalty / [UX-10](../product/ui-ux-team-requests.md#ux-10--loyalty-program-list--active-default), not this Overview canvas.
 3. If a program exists, `Promise.all` of three `select("id").limit(1).maybeSingle()`:
    - `rewards` where `loyalty_program_id = program.id`
@@ -165,6 +165,22 @@ Header: “Welcome Back, {fullName}”. Right side: a **This month** button (no 
 
 ---
 
+## Merchant display currency
+
+**Product lock (UX-23 / DG-09):** monetary widgets on this page must use the logged-in merchant’s **`profiles.currency`** (ISO 4217, e.g. `EGP`, `SAR`, `USD`). Currency is chosen **once** during onboarding and stored on `profiles.currency`; it is **display metadata only** — it labels amounts in the UI and does not convert historical cents, points, or vouchers ([data-contract.md](../backend/data-contract.md#profiles--merchant-display-currency-ux-23--dg-09)).
+
+| Concern | Target behavior |
+|---------|-----------------|
+| **Source of truth** | `profiles.currency` from the owner’s profile row (same fetch as greeting) |
+| **Formatting** | Shared helper, e.g. `formatMoney(cents, currency)` using `Intl.NumberFormat` with the merchant code — **no** hardcoded `$`, `USD`, or fixed `en-US` locale |
+| **When currency is missing** | Block or redirect to onboarding until set; do not default silently to USD in production UI |
+| **Per-transaction history** | When order/ledger rows exist, row-level displays prefer each row’s `currency_code` snapshot; dashboard **aggregates** use `profiles.currency` |
+| **Settings** | Currency field is **read-only** after `onboarding_completed` ([settings-page.md](settings-page.md#currency-read-only-after-onboarding)) |
+
+**Today (gap [G-37](gaps-and-solutions.md#g-37--hardcoded-usd--editable-settings-currency)):** `SetupCompleteDashboard` hardcodes `currency: "USD"` in `Intl.NumberFormat`; onboarding writes `cheque_currency` but not `profiles.currency`; Settings still allows editing `currency`.
+
+---
+
 ## Stat cards (5)
 
 > **Product MVP (Ship 1):** **Comment out** the **Total Revenue** stat card. See [phase-1-scope.md](../product/phase-1-scope.md#code-inventory--blocks-to-comment-out-for-ship-1).
@@ -177,14 +193,14 @@ Computed in the browser from the three arrays. Every card shows `delta = "—"` 
 | Active Customers | `status === "active"` | `lifecycle_state === "active"` |
 | At-Risk Customers | `last_activity_at` older than **30 days** | `lifecycle_state === "at_risk"` |
 | Points Redeemed | `Σ redeemed_count × (point_cost ?? 0)` | same |
-| Total Revenue | `Σ campaigns.revenue_cents / 100` formatted USD | same |
+| Total Revenue | `Σ campaigns.revenue_cents / 100` formatted with `profiles.currency` | same (source becomes `orders`, not campaign column) |
 
 ### Conditions / edge cases
 
 - **G-08:** Today, at-risk here is 30-day recency; Customers tab uses `status === "at_risk"` (empty). Target: shared `lifecycle_state` everywhere.
 - Members with `last_activity_at = null` are **not** counted as at-risk **today**; target fallback assigns `at_risk` when created > 14 days ago.
-- Revenue is USD hardcoded (`en-US`), ignoring `profiles.currency`.
-- `campaigns.revenue_cents` is never written by send ([campaigns-page.md](campaigns-page.md)) — card stays `$0`.
+- **G-37:** Revenue formatting hardcodes USD today; target reads `profiles.currency` ([Merchant display currency](#merchant-display-currency)).
+- `campaigns.revenue_cents` is never written by send ([campaigns-page.md](campaigns-page.md)) — card stays at zero in the merchant’s currency until `orders` ships.
 - Month-over-month deltas need historical snapshots (TODO in source).
 
 ---
@@ -308,6 +324,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 | — | **This month** | Button, no period | No period query | All-time counters | Same period model as Analytics; until then hide/disable (Phase 0 honesty) |
 | — | **Stat deltas** | Always `"—"` | No previous-period totals | No daily snapshots | Store period aggregates (Phase 7) |
 | [G-08](gaps-and-solutions.md#g-08--customer-lifecycle-single-state-decided-not-shipped) | **At-risk / Active counts** | Recency vs `status` mismatch | No lifecycle field on API | No DB function | [customer-lifecycle.md](../backend/customer-lifecycle.md) |
+| [G-37](gaps-and-solutions.md#g-37--hardcoded-usd--editable-settings-currency) | **Monetary formatting** | Hardcoded `$` / USD | Profile fetch omits currency use | `profiles.currency` exists | Onboarding → `profiles.currency`; shared formatter; Settings read-only |
 | [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Total Revenue** | Shows campaign `revenue_cents` | No orders API | No `orders` table | Ship 1: **comment out** card; post–Ship 1: orders + attribution |
 | [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **Points Redeemed** | `redeemed_count × point_cost` | No ledger / pending lifecycle | No `points_ledger` | Ledger on earn/redeem; donut uses `completed` only (QR scan, not staff approve) |
 | [G-01](gaps-and-solutions.md#g-01--qr-scan-tracking-is-always-0) | **Live Activity** | Empty forever | No activity API | No event log | `visit_events` + reward events; feed last 24h |
@@ -321,7 +338,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 
 1. **Header search** — decorative
 2. **This month / MoM deltas** — not wired
-3. **Revenue** — campaign column, usually `$0`
+3. **Revenue** — campaign column, usually zero; formatting ignores merchant currency until [G-37](gaps-and-solutions.md#g-37--hardcoded-usd--editable-settings-currency) fixed
 4. **Live activity** — no event table
 5. **At-risk definition** — recency views aligned; Customers tab / campaign send still read stored `status` (not auto-written)
 6. **Open rate** — opens never incremented

@@ -70,7 +70,7 @@ Points **require** a purchase amount. A QR/check-in with no ticket does **not** 
 
 **Minimum spend to earn:** ticket floor. No points when the paid invoice is below this amount.
 
-**Earn vs display currency:** the conversion rate is a **program rule**. Shop `profiles.currency` is **display metadata only** (symbol/label). Changing shop currency must **not** convert historical `*_cents`, points, or vouchers. Each `orders` / `points_ledger` row stores `currency_code` at write time.
+**Earn vs display currency:** the conversion rate is a **program rule**. Shop `profiles.currency` is **display metadata only** (ISO 4217 symbol/label), set **once at onboarding** and **read-only** in Settings thereafter ([data-contract.md](../backend/data-contract.md#profiles--merchant-display-currency-ux-23--dg-09)). Each `orders` / `points_ledger` row stores `currency_code` at write time. Changing display currency must **not** convert historical `*_cents`, points, or vouchers.
 
 **Prospective edits:** changing the earn rate applies to **new** transactions only ([§14.1 snapshot](./reward-redemption-flow.md#141-reward-snapshot-prospective-edits-versions)).
 

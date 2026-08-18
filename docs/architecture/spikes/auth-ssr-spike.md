@@ -99,7 +99,7 @@ Neither was available in the repo env (only URL + publishable/anon key).
 1. Adopt `@supabase/ssr` with separate **browser / server / proxy** factories (as in this spike).
 2. Put session refresh + coarse route redirects in **`proxy.ts`**; re-check `getUser()` in protected layouts/pages.
 3. Mark user-specific routes `force-dynamic` / `no-store`; never cache authenticated HTML as static.
-4. Keep backend (Supabase Auth + RLS) as authorization source of truth; Next gates are not permissions.
+4. ~~Keep backend (Supabase Auth + RLS) as authorization source of truth; Next gates are not permissions.~~ **Superseded:** NestJS Auth API is the IdP; NestJS policies are authorization source of truth. RLS on leftover client paths is transitional data access only ([ADR-005](../decisions/ADR-005-authentication.md) Option C).
 5. Provision a **confirmed spike/test user** or allow CI a scoped service-role secret for auth smoke only.
 6. Do not remove TanStack `localStorage` auth until cookie SSR is proven green and an auth slice cutover plan exists.
 7. Treat MFA, recovery, verify deep links, and cross-tab sync as follow-ons (ADR-005 verification list) after this gate clears.

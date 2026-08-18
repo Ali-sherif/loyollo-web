@@ -103,6 +103,17 @@ These widgets are visible in production UI and systematically show **zero, even 
 | **Owner** | Backend program |
 | **Phase** | 5 |
 
+### G-37 — Hardcoded USD + editable Settings currency
+
+| Field | Value |
+|-------|--------|
+| **Where** | Dashboard Total Revenue (`SetupCompleteDashboard` uses `currency: "USD"`); Analytics revenue widgets (when shipped); Settings General still PATCHes `currency`; onboarding writes `cheque_currency` not `profiles.currency` |
+| **Blocked by** | No shared formatter; onboarding/settings not aligned with UX-23 lock |
+| **Solution** | **DECIDED (UX-23 / DG-09):** (1) onboarding writes **`profiles.currency` once**; (2) Settings currency **read-only** after `onboarding_completed`; (3) shared `formatMoney(cents, profiles.currency)` on Dashboard + Analytics — no hardcoded `$` / `USD`. Historical rows use `currency_code` snapshot. [data-contract](../backend/data-contract.md#profiles--merchant-display-currency-ux-23--dg-09) · [dashboard-page.md](dashboard-page.md#merchant-display-currency) · [settings-page.md](settings-page.md#currency-read-only-after-onboarding) |
+| **Status** | `FRONTEND-FIXABLE` (product rules **DECIDED** 2026-08-18) |
+| **Owner** | Frontend |
+| **Phase** | 0 |
+
 ### G-08 — Customer lifecycle single state (DECIDED — not shipped)
 
 | Field | Value |
@@ -391,7 +402,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 | Field | Value |
 |-------|--------|
 | **Where** | `/app/customers` Add Customer; public `/join/[programId]`; Dashboard / Analytics KPIs |
-| **Blocked by** | No shop-customer auth. Rows are owner-created or anonymous join. KPIs use denormalized / owner-typed fields |
+| **Blocked by** | No shop-customer auth. No `profiles.role` / `profiles.account_status` ([S-01](../audit/2026-08-14-security-ui-product-audit.md#s-01--authz-is-login-only-critical--g-33-g-34-g-36)). Rows are owner-created or anonymous join. KPIs use denormalized / owner-typed fields |
 | **Solution** | **Split (see [phase-1-scope.md](../product/phase-1-scope.md#otp-vs-staff-pos--resolved-split)):** **In Product MVP (Ship 1)** — public **enroll OTP** (PM-06), UX-75 profile on new phone, membership row + **wallet QR** at enroll (Backend Remediation **P5**); owner manual add remains (no OTP). **Out of Product MVP (Ship 1)** — customer **portal sessions**: register/login/recovery app, `/api/me/wallet` behind customer JWT, lost-access OTP funnel when not enrolling. When portal ships: passwordless only; after OTP: inactive → block; existing in Shop → wallet; first time in Shop → link; new phone → UX-75. **Calculate KPIs** from stored activity (not only owner-typed fields). Wallet: one card per Shop; soft-delete only. [program-model.md](../product/program-model.md) · [customer-portal-journey.md](../product/customer-portal-journey.md) · [OTP](loyalty-page.md#otp-verification-decided) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14; enroll path **In Product MVP (Ship 1)**) |
 | **Owner** | Backend program |
@@ -402,7 +413,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 | Field | Value |
 |-------|--------|
 | **Where** | Intended `/app` team form (route not locked; likely Settings). No UI today |
-| **Blocked by** | No create-teammate API; no random password + credential email |
+| **Blocked by** | No create-teammate API; no random password + credential email; no `profiles.role` / `profiles.account_status` columns ([data-contract](../backend/data-contract.md#profiles--role-and-account-status-s-01-g-33-g-34-g-36)) |
 | **Solution** | `admin` form: profile + role `admin` \| `staff` → create `/app` user → random temp password → email (added + email + temp password) via messaging contracts. **First login must change that password** before `/app`. After the account exists, forgotten password is the **same owner recovery** (`/auth/forgot-password` → `RecoveryEmail` → `/auth/reset-password`). Admin may **re-issue a temp password** when locked out; do not treat current `invite` accept-link as reset. [11-authentication-migration.md](11-authentication-migration.md#admin-adds-admin-or-staff-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
 | **Owner** | Backend program |
@@ -424,7 +435,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 | Field | Value |
 |-------|--------|
 | **Where** | Intended `/app` account page (route not locked) |
-| **Blocked by** | No account `active`/`inactive`; no list API with role/email/name/phone filters |
+| **Blocked by** | No `profiles.account_status` column; no list API with role/email/name/phone filters ([data-contract](../backend/data-contract.md#profiles--role-and-account-status-s-01-g-33-g-34-g-36)) |
 | **Solution** | `admin` sets **`staff`** and **`customer`** account status `active` \| `inactive`. **One page, two tabs:** **Team** (`admin` + `staff`) and **Customers** (`customer`). Both tabs: active/inactive + filters **email**, **name**, **phone**. Team tab also filters **role** (`admin` \| `staff`). `admin` rows appear on Team; toggling another `admin` is still out. Distinct from `customers.status` (at_risk/churned) and program status. Inactive `staff` must not get `/app` after password reset; inactive `customer` must not get a session from a new OTP. [11-authentication-migration.md](11-authentication-migration.md#account-active--inactive-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
 | **Owner** | Backend program |
@@ -473,6 +484,7 @@ Canonical glossary: [data-contract.md § Unified glossary](../backend/data-contr
 | At risk | stored `status` (`new` / `active` / `at_risk`) | `status === "at_risk"` | stored `status` | `.eq("status", "at_risk")` |
 | Champion / Gold / VIP | Avatar color from `tier` text | Filter on `tier` text | Segments vs engagement levels vs `tier` | Audience by `tier` |
 | Revenue | Sum of campaign cents | Column `"—"` | Empty tab | `revenue_cents` unused |
+| Currency display | Hardcoded USD ([G-37](gaps-and-solutions.md#g-37--hardcoded-usd--editable-settings-currency)) | Settings editable | N/A | `profiles.currency` ignored |
 | Active | `status === "active"` | Same | Mix of status and recency | **Campaign status:** Active = currently sending (working); Completed = all messages processed. Unrelated to member `active`. See [campaigns-page.md](campaigns-page.md#product-meanings-decided) |
 | Owner / admin | Signed-in `/app` user | Same | Same | Role **`admin`** (buyer). **`staff`** is a different name with **the same permissions for now**. Not a loyalty customer. [locked role matrix](11-authentication-migration.md#locked-role-matrix) |
 

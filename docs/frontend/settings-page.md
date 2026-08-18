@@ -66,6 +66,17 @@ flowchart TD
 
 **UX-23:** `currency` is **display metadata only**. Changing it must not convert historical amounts. Snapshot `currency_code` lives on `orders` / `points_ledger`.
 
+### Currency — read-only after onboarding
+
+**Target (DECIDED):** the merchant selects currency **once** during onboarding; that value is persisted to **`profiles.currency`**. After `onboarding_completed = true`, the Currency control on General is **disabled** (read-only display). Save payload must **omit** `currency`; backend rejects post-setup changes ([data-contract.md](../backend/data-contract.md#profiles--merchant-display-currency-ux-23--dg-09)).
+
+| Phase | Currency UI |
+|-------|-------------|
+| Onboarding (before complete) | Editable select — writes `profiles.currency` (consolidate from legacy `cheque_currency`) |
+| Settings General (after complete) | Disabled field showing ISO code; helper text: “Set during account setup” |
+
+**Today (gap [G-37](gaps-and-solutions.md#g-37--hardcoded-usd--editable-settings-currency)):** Settings General still loads/saves `currency` on every Save; onboarding writes `cheque_currency` only.
+
 Email falls back to `user.email`. Email input is **disabled** and **not** included in save payload (Auth email change is a different flow).
 
 ### Label vs column mismatch
@@ -165,9 +176,9 @@ Does **not** navigate away. Strength via `passwordFeedback`.
 
 > **Product MVP (Ship 1):** **Comment out** `<TwoFactorCard />` in `SecurityTab`. TOTP enroll UI is out of scope; sign-in MFA challenge (G-26) is deferred with it. Post–Ship 1: uncomment — do not add `ENABLE_2FA` flags.
 
-Supabase `auth.mfa`: `listFactors` → `enroll({ factorType: "totp" })` → QR + secret → `challenge` + `verify`. Disable `unenroll`s all TOTP factors.
+**Target (DECIDED):** NestJS Auth API TOTP MFA — enroll, challenge, verify, unenroll. **Legacy (shipped):** may still call withdrawn Supabase `auth.mfa` (`listFactors` → `enroll({ factorType: "totp" })` → QR + secret → `challenge` + `verify`; disable `unenroll`s all TOTP factors). Do not extend the Supabase path.
 
-This is **real** Auth MFA, not a stub. Completeness depends on Supabase project MFA being enabled. Login challenge UX on `/auth/sign-in` must also handle AAL2 (verify separately).
+Login challenge UX on `/auth/sign-in` must handle AAL2 (verify separately) against NestJS once MFA ships.
 
 ### Delete account
 
@@ -191,9 +202,10 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 
 | G-ID | Widget | UI gap | API gap | DB gap | Recommended fix |
 |------|--------|--------|---------|--------|-----------------|
+| [G-37](gaps-and-solutions.md#g-37--hardcoded-usd--editable-settings-currency) | **Currency** | Editable after setup | Save still PATCHes `currency` | Column exists | Lock at onboarding; disabled UI; omit from PATCH |
 | [G-16](gaps-and-solutions.md#g-16--avatar-signed-urls-expire) | **Avatar URL** | Signed URL expires | — | Private bucket + stored token | Public bucket or path + sign on read |
 | [G-24](gaps-and-solutions.md#g-24--settings-field-labels-vs-columns) | **Business Type / Industry labels** | Swapped vs columns | — | Columns exist | Align labels |
-| — | **Email change** | Disabled | No change-email BFF | Auth identities | Supabase email-change + messaging template |
+| — | **Email change** | Disabled | No change-email BFF | Auth identities | NestJS Auth API email-change + messaging template |
 | [G-15](gaps-and-solutions.md#g-15--notification-preferences-are-mostly-cosmetic) | **Notification prefs** | Toggles save | Owner BFF ignores `prefKey` | Prefs table OK | Gate insert + email; cron reports |
 | [G-19](gaps-and-solutions.md#g-19--integrations-never-connect) | **Integrations** | Pending ≠ connected | No OAuth/BFF | `metadata` unused | Ship 1: **comment out tab**; post–Ship 1: per-provider connect |
 | [G-07](gaps-and-solutions.md#g-07--plan-limits-are-ui-only-billing-is-a-placeholder) | **Billing** | Free plan switch | No Stripe | `profiles.plan` only | Checkout + webhook |
@@ -225,7 +237,7 @@ Page (settings/page.tsx)
 └── SettingsPage
     └── DashboardShell
         ├── Tab bar (General | Notifications | Integrations | Billing | Security)
-        ├── General: avatar, currency, basic info, Save
+        ├── General: avatar, currency (read-only after onboarding), basic info, Save
         ├── NotificationsTab
         ├── IntegrationsTab (+ pending modal)
         ├── BillingTab (+ switch confirm)

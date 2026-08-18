@@ -22,7 +22,67 @@ Mutation, POS, OTP, and enroll errors use:
 }
 ```
 
-**Product MVP (Ship 1) error codes:** `PROGRAM_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_MUTATION_BLOCKED_ACTIVE_MEMBERS`, `PROGRAM_MUTATION_BLOCKED_NOT_EXPIRED`, `REWARD_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_ACTIVE_LIMIT`, `INVOICE_DUPLICATE`, `REFERRAL_POINTS_REQUIRES_POINTS_ENABLED`, `OTP_MAX_ATTEMPTS_EXCEEDED`, `OTP_RESEND_COOLDOWN`, `DAILY_OTP_LIMIT_REACHED`, `AUTOMATIONS_NOT_AVAILABLE_PHASE1`, `ENROLL_VALIDATION_FAILED`. OTP 429 bodies include `retry_after_seconds` (in `details` or top-level — UI must not hardcode timers).
+**Product MVP (Ship 1) error codes:** `PROGRAM_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_MUTATION_BLOCKED_ACTIVE_MEMBERS`, `PROGRAM_MUTATION_BLOCKED_NOT_EXPIRED`, `REWARD_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_ACTIVE_LIMIT`, `INVOICE_DUPLICATE`, `REFERRAL_POINTS_REQUIRES_POINTS_ENABLED`, `OTP_MAX_ATTEMPTS_EXCEEDED`, `OTP_RESEND_COOLDOWN`, `DAILY_OTP_LIMIT_REACHED`, `AUTOMATIONS_NOT_AVAILABLE_PHASE1`, `ENROLL_VALIDATION_FAILED`, `FORBIDDEN_ROLE`, `ACCOUNT_NOT_ACTIVE`. OTP 429 bodies include `retry_after_seconds` (in `details` or top-level — UI must not hardcode timers).
+
+---
+
+## Auth / session
+
+NestJS is the sole IdP ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Every successful auth response and refreshed session **must** include `role` and `account_status` from `profiles` ([data-contract](data-contract.md#profiles--role-and-account-status-s-01-g-33-g-34-g-36)). Closes **S-01** / **G-33**, **G-34**, **G-36**.
+
+### JWT claims (access token)
+
+| Claim | Type | Required | Notes |
+|-------|------|----------|-------|
+| `sub` | uuid | yes | `profiles.id` |
+| `role` | string | yes | `admin` \| `staff` \| `customer` |
+| `account_status` | string | yes | `active` \| `inactive` \| `pending` |
+| `owner_id` | uuid | yes for merchant | Shop scope for `admin` / `staff`; `admin` → own `profiles.id`; `staff` → employing Shop’s `owner_id` |
+| `email` | string | yes for merchant | Omitted or hashed for customer OTP sessions if product chooses |
+| `exp` / `iat` | number | yes | Standard JWT |
+
+Nest middleware / guards reject merchant handlers when `role === 'customer'` or `account_status !== 'active'` → **403** with `FORBIDDEN_ROLE` or `ACCOUNT_NOT_ACTIVE`.
+
+### Session user shape (login, refresh, `GET /auth/me`)
+
+All auth endpoints below return this user object (inside `{ user, … }`):
+
+```json
+{
+  "id": "uuid",
+  "email": "string|null",
+  "role": "admin",
+  "account_status": "active",
+  "owner_id": "uuid",
+  "must_change_password": false
+}
+```
+
+| Field | Notes |
+|-------|-------|
+| `role` | From `profiles.role` — never inferred from “has `/app` login” |
+| `account_status` | From `profiles.account_status` |
+| `owner_id` | Merchant Shop scope; for `admin`, equals `id` |
+| `must_change_password` | `true` when `account_status === 'pending'` (teammate temp password); frontend redirects to force-change before `/app` |
+
+HTTP-only cookies on the Next.js host carry the access/refresh pair; Next forwards the JWT to Nest on BFF calls. Do not store tokens in `localStorage` in the target architecture.
+
+### Auth endpoints
+
+| Method | Path | Purpose | Request | Response | Unlocks |
+|--------|------|---------|---------|----------|---------|
+| POST | `/auth/sign-up` | Merchant self-register | `{ email, password, … }` | `{ user, access_token, refresh_token }` — `user.role = admin`, `account_status = active` | G-34 |
+| POST | `/auth/sign-in` | Merchant email/password | `{ email, password }` | `{ user, access_token, refresh_token }` or **403** `ACCOUNT_NOT_ACTIVE` / `FORBIDDEN_ROLE` | S-01 |
+| POST | `/auth/sign-out` | Clear session | — | `204` | — |
+| POST | `/auth/refresh` | Rotate access token | Cookie or `{ refresh_token }` | `{ user, access_token }` — re-read `role` + `account_status` from DB | S-01 |
+| GET | `/auth/me` | Current session | Cookie / Bearer | `{ user }` | S-01 |
+| POST | `/auth/forgot-password` | Merchant reset request | `{ email }` | `{ ok: true }` | G-34 |
+| POST | `/auth/reset-password` | Merchant reset confirm | `{ token, password }` | `{ user, access_token, refresh_token }` — still blocked if `account_status !== 'active'` | G-34 |
+| POST | `/auth/change-password` | First-login or voluntary change | `{ current_password, new_password }` | `{ user }` — sets `account_status = active` when leaving `pending` | G-34 |
+| POST | `/auth/team` | Admin creates teammate | `{ name, email, role: "admin"\|"staff" }` | `{ user }` — `account_status = pending`, emails temp password | G-34 |
+| PATCH | `/auth/accounts/:id/status` | Admin sets active/inactive | `{ account_status: "active"\|"inactive" }` | `{ user }` — `staff` and `customer` only | G-36 |
+
+Customer OTP register/login endpoints (portal, deferred) use the same JWT claim shape with `role = customer`. They must **not** authorize any `/app` or merchant `/api/*` path.
 
 ---
 
@@ -202,7 +262,7 @@ Square/Clover still deferred (UX-19). Authz: `admin` / `staff`, Shop-scoped.
 | POST | `/api/pos/scan` | Customer QR → membership + eligibility + optional **deferred migrate** | `{ qr_payload }` | `{ customer, enrolled_program, migrated?: boolean }` |
 | POST | `/api/pos/transactions` | Bill Amount + Invoice Number; earn on **locked** program after migrate decision | `{ customer_id, amount_cents, invoice_number, idempotency_key, branch_id?, currency_code? }` | `{ order, membership, ledger[] }` or **409** `INVOICE_DUPLICATE` |
 
-Idempotency: `idempotency_key` and/or `(shop_id, invoice_number)`. Snapshot `currency_code` on the order. Display currency on `profiles` is metadata only.
+Idempotency: `idempotency_key` and/or `(shop_id, invoice_number)`. Snapshot `currency_code` on the order (default from `profiles.currency` when omitted). Display currency on `profiles` is metadata only — set once at onboarding, locked after `onboarding_completed` ([data-contract](data-contract.md#profiles--merchant-display-currency-ux-23--dg-09)).
 
 ### Join — OTP + enroll
 

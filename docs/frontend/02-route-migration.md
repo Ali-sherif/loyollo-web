@@ -35,7 +35,7 @@
 | `/legal/terms`                  | `legal/terms/page.tsx`                        | `/terms`                        | Public           | Legal      | Static                       | Grouped under `/legal`              |
 | `/legal/privacy`                | `legal/privacy/page.tsx`                      | `/privacy`                      | Public           | Legal      | Static                       | Grouped under `/legal`              |
 | `/auth/sign-in`                 | `auth/sign-in/page.tsx`                       | `/signin`                       | Public           | Auth       | Dynamic client form          | Redirect signed-in users            |
-| `/auth/sign-up`                 | `auth/sign-up/page.tsx`                       | `/signup`                       | Public           | Auth       | Dynamic client form          | Supabase signup                     |
+| `/auth/sign-up`                 | `auth/sign-up/page.tsx`                       | `/signup`                       | Public           | Auth       | Dynamic client form          | NestJS Auth API signup              |
 | `/auth/verify`                  | `auth/verify/page.tsx`                        | `/verify`                       | Public           | Auth       | Dynamic client form          | OTP timers                          |
 | `/auth/verified`                | `auth/verified/page.tsx`                      | `/verified`                     | Public           | Auth       | Dynamic                      | Post-verification                   |
 | `/auth/forgot-password`         | `auth/forgot-password/page.tsx`               | `/forgot-password`              | Public           | Auth       | Dynamic client form          | Recovery redirect                   |

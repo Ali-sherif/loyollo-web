@@ -2,7 +2,7 @@
 
 Reference for all components, conditions, and edge cases on the Analytics route. Includes domain notes for frontend + backend work (**today:** one program per owner in shipped code; **DECIDED:** independent programs with one ACTIVE, Analytics **Shop-scoped** — [ADR-016](../architecture/decisions/ADR-016-independent-programs.md) · [loyalty-page.md](loyalty-page.md#independent-programs-decided); how tiers are stored vs assigned, segment cutoffs, revenue placeholders), plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
 
-**Jump to:** [independent programs](#independent-programs-decided-adr-016) · [one program today](#one-owner--one-loyalty-program-today) · [how tiers work](#how-customer-tiers-actually-work) · [point ranges](#loyalty-page-point-ranges-saved-vs-ui) · [lifecycle](#customer-lifecycle--card) · [members by tier](#members-by-tier--card--donut) · [engagement stats](#stat-cards-4) · [visit frequency](#visit-frequency-over-time--card--emptychart-disabled) · [insights](#engagement-insights--card-suggestion-cards-not-a-report) · [most engaged / tier column](#most-engaged-members--card--table) · [lifecycle states](#lifecycle-states--card--horizontal-bars) · [lifecycle vs tiers](#lifecycle-vs-tiers-do-not-mix) · [revenue tab](#tab-3-revenuetab) · [ROI](#roi-from-rewards) · [channel](#revenue-by-channel--what-channel-means) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
+**Jump to:** [independent programs](#independent-programs-decided-adr-016) · [auth stack](#auth--data-stack) · [one program today](#one-owner--one-loyalty-program-today) · [how tiers work](#how-customer-tiers-actually-work) · [point ranges](#loyalty-page-point-ranges-saved-vs-ui) · [lifecycle](#customer-lifecycle--card) · [members by tier](#members-by-tier--card--donut) · [engagement stats](#stat-cards-4) · [visit frequency](#visit-frequency-over-time--card--emptychart-disabled) · [insights](#engagement-insights--card-suggestion-cards-not-a-report) · [most engaged / tier column](#most-engaged-members--card--table) · [lifecycle states](#lifecycle-states--card--horizontal-bars) · [lifecycle vs tiers](#lifecycle-vs-tiers-do-not-mix) · [revenue tab](#tab-3-revenuetab) · [ROI](#roi-from-rewards) · [channel](#revenue-by-channel--what-channel-means) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
 **Source files:**
 
@@ -75,6 +75,18 @@ Auth is enforced twice:
 1. **Server** — `requireUser()` redirects unauthenticated users to `/auth/sign-in`
 2. **Client** — `AnalyticsPage` runs additional checks (verification, onboarding)
 
+### Auth & data stack
+
+Per [ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C and [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md):
+
+| Concern | Owner | Notes |
+|---------|-------|-------|
+| **Authentication & JWT issuance** | **NestJS Auth API** | Merchant (`admin`/`staff`) email/password sign-in, verification, and session refresh. Next.js holds Nest-issued JWTs (HTTP-only cookies when D-28 is proven). Supabase Auth is **not** the IdP. |
+| **Database storage & RLS** | **Supabase (PostgreSQL)** | **Today (shipped):** `AnalyticsPage` loads `profiles`, `loyalty_programs`, `customers`, and `rewards` via the Supabase client — direct data reads under existing RLS policies. This is a **data layer**, not authentication. |
+| **Authorization (permissions)** | **NestJS** | Final source of truth for role and permission checks. RLS on leftover client paths is transitional until Frontend Migration Phase 2. |
+
+Do not conflate “Supabase query” with “Supabase Auth.” Identity and tokens come solely from NestJS endpoints; Supabase remains the direct fetch path for analytics tables until those reads move behind NestJS APIs.
+
 ---
 
 ## High-level page flow
@@ -128,7 +140,7 @@ flowchart TD
 
 ### Data loading sequence
 
-1. Fetch `profiles` (`full_name`, `onboarding_completed`) for current user
+1. Fetch `profiles` (`full_name`, `onboarding_completed`, **`currency`**) for current user
 2. **Today:** fetch `loyalty_programs` where `owner_id = user.id` with `.maybeSingle()`. **Target:** fetch all programs; derive `programIds` ([Independent programs](#independent-programs-decided-adr-016))
 3. If program exists (**today**), parallel fetch:
    - `customers` — `id, full_name, email, tier, points, visits, status, last_activity_at, created_at` where `loyalty_program_id = program.id`
@@ -167,6 +179,12 @@ Three tabs switch `tab` state (Revenue tab present in source until commented):
 | Revenue Impact | `RevenueTab` | None (all placeholders) |
 
 Active tab gets yellow background (`#feb602`).
+
+### Merchant display currency
+
+All monetary labels on this page (Overview **Revenue impact**, Revenue tab cards/charts/tables when shipped) must format amounts with the logged-in merchant’s **`profiles.currency`** — same rules as [dashboard-page.md § Merchant display currency](dashboard-page.md#merchant-display-currency). Use a shared `formatMoney(cents, currency)` helper; **never** hardcode `$` or `USD`. Row-level order history uses each row’s `currency_code` when present.
+
+**Today:** no revenue equations run; when they ship, formatting still hardcodes USD until [G-37](gaps-and-solutions.md#g-37--hardcoded-usd--editable-settings-currency) is fixed.
 
 ---
 
@@ -278,7 +296,7 @@ Percentage is of total customers; shows `"—"` if no customers.
 
 **Required inputs (missing):** `order.amount`, `order.date`, and whether the buyer is a loyalty customer.
 
-Green banner copy: tracking will appear once orders are linked to loyalty members. Dashes are used instead of `0` so it does not look like “zero revenue.”
+Green banner copy: tracking will appear once orders are linked to loyalty members. Dashes are used instead of `0` so it does not look like “zero revenue.” When values are shown, format with **`profiles.currency`** ([Merchant display currency](#merchant-display-currency)).
 
 Full intended metrics for the Revenue tab: [Revenue impact — intended equations](#revenue-impact--intended-equations-not-coded).
 
@@ -759,7 +777,7 @@ Used on `/app/loyalty` for config UI. Not used to classify members on Analytics 
 | Loading auth or data | Full-screen spinner |
 | No loyalty program | Tab empty states (Overview/Engagement); Revenue still shows placeholders |
 | Program but no customers | Stats at 0/`—`; multiple empty charts |
-| Program with customers | Live metrics from Supabase |
+| Program with customers | Live metrics from Supabase data layer (RLS-scoped reads; JWT issued by NestJS) |
 | Date range / Export buttons | No effect (not implemented) |
 | Insight CTAs (Send, Nudge, etc.) | No handlers |
 | Visit frequency chart | Always empty (needs scan event log) |
@@ -791,6 +809,7 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 | [G-01](gaps-and-solutions.md#g-01--qr-scan-tracking-is-always-0) | **QR scans / days between / frequency / peak** | Empty | Check-in does not append events | No event table | `visit_events` |
 | — | **Insights CTAs** | Send / Nudge / Explore / Create do nothing | No create-from-insight | N/A | Prefill campaign or hide |
 | [G-02](gaps-and-solutions.md#g-02--visit--stamp-progress-is-always-empty) | **1 visit from a reward** | Uses `visits % 5 === 4` | Ignores program rules | Rules exist | Compare to `visits_required` / `point_cost` |
+| [G-37](gaps-and-solutions.md#g-37--hardcoded-usd--editable-settings-currency) | **Monetary formatting** | Will hardcode USD when revenue ships | Profile currency unused | `profiles.currency` | Shared formatter from `profiles.currency` |
 | [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Revenue tab (all)** | Layout only | Never queries money | **No orders table** | [data-contract](../backend/data-contract.md) |
 | [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Revenue by channel** | Chart empty | Not joined to orders | No `attributed_channel` | See [channel](#revenue-by-channel--what-channel-means) |
 | [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) / [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **ROI from Rewards** | `"—"` | No cost + ticket join | No `cost_cents` / `order_id` | See [ROI](#roi-from-rewards) |

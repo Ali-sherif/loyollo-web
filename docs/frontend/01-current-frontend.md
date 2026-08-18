@@ -8,7 +8,7 @@
 | UI            | React/React DOM 19.2                                                        |
 | Routing       | TanStack Router generated file tree                                         |
 | Build/runtime | Vite 8, Nitro 3 beta, Lovable config, Cloudflare default                    |
-| Data/auth     | Supabase JS; browser RLS client plus server service-role client             |
+| Data/auth     | Supabase JS for PostgreSQL + RLS data paths; **legacy** Supabase Auth in browser (withdrawn — target is NestJS Auth API per [ADR-005](../architecture/decisions/ADR-005-authentication.md)) |
 | State         | Local React state, Auth Context, limited React Query                        |
 | Styling       | Tailwind CSS 4, shadcn/Radix, global tokens                                 |
 | Forms         | Primarily local state; Zod selectively; RHF installed but not used by pages |

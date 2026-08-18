@@ -23,7 +23,7 @@ Do not collapse these three paths:
 
 Earn ≠ redeem remains locked. A visit-completion “ready at the counter” is not an automatic catalog redemption.
 
-**Exception (not a contradiction):** purely **digital** catalog rewards (for example an instantly-applied discount voucher) may skip the QR / staff-scan step and complete in the same create transaction. Physical / in-person handoff rewards use the QR flow below. See [§16](#16-digital-rewards-exception).
+**Exception (not a contradiction):** purely **digital** catalog rewards (for example an instantly-applied discount voucher) may skip the QR / staff-scan step and complete in the same create transaction. Physical / in-person handoff rewards use the QR flow below. **Product MVP (Ship 1):** no digital/physical flag exists yet — all catalog items default to **physical** ([§16](#16-digital-rewards-exception)).
 
 ---
 
@@ -491,7 +491,9 @@ Available < cost → error, no row
 
 That is a documented **exception**, not a second contradictory state machine. Referral discount grants remain on `vouchers` ([§1](#1-catalog-redeem-vs-earn-vs-voucher)) and are not this path.
 
-Which catalog rewards are digital vs physical is a catalog/product flag (backend-owned). Until that flag exists, treat catalog redeem as the physical QR flow.
+Which catalog rewards are digital vs physical is a catalog/product flag (backend-owned). **That flag does not exist in the backend schema yet.**
+
+**Product MVP (Ship 1) default:** treat **every** catalog item as a **PHYSICAL** reward — pending + reserve + single-use QR + staff scan. Do **not** use the instant digital complete path ([§16](#16-digital-rewards-exception) exception) until the flag ships and a reward is explicitly marked digital. Referral discount grants on `vouchers` are unchanged ([§1](#1-catalog-redeem-vs-earn-vs-voucher)).
 
 ---
 

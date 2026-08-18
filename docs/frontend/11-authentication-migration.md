@@ -19,6 +19,18 @@ Aligned with [ADR-005](../architecture/decisions/ADR-005-authentication.md) **Op
 7. Client checks may remain for UX only; they are not authorization.
 8. Preserve product behavior for verification, recovery, MFA (if in product scope), onboarding, and sign-out — implemented against Nest, not Supabase.
 
+## Auth terminology (standard across `docs/`)
+
+Use this split consistently. Do not describe Supabase as an identity provider for merchant or customer login.
+
+| Term | Meaning |
+|------|---------|
+| **NestJS Auth API** | Sole IdP. Issues and validates local JWTs for `admin`, `staff`, and `customer`. Handles sign-up, sign-in, email verification, password reset, temp-password flows, customer OTP, and (when in scope) MFA. |
+| **Supabase (database / RLS)** | PostgreSQL storage and Row Level Security policies on leftover direct client data paths ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md)). **Not** authentication. Client reads/writes use the Nest-issued JWT where applicable; RLS enforces row access on those paths until Phase 2 cutover. |
+| **Supabase Auth (withdrawn)** | Legacy GoTrue / `@supabase/ssr` IdP. Must not appear in target specs, QA acceptance criteria, or new implementation. Legacy shipped code may still call it until migration completes — document as debt, not contract. |
+
+**Short form:** NestJS handles **authentication & JWT issuance**; Supabase handles **database storage & RLS policies**.
+
 ## Locked role matrix
 
 **DECIDED.** Canonical stored names: `admin` · `staff` · `customer`. There are no other logged-in roles.
@@ -37,7 +49,34 @@ This is **not** [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy
 
 Rules: `admin` / `staff` are never a shop `customer`. `customer` never gets `/app` as merchant. Do not call the buyer role `purchaser` — stored name is **`admin`**.
 
-Today there is no `profiles.role` column. Implicit merchant role is **`admin`**. Do not add a roles table from this frontend repo ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
+**Target schema (DECIDED, not shipped):** `profiles.role` and `profiles.account_status` ([data-contract](../backend/data-contract.md#profiles--role-and-account-status-s-01-g-33-g-34-g-36)). Until the migration ships, implicit merchant role is **`admin`** and there is no status gate — **S-01**. Do not add a roles table from this frontend repo ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
+
+## Route guards (`/app/*`)
+
+Next.js middleware (or the App Router proxy) **must** enforce merchant access **before** any `/app/*` route renders. NestJS must apply the same checks on every merchant API. Client-side redirects are UX only — not authorization.
+
+```mermaid
+flowchart TD
+  Req["Request /app/*"] --> HasSession{Valid session?}
+  HasSession -->|no| SignIn["Redirect /auth/sign-in"]
+  HasSession -->|yes| RoleCheck{role admin or staff?}
+  RoleCheck -->|customer| Block["403 or /unauthorized"]
+  RoleCheck -->|yes| StatusCheck{account_status active?}
+  StatusCheck -->|inactive or pending| Block
+  StatusCheck -->|active| MustChange{must_change_password?}
+  MustChange -->|yes| ForceChange["Redirect /auth/change-password"]
+  MustChange -->|no| App["Allow /app/*"]
+```
+
+| Condition | Action |
+|-----------|--------|
+| No session | Redirect to `/auth/sign-in` (preserve return URL) |
+| `role === 'customer'` | **Block immediately** — **403** or redirect to `/unauthorized`. Never render merchant chrome. Do **not** redirect to `/app/loyalty` or any `/app/*` path |
+| `account_status === 'inactive'` | Same block — applies after password reset too ([G-36](gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer)) |
+| `account_status === 'pending'` | Redirect to `/auth/change-password` (first-login temp password — [G-34](gaps-and-solutions.md#g-34--admin-cannot-create-adminstaff-with-emailed-temp-password)) |
+| `account_status === 'active'` and merchant role | Allow `/app/*` |
+
+Session payload must include `role` and `account_status` from Nest ([api-contract](../backend/api-contract.md#auth--session)). Re-validate on refresh; do not cache stale status in client state without a server round-trip.
 
 Canonical glossary: [data-contract.md](../backend/data-contract.md#unified-glossary). Product note: [product-manager-meeting-report.md](../product-manager-meeting-report.md).
 
@@ -95,6 +134,9 @@ This is **account** status (can they use the product?), not:
 |----------------|--------|
 | **`active`** | `staff` may use `/app`; `customer` may use customer login |
 | **`inactive`** | `staff` must not use `/app`; `customer` must not use customer login |
+| **`pending`** | Teammate invited with temp password — must change password before `/app` ([first login](#first-login-decided)). Not used for `customer` |
+
+Persisted on `profiles.account_status` ([data-contract](../backend/data-contract.md#profiles--role-and-account-status-s-01-g-33-g-34-g-36)).
 
 Toggling **other `admin`** accounts is **not** in this decision (only `staff` and `customer`). `admin` rows **are listed** (Team tab) so the owner can see teammates; there is **no** deactivate control on another `admin`.
 
@@ -201,6 +243,8 @@ Inactive `customer` must not get a session from a new OTP ([G-36](gaps-and-solut
 | Concern                                | Backend change required                                                                                                                                                          |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | App Router pages/forms                 | No (frontend consumes Nest auth APIs)                                                                                                                                            |
+| `profiles.role` + `profiles.account_status` | **Yes** — Prisma migration + backfill; closes S-01 ([data-contract](../backend/data-contract.md#profiles--role-and-account-status-s-01-g-33-g-34-g-36))                      |
+| `/app/*` route guards (Next middleware) | **Yes** — block `customer` and non-`active` accounts before render ([route guards](#route-guards-app))                                                                          |
 | Independent NestJS auth (Option C)     | **Yes** — local JWT IdP for `admin` / `staff` / `customer`; no Supabase Auth                                                                                                     |
 | Admin temp-password + first-login gate | **Yes** — NestJS generates temp password, emails it, enforces change on first login                                                                                              |
 | Admin/staff password reset             | **Yes** — NestJS-native reset token + recovery email                                                                                                                             |

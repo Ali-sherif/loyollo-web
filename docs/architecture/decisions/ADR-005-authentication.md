@@ -64,7 +64,7 @@ Prove the Nest JWT cookie/SSR path in a focused spike covering redirect, refresh
 
 ## Risks
 
-LocalStorage JWTs remain exposed to XSS until the Nest cookie session is proven. Cookie sessions require CSRF protection on cookie-authenticated mutations. Frontend route gates must never substitute for NestJS authorization checks. Dual IdPs (Supabase Auth + Nest) are forbidden.
+LocalStorage JWTs remain exposed to XSS until the Nest cookie session is proven. Cookie-authenticated mutations use Origin/Host allow-list plus `SameSite=Lax` ([ADR-017](ADR-017-csrf-cookie-mutations.md)); do not treat Server Actions, Strict, or Double-Submit as the primary control. Frontend route gates must never substitute for NestJS authorization checks. Dual IdPs (Supabase Auth + Nest) are forbidden.
 
 ## Verification
 

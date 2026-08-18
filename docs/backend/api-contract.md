@@ -4,7 +4,7 @@
 
 **Stack (DECIDED):** NestJS 11.x + Prisma 7.x + PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md), [README.md](README.md#target-stack-decided)). **Auth is NestJS from Product MVP (Ship 1)** (local JWT for `admin` / `staff` / `customer`; no Supabase Auth — [ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Other paths below are Nest HTTP contracts; remaining non-auth domains may still follow the **Frontend Migration Phase 2** cutover in [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md).
 
-**Related:** [data-contract.md](data-contract.md) · [remediation-roadmap.md](remediation-roadmap.md) · [gaps-and-solutions.md](../frontend/gaps-and-solutions.md) · [program-model.md](../product/program-model.md) · [phase-1-scope.md](../product/phase-1-scope.md) · [ADR-016](../architecture/decisions/ADR-016-independent-programs.md)
+**Related:** [data-contract.md](data-contract.md) · [remediation-roadmap.md](remediation-roadmap.md) · [gaps-and-solutions.md](../frontend/gaps-and-solutions.md) · [program-model.md](../product/program-model.md) · [phase-1-scope.md](../product/phase-1-scope.md) · [ADR-016](../architecture/decisions/ADR-016-independent-programs.md) · [ADR-017](../architecture/decisions/ADR-017-csrf-cookie-mutations.md)
 
 Authz unless noted: **owner session** = **`admin`** (buyer of Loyollo; [data-contract glossary](data-contract.md#unified-glossary)). **`staff`** uses the same `/app` APIs with **the same permissions as `admin` for now**. Scope to the caller’s Shop (`owner_id`). Service-role only in workers and public enroll.
 
@@ -65,7 +65,7 @@ All auth endpoints below return this user object (inside `{ user, … }`):
 | `owner_id` | Merchant Shop scope; for `admin`, equals `id` |
 | `must_change_password` | `true` when `account_status === 'pending'` (teammate temp password); frontend redirects to force-change before `/app` |
 
-HTTP-only cookies on the Next.js host carry the access/refresh pair; Next forwards the JWT to Nest on BFF calls. Do not store tokens in `localStorage` in the target architecture.
+HTTP-only cookies on the Next.js host carry the access/refresh pair (`HttpOnly`; `Secure` in production; `SameSite=Lax`; `Path=/`). Next forwards the JWT to Nest as `Authorization: Bearer` on BFF/RSC calls. Nest must **not** treat browser-sent cookies as mutation auth ([ADR-017](../architecture/decisions/ADR-017-csrf-cookie-mutations.md)). Cookie-authenticated Next mutations use Origin/Host allow-list. Do not store tokens in `localStorage` in the target architecture.
 
 ### Auth endpoints
 
@@ -83,6 +83,8 @@ HTTP-only cookies on the Next.js host carry the access/refresh pair; Next forwar
 | PATCH | `/auth/accounts/:id/status` | Admin sets active/inactive | `{ account_status: "active"\|"inactive" }` | `{ user }` — `staff` and `customer` only | G-36 |
 
 Customer OTP register/login endpoints (portal, deferred) use the same JWT claim shape with `role = customer`. They must **not** authorize any `/app` or merchant `/api/*` path.
+
+**Auth transport:** Nest request column “Cookie” / “Cookie or `{ refresh_token }`” means Next may read tokens from its host cookie and call Nest with Bearer (or refresh body). Browsers must not send session cookies to Nest as mutation auth ([ADR-017](../architecture/decisions/ADR-017-csrf-cookie-mutations.md)).
 
 ---
 

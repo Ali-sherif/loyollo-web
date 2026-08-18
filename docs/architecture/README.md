@@ -19,7 +19,8 @@
 - **DECIDED:** RLS/storage for this migration — retain existing Lovable policies during Frontend Migration (ADR-011 Phase 1); Frontend Migration Phase 2 custom Backend APIs own all data/storage access. See [ADR-011](decisions/ADR-011-rls-storage-strategy.md). Product ship scope: [phase-1-scope.md](../product/phase-1-scope.md).
 - **DECIDED:** Phase 2 backend stack is NestJS 11.x, Prisma 7.x, and PostgreSQL 18.x (latest stable patches at implementation). Not a frontend-migration slice. See [ADR-015](decisions/ADR-015-backend-stack.md).
 - **DECIDED:** Go-live/cutover (D-23) ΓÇö pre-launch; first prod is Next on Vercel; no dual production frontends; first-party email BFF; no dual writes. See [cutover.md](cutover.md).
-- **ACCEPTED RISK:** Cookie/SSR session spike (**BLOCKED** until Nest JWT cookies proven — [ADR-005](decisions/ADR-005-authentication.md); `@supabase/ssr` spike [superseded](spikes/auth-ssr-spike.md)); minimal parity baselines ([parity-baselines.md](parity-baselines.md)); **Vercel env confirm** (open until UI check) — see [deferred-decisions.md](deferred-decisions.md); rollback owner not a GO gate. **DONE:** asset vendoring (slice 2); server infra scaffolding + messaging stubs (slices 3–4).
+- **DECIDED:** CSRF for cookie-authenticated mutations is Origin/Host allow-list plus `SameSite=Lax` ([ADR-017](decisions/ADR-017-csrf-cookie-mutations.md); D-37). Nest does not accept browser session cookies as mutation auth.
+- **ACCEPTED RISK:** Cookie/SSR session spike (**BLOCKED** until Nest JWT cookies proven — [ADR-005](decisions/ADR-005-authentication.md); `@supabase/ssr` spike [superseded](spikes/auth-ssr-spike.md); CSRF rejection is part of that proof per ADR-017); minimal parity baselines ([parity-baselines.md](parity-baselines.md)); **Vercel env confirm** (open until UI check) — see [deferred-decisions.md](deferred-decisions.md); rollback owner not a GO gate. **DONE:** asset vendoring (slice 2); server infra scaffolding + messaging stubs (slices 3–4).
 - **Go / No-Go:** **GO** for migration implementation and root Next.js app creation. D-28 remains documented open/BLOCKED until Nest JWT SSR is PASSED.
 
 ## Critical decisions
@@ -40,6 +41,7 @@
 14. Product data ownership + UI honesty: [ADR-014](decisions/ADR-014-product-data-ownership.md) (backend contracts under [`docs/backend/`](../backend/README.md); not a migration slice)
 15. Backend stack (NestJS / Prisma / PostgreSQL): [ADR-015](decisions/ADR-015-backend-stack.md) (Phase 2 backend program; not a migration slice)
 16. Independent loyalty programs (one ACTIVE default): [ADR-016](decisions/ADR-016-independent-programs.md) (product/backend contracts; not a migration slice)
+17. CSRF for cookie-authenticated mutations: [ADR-017](decisions/ADR-017-csrf-cookie-mutations.md) (Origin/Host + `SameSite=Lax`; D-37; prove with D-28)
 
 ## Recommended decision order
 

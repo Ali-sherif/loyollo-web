@@ -7,7 +7,7 @@
 
 Historical notes below are kept for the leftover `@supabase/ssr` scaffolding only.
 
-**Related:** [ADR-005](../decisions/ADR-005-authentication.md) Option C, D-28 (retargeted)
+**Related:** [ADR-005](../decisions/ADR-005-authentication.md) Option C, [ADR-017](../decisions/ADR-017-csrf-cookie-mutations.md), D-28 (retargeted), D-37
 
 ## Goal
 
@@ -88,7 +88,7 @@ Neither was available in the repo env (only URL + publishable/anon key).
 3. **Cookie chunking** — Large JWTs may split across `sb-*-auth-token.0`, `.1`, …; always use `getAll` / `setAll`, never single-name gets.
 4. **RSC cookie mutation** — `cookies().set` in Server Components can throw; refresh belongs in proxy / Route Handlers (spike server factory already swallows read-only set errors).
 5. **`getUser()` vs `getSession()`** — Server paths must call `getUser()` so Auth validates the JWT; `getSession()` alone is insufficient for gates.
-6. **HttpOnly / Secure / SameSite** — Production must set Secure on HTTPS; local HTTP may omit Secure. CSRF protection is required before cookie-authenticated mutations in the real app.
+6. **HttpOnly / Secure / SameSite=Lax** — Production must set Secure on HTTPS; local HTTP may omit Secure. CSRF mechanism is **DECIDED** ([ADR-017](../decisions/ADR-017-csrf-cookie-mutations.md)): Origin/Host allow-list plus `SameSite=Lax`. Do not use Strict or Double-Submit as the primary control. When D-28 runs, prove foreign-origin cookie POST is rejected and same-origin mutation is accepted.
 7. **Dual session models** — Today’s TanStack app uses `localStorage`; Next cookie sessions must not be assumed interchangeable. Plan a single auth model for the Next go-live surface (no dual production frontends — [cutover.md](../cutover.md)).
 8. **Matcher scope** — Proxy matcher must include HTML navigations and auth routes; static assets should stay excluded.
 9. **Monorepo lockfiles** — Nested `package-lock.json` under `spikes/` confused Turbopack root inference; spike `next.config.ts` sets `turbopack.root` to the spike directory.
@@ -118,3 +118,4 @@ Neither was available in the repo env (only URL + publishable/anon key).
 2. Add `SUPABASE_SERVICE_ROLE_KEY` **or** confirmed `SPIKE_TEST_*` credentials to local env (do not commit).
 3. `npm run build && npx next start -p 3000 && npm run validate` (or equivalent in-app auth smoke).
 4. On `ok: true`, update this doc Status → **PASSED**, set D-28 → **DECIDED/APPROVED**, and clear the “remains BLOCKED” notes in the checklist / decision matrix / architecture README.
+5. CSRF ([ADR-017](../decisions/ADR-017-csrf-cookie-mutations.md)): foreign-origin cookie mutation rejected; same-origin accepted; cookie is `HttpOnly` + `SameSite=Lax` (`Secure` in production).

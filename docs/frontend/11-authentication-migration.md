@@ -255,4 +255,4 @@ Inactive `customer` must not get a session from a new OTP ([G-36](gaps-and-solut
 
 ## Security gates
 
-CSRF is required if cookie-authenticated mutations are introduced. XSS remains material while leftover tokens are in localStorage; Frontend Migration target is Nest JWT in HTTP-only cookies. Redirect destinations must be allow-listed. Secrets are referenced by name only. Frontend route gates must never substitute for NestJS permission checks.
+Cookie-authenticated mutations use Origin/Host allow-list plus `SameSite=Lax` ([ADR-017](../architecture/decisions/ADR-017-csrf-cookie-mutations.md)). Next.js Server Action CSRF is used as-is; cookie-authenticated Route Handlers/BFF must apply the same Origin/Host check. Nest must not accept browser session cookies as mutation auth — Next forwards Bearer. XSS remains material while leftover tokens are in localStorage; Frontend Migration target is Nest JWT in HTTP-only cookies. Redirect destinations must be allow-listed. Secrets are referenced by name only. Frontend route gates must never substitute for NestJS permission checks.

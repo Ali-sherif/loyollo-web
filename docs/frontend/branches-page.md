@@ -96,7 +96,7 @@ Enforced **in the UI only**:
 
 A client can still `insert` via the Supabase anon key if RLS does not cap row count. There is **no** CHECK constraint or BFF.
 
-`profiles.plan` is switched in Settings → Billing with a **placeholder** (no Stripe). Limits follow whatever is stored.
+`profiles.plan` is switched in Settings → Billing with a **placeholder** (no Stripe). Limits follow whatever is stored. **DG-04:** the switcher must not apply a **lower** plan; off a paid plan is **cancel** (keep until period end) or **upgrade**.
 
 ---
 
@@ -209,7 +209,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 | [G-13](gaps-and-solutions.md#g-13--detail-pages-are-shells) | **Detail charts / top lists** | Fake bars / em dashes | Detail never queries | No branch linkage | Aggregate after `branch_id` |
 | [G-28](gaps-and-solutions.md#g-28--main-branch-uniqueness--delete) | **Main uniqueness** | Two-step client update | Race | No unique partial index | `UNIQUE (owner_id) WHERE is_main` |
 | [G-28](gaps-and-solutions.md#g-28--main-branch-uniqueness--delete) | **Delete main** | Allowed | — | — | Block or force reassign |
-| [G-07](gaps-and-solutions.md#g-07--plan-limits-are-ui-only-billing-is-a-placeholder) | **Upgrade CTA** | → `/pricing` | Billing placeholder | `profiles.plan` free-form | Stripe (or hide until paid) |
+| [G-07](gaps-and-solutions.md#g-07--plan-limits-are-ui-only-billing-is-a-placeholder) | **Upgrade CTA** | → `/pricing` | Billing placeholder | `profiles.plan` free-form | Stripe later; **DG-04** upgrade-only (no lower plan) |
 | — | **Detail auth** | `/auth` path | — | — | Same `/signin` + onboarding guard |
 
 ---

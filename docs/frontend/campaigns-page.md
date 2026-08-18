@@ -1,8 +1,8 @@
 # Campaigns Page (`/app/campaigns`)
 
-Reference for all components, conditions, and edge cases on the Campaigns list route, plus the linked detail page (`/app/campaigns/[campaignId]`), send pipeline, audience matching, and automations. Includes domain notes for frontend + backend work, plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions). **Today** campaigns hang off the owner’s single `loyalty_programs` row. **DECIDED:** campaigns are **Shop-scoped** (`owner_id`; `loyalty_program_id` is a transitional alias — [data-contract](../backend/data-contract.md#independent-programs-decided-not-shipped)). **PM-18:** hide **Scheduled Automations** in Product MVP (Ship 1); do **not** hide campaign list / Launch.
+Reference for all components, conditions, and edge cases on the Campaigns list route, plus the linked detail page (`/app/campaigns/[campaignId]`), send pipeline, audience matching, and automations. Includes domain notes for frontend + backend work, plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions). **Today** campaigns hang off the owner’s single `loyalty_programs` row. **DECIDED:** campaigns are **Shop-scoped** (`owner_id`; `loyalty_program_id` is a transitional alias — [data-contract](../backend/data-contract.md#independent-programs-decided-not-shipped)). **PM-18:** hide **Scheduled Automations** in Product MVP (Ship 1); do **not** hide campaign list / Launch. **DG-08:** SMS channel stays **visible**; bulk send is a **visible-fail stub** (shared trial message).
 
-**Jump to:** [independent programs](#independent-programs-decided-adr-016) · [product meanings](#product-meanings-decided) · [route](#route-structure) · [page flow](#high-level-page-flow) · [stat cards](#stat-cards-4) · [status tabs](#status-tabs) · [filters](#search--filters--sort) · [table](#campaign-table) · [row menu](#row-menu) · [create / edit](#create--edit-dialog) · [send](#launch--send-pipeline) · [audience](#how-audience-actually-resolves) · [status machine](#campaign-status-machine) · [automations](#scheduled-automations) · [detail page](#detail-page-appcampaignscampaignid) · [performance](#performance--open--redeemed) · [personalization](#personalization-tokens) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
+**Jump to:** [independent programs](#independent-programs-decided-adr-016) · [product meanings](#product-meanings-decided) · [DG-08 SMS visible-fail](#dg-08--sms-campaigns-visible-fail-product-mvp-ship-1) · [route](#route-structure) · [page flow](#high-level-page-flow) · [stat cards](#stat-cards-4) · [status tabs](#status-tabs) · [filters](#search--filters--sort) · [table](#campaign-table) · [row menu](#row-menu) · [create / edit](#create--edit-dialog) · [send](#launch--send-pipeline) · [audience](#how-audience-actually-resolves) · [status machine](#campaign-status-machine) · [automations](#scheduled-automations) · [detail page](#detail-page-appcampaignscampaignid) · [performance](#performance--open--redeemed) · [personalization](#personalization-tokens) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
 **Source files:**
 
@@ -403,7 +403,7 @@ Shared `CreateCampaignDialog` (also used on the detail page).
 |-------|----------|-------|
 | Campaign name | Yes | Trimmed |
 | Description | No | Internal note; empty → `null` |
-| Channel | Yes | `"email"` \| `"sms"` (default email) |
+| Channel | Yes | `"email"` \| `"sms"` (default email). **DG-08:** SMS stays selectable; selecting it shows the shared trial failure copy. Subject is hidden for SMS. |
 | Audience | Yes | One of the [audience options](#audience-options); default `"All customers"` |
 | Subject | No | **Only rendered when channel is email** |
 | Message | Yes | Body; personalization tokens are **not** documented in the dialog |
@@ -521,23 +521,23 @@ sequenceDiagram
   BFF->>BFF: session user
   BFF->>Svc: sendCampaign(id, userId)
   Svc->>DB: load campaign, owner check
-  Svc->>DB: resolve audience
-  alt no recipients
-    Svc-->>UI: 400 error, status unchanged
-  else has recipients
-    Svc->>DB: status = sending
-    Svc->>DB: upsert campaign_recipients pending
-    loop each recipient
-      alt SMS
-        Svc->>DB: recipient failed (SMS provider not configured)
-      else email
+  alt SMS (DG-08)
+    Svc-->>UI: 503 SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1, status unchanged
+  else email
+    Svc->>DB: resolve audience
+    alt no recipients
+      Svc-->>UI: 400 error, status unchanged
+    else has recipients
+      Svc->>DB: status = sending
+      Svc->>DB: upsert campaign_recipients pending
+      loop each recipient
         Svc->>Q: enqueue_email
         Svc->>DB: recipient sent or failed
       end
+      Svc->>DB: today: status = active if sentCount>0 else failed
+      Note over Svc,DB: Intended: status = completed if sentCount>0 else failed
+      Svc-->>UI: { sentCount, failedCount, total, status }
     end
-    Svc->>DB: today: status = active if sentCount>0 else failed
-    Note over Svc,DB: Intended: status = completed if sentCount>0 else failed
-    Svc-->>UI: { sentCount, failedCount, total, status }
   end
   UI->>DB: refetch that campaign row
 ```
@@ -560,7 +560,7 @@ Create+Launch uses the same path after insert.
 - Node runtime
 - Requires session user (401 otherwise)
 - Delegates to `sendCampaign` in `lib/server/campaigns-service.ts`
-- Errors → 400 + `{ error }`
+- Errors → 400 + `{ error }`, except **DG-08 SMS** → **503** `{ code: SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1, message }` (campaign stays draft)
 
 ### Service rules
 
@@ -570,7 +570,7 @@ Create+Launch uses the same path after insert.
 | Campaign missing | “Campaign not found” |
 | `owner_id !== userId` | “Forbidden” |
 | `status` is `sending` or `active` | “Campaign is already sending or has been sent” (**today**). **Intended:** refuse `active`/`sending` as already running; refuse `completed` as already finished |
-| SMS channel | Every recipient fails with “SMS provider not configured” |
+| SMS channel | Every recipient fails with “SMS provider not configured” (**today, superseded**). **DG-08:** refuse **before** audience/fan-out with **503** `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1`; campaign status unchanged (stays draft) |
 | Email | Personalize subject/body, wrap HTML, `mint_unsubscribe_token`, `enqueue_email` |
 
 From-name: `profiles.business_name` → else `full_name` → else `"Loyollo"`.  
@@ -702,6 +702,26 @@ Table: `campaign_automations`. Unique `(owner_id, type)` — **one row per type 
 Empty: “No automations yet” + New automation. Filter miss: “No matching automations.”
 
 **Enabled does not send mail.** There is no job that reads `enabled` and fans out to customers.
+
+---
+
+## DG-08 — SMS campaigns visible-fail (Product MVP (Ship 1))
+
+**DG-08 (DECIDED 2026-08-18, option 2 — show failure):** keep **SMS** visible in the channel picker, type filter, table Type column, SMS Sent stat, and detail channel. Do **not** hide the option (rejected option 3) and do **not** treat bulk SMS as a live send path (rejected option 1).
+
+During the trial / Product MVP (Ship 1):
+
+| Surface | Behavior |
+|---------|----------|
+| Create / edit dialog | Channel `sms` stays selectable. Selecting it shows the **shared** failure copy. Draft save is allowed. Launch still calls send. |
+| Detail page | Same shared copy when `channel === "sms"`. |
+| `POST /api/campaigns/send` (and Nest `POST /api/campaigns/:id/send`) | If `channel === "sms"`: **503** `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1` with that same message. **No** audience query, **no** recipient rows, **no** status change (stays **draft**). |
+| Insight CTAs `channel: "sms"` | `create` may insert a draft; `send` / `nudge` must not enqueue — same 503. |
+| OTP SMS / WhatsApp | **Out of scope** for DG-08. Still messaging-adapter stub until a provider is chosen. |
+
+Canonical copy (English UI): *SMS sending isn't available during the trial. You can save this campaign as a draft; messages will not be delivered until SMS is enabled.* Source: `src/lib/campaigns/sms-campaigns-policy.ts`.
+
+Consent, frequency caps, quiet hours, preferred channel, and stored opt-in remain **open** under [UX-24](../product/ui-ux-team-requests.md#ux-24--communication-policy--sms-in-product-mvp-ship-1).
 
 ---
 
@@ -851,7 +871,7 @@ Owners **SELECT** only via campaign ownership. Inserts/updates go through **serv
 | Save as draft | Row with Draft pill, performance `"—"` |
 | Launch with recipients (email) | **Today:** status Active, sent counts, toast. **Intended:** Active while sending, then **Completed** |
 | Launch with zero matching customers | Error toast; stays draft |
-| Launch SMS | Recipients fail; campaign `failed`; toast |
+| Launch SMS | Shared trial toast (`SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1`); stays **draft**; no recipients written |
 | Re-launch `active` | **Today:** error (treated as already sent). **Intended:** error as already running |
 | Re-launch `completed` | **Intended:** error as already finished (no writer today) |
 | Re-launch `failed` | Allowed; may duplicate emails to prior recipients |
@@ -890,7 +910,7 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 | [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **At Risk audience** | Query uses stored `at_risk` status | Synced nightly + on activity | — | — |
 | [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **VIP / Gold / Silver audience** | Options exist | `ilike` on empty `tier` | `tier` unset | Write tier on enroll/check-in |
 | [G-21](gaps-and-solutions.md#g-21--birthday-stored-automation-unused) | **Birthday audience** | Month-only, server TZ | Filter in JS | `birth_date` optional | SQL + owner TZ |
-| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **SMS send** | Channel selectable | Throws per recipient | n/a | Stub transport; messaging contracts |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **SMS send** | Channel stays visible; shared trial notice | **DG-08:** 503 `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1`; no fan-out | n/a | Keep visible-fail until SMS provider + worker; then send via messaging contracts |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Fan-out in Next** | Launch waits on HTTP | Unbounded loop | n/a | Enqueue job; `202` ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)) |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Retry / idempotency** | Re-launch resends all | `ignoreDuplicates` then send | Unique pair exists | Skip already-`sent` |
 | — | **Messaging contracts** | n/a | Duplicate `buildHtml` | n/a | Call messaging contracts only |
@@ -940,7 +960,7 @@ Short list:
 
 1. **Open/click tracking** — `opened_count` / `clicked_count` unused; list shows `0% Open` after send
 2. **Revenue** — `revenue_cents` never written; UI shows `$0.00`
-3. **SMS** — provider not configured; all SMS launches fail
+3. **SMS** — **DG-08 visible-fail:** channel visible; launch 503 with shared trial message; no recipient loop. OTP SMS still uses the transport stub.
 4. **Fan-out in Next** — violates ADR-013; timeout / partial send risk
 5. **At Risk audience** — queries stored `status = 'at_risk'` (populated by nightly sync + check-in)
 6. **Tier audiences** — `customers.tier` usually null

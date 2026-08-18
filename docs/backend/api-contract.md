@@ -22,7 +22,7 @@ Mutation, POS, OTP, and enroll errors use:
 }
 ```
 
-**Product MVP (Ship 1) error codes:** `PROGRAM_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_MUTATION_BLOCKED_ACTIVE_MEMBERS`, `PROGRAM_MUTATION_BLOCKED_NOT_EXPIRED`, `REWARD_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_ACTIVE_LIMIT`, `INVOICE_DUPLICATE`, `REFERRAL_POINTS_REQUIRES_POINTS_ENABLED`, `OTP_MAX_ATTEMPTS_EXCEEDED`, `OTP_RESEND_COOLDOWN`, `DAILY_OTP_LIMIT_REACHED`, `AUTOMATIONS_NOT_AVAILABLE_PHASE1`, `ENROLL_VALIDATION_FAILED`, `FORBIDDEN_ROLE`, `ACCOUNT_NOT_ACTIVE`. OTP 429 bodies include `retry_after_seconds` (in `details` or top-level — UI must not hardcode timers).
+**Product MVP (Ship 1) error codes:** `PROGRAM_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_MUTATION_BLOCKED_ACTIVE_MEMBERS`, `PROGRAM_MUTATION_BLOCKED_NOT_EXPIRED`, `REWARD_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_ACTIVE_LIMIT`, `INVOICE_DUPLICATE`, `REFERRAL_POINTS_REQUIRES_POINTS_ENABLED`, `OTP_MAX_ATTEMPTS_EXCEEDED`, `OTP_RESEND_COOLDOWN`, `DAILY_OTP_LIMIT_REACHED`, `AUTOMATIONS_NOT_AVAILABLE_PHASE1`, `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1`, `ENROLL_VALIDATION_FAILED`, `FORBIDDEN_ROLE`, `ACCOUNT_NOT_ACTIVE`, `PLAN_DOWNGRADE_FORBIDDEN`. OTP 429 bodies include `retry_after_seconds` (in `details` or top-level — UI must not hardcode timers).
 
 ---
 
@@ -185,10 +185,10 @@ Visit metrics in the same response (or nested under `engagement`) must use the P
 
 | Method | Path | Purpose | Request | Response | Unlocks |
 |--------|------|---------|---------|----------|---------|
-| POST | `/api/campaigns/:id/send` | Enqueue send (**202**) | Body optional | `{ job_id }` — worker outside Next ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)) | G-09 send (opens still deferred) |
+| POST | `/api/campaigns/:id/send` | Enqueue send (**202**). **DG-08:** if `channel === "sms"` → **503** `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1` (no job, campaign stays draft) | Body optional | `{ job_id }` on email; `{ code, message }` on SMS trial refuse — worker outside Next ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)) | G-09 send (opens still deferred); DG-08 |
 | POST/PATCH/DELETE | `/api/campaign_automations` … | **PM-18:** hidden in **Product MVP (Ship 1)**. Writes return **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or omit routes → 404). Do **not** hide campaign list / Launch | — | `{ code, message }` | DG-10 |
 
-Do **not** hide campaign list or Launch. G-09 **automations** = resolved hidden; G-09 send/opens stay deferred.
+Do **not** hide campaign list or Launch. **DG-08:** do **not** hide SMS channel. G-09 **automations** = resolved hidden; G-09 send/opens stay deferred.
 
 ### Insights / nudge automation
 
@@ -211,8 +211,8 @@ Analytics Engagement insight cards expose CTAs (**Send**, **Nudge**, **Create**)
 | `action` | Behavior |
 |----------|----------|
 | `create` | Insert draft `campaigns` row prefilled with insight audience + copy template; insert `insight_actions`; return `campaign_id`. No send. |
-| `nudge` | Same as `create`, then enqueue `campaign_jobs` (lighter/reminder template if product defines one); return `job_id`. Worker sends outside Next ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)). |
-| `send` | Same as `create`, then enqueue full send via `campaign_jobs` / `POST /api/campaigns/:id/send` semantics; return `job_id`. |
+| `nudge` | Same as `create`, then enqueue `campaign_jobs` (lighter/reminder template if product defines one); return `job_id`. Worker sends outside Next ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)). **DG-08:** `channel: "sms"` → **503** `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1`; draft may exist, **no** job. |
+| `send` | Same as `create`, then enqueue full send via `campaign_jobs` / `POST /api/campaigns/:id/send` semantics; return `job_id`. **DG-08:** `channel: "sms"` → same 503; **no** enqueue. |
 
 **Pipeline:**
 
@@ -480,11 +480,14 @@ Rules: one object per **Shop** identity. Show the **enrolled** program card plus
 
 | Method | Path | Purpose | Unlocks |
 |--------|------|---------|---------|
-| POST | `/api/billing/checkout` | Start paid plan | G-07 |
-| POST | `/api/billing/webhook` | Sole writer of `profiles.plan` | G-07, G-32 |
+| POST | `/api/billing/checkout` | Start / **upgrade** paid plan (target `PLAN_ORDER` **>** current) | G-07, DG-04 |
+| POST | `/api/billing/cancel` | Cancel at period end — does **not** write a lower `profiles.plan` now | G-07, DG-04 |
+| POST | `/api/billing/webhook` | Sole writer of `profiles.plan`; reject downgrade | G-07, G-32, DG-04 |
 | POST | `/api/integrations/:provider/connect` | OAuth/API keys; POS → `orders` + `Invoice.Paid` | G-19, G-06, G-14 |
 
 Exact provider paths are product choices; this row is the contract intent.
+
+**DG-04 (DECIDED):** no subscription **downgrade**. Rank `starter` < `growth` < `premium`. Checkout / webhook that would set a lower plan → **400** `PLAN_DOWNGRADE_FORBIDDEN`. Off a paid plan: **cancel** (current plan until `current_period_end`, then typically `starter`) or **upgrade**. Product MVP (Ship 1) may ship placeholder Billing **without** implementing these paid paths. [data-contract](data-contract.md#profiles--merchant-plan-dg-04).
 
 ---
 

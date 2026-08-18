@@ -12,7 +12,7 @@
 - [x] Email/SMS template preservation decided and inventoried
 - [x] Hosting target approved: Vercel (outside Lovable); Cloudflare/OpenNext secondary
 - [x] Email delivery provider: **ACCEPTED RISK** ΓÇö concrete provider deferred; use `src/lib/server/messaging/` adapter stubs until a provider is chosen
-- [x] SMS provider: **ACCEPTED RISK** ΓÇö channel and templates preserved; stub transport fails explicitly until a provider is chosen
+- [x] SMS provider: **ACCEPTED RISK** ΓÇö channel and templates preserved; stub transport fails explicitly until a provider is chosen. **DG-08:** bulk SMS campaigns visible-fail (`SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1`)
 - [x] Node version approved: 24 LTS for Node deploys; workerd via OpenNext if Cloudflare
 - [x] Canonical package manager approved: npm (`package-lock.json`; retire `bun.lock` at implementation start)
 - [x] Next.js / React / TypeScript lines approved (16.3.x / 19.2.x / 6.0.x); exact patches at implementation start

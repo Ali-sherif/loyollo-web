@@ -9,6 +9,7 @@ import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { cn } from "@/lib/utils";
 import { CreateCampaignDialog, type CampaignFormData } from "@/features/campaigns/campaigns-page";
+import { SMS_CAMPAIGNS_NOT_AVAILABLE_MESSAGE } from "@/lib/campaigns/sms-campaigns-policy";
 
 type Campaign = {
   id: string;
@@ -254,6 +255,14 @@ function CampaignDetailPage({ campaignId }: { campaignId: string }) {
                   </span>
                 )}
               </div>
+              {!isEmail && (
+                <p
+                  role="status"
+                  className="rounded-[10px] border border-[#d7ddea] bg-[#f4f6fb] px-3 py-2 text-[13px] leading-relaxed text-[#737373]"
+                >
+                  {SMS_CAMPAIGNS_NOT_AVAILABLE_MESSAGE}
+                </p>
+              )}
             </div>
             <button
               type="button"

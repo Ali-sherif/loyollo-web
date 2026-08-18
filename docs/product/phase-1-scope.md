@@ -95,7 +95,7 @@ Never use bare **“Phase 1”** in specs, tickets, or PRs. Always qualify:
 
 **Gaps index column `Phase`:** always means **Backend Remediation P[N]**, not Product MVP (Ship 1). See [gaps-and-solutions.md](../frontend/gaps-and-solutions.md).
 
-**Error codes** ending in `_PHASE1` (e.g. `AUTOMATIONS_NOT_AVAILABLE_PHASE1`) are legacy identifiers; they mean **“not available in Product MVP (Ship 1)”** — do not rename without a coordinated API change.
+**Error codes** ending in `_PHASE1` (e.g. `AUTOMATIONS_NOT_AVAILABLE_PHASE1`, `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1`) are legacy identifiers; they mean **“not available in Product MVP (Ship 1)”** — do not rename without a coordinated API change.
 
 ---
 
@@ -155,7 +155,7 @@ Never use bare **“Phase 1”** in specs, tickets, or PRs. Always qualify:
 | **Account active/inactive admin** | Team + Customers tabs with filters | Deferred | [G-36](../frontend/gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer) |
 | **Insight nudge CTAs** | `POST /api/insights/:key/actions` | Disabled/hidden until Backend **P6** | [remediation-roadmap.md](../backend/remediation-roadmap.md#backend-remediation-p0--honesty-in-ui) |
 | **Global search** | Header search with results | Hide or disable until Backend **P6** | [G-05](../frontend/gaps-and-solutions.md#g-05--global-search-is-a-dead-button) |
-| **SMS campaigns (live)** | Bulk SMS send path | Visible-fail stub or hidden — product must pick (`DG-08`) | [UX-24](./ui-ux-team-requests.md#ux-24--communication-policy--sms-in-product-mvp-ship-1) |
+| **SMS campaigns (live)** | Bulk SMS send path | **Visible-fail stub (DG-08 ✓):** channel stays in UI; send → 503 `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1` + shared trial message | [UX-24](./ui-ux-team-requests.md#ux-24--communication-policy--sms-in-product-mvp-ship-1) |
 
 ---
 
@@ -195,13 +195,12 @@ These do **not** block Ship 1 UI exclusion lock but must close before shipping c
 
 | ID | Question |
 | --- | --- |
-| **DG-08** | SMS campaigns: real path, visible fail, or hidden |
 | **DG-11** | Referral `pending_review` merchant UI vs internal-only |
 | **DG-14** | Single at-risk definition (30 vs 60 vs 20–60 day cutoffs) |
 
 Track in [ui-ux-team-requests.md](./ui-ux-team-requests.md) and [deferred-decisions.md](../architecture/deferred-decisions.md).
 
-**Resolved (2026-08-18):** `DG-01` (hide 2FA, POS, Wallet), `DG-02` (hide Integrations tab), `DG-03` (hide Revenue UI), `DG-14` (at risk = **> 30 days** inactivity; snake_case `at_risk`).
+**Resolved (2026-08-18):** `DG-01` (hide 2FA, POS, Wallet), `DG-02` (hide Integrations tab), `DG-03` (hide Revenue UI), `DG-04` (no subscription downgrade; upgrade or cancel-to-period-end; Ship 1 placeholder Billing OK without paid matrix), `DG-08` (SMS campaigns **visible-fail**: channel stays; send 503 `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1`), `DG-14` (at risk = **> 30 days** inactivity; snake_case `at_risk`).
 
 ---
 

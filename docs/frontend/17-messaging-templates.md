@@ -33,7 +33,7 @@ These are currently rendered by Lovable auth webhook/preview routes. After withd
 | Owner preference notification | `src/lib/notifications.functions.ts`                         | Email + in-app | Title/message/CTA path                                                               |
 | Password changed              | `src/lib/security.functions.ts`                              | Email          | Security notice copy                                                                 |
 | Campaign email                | `src/lib/campaigns.functions.ts` `buildHtml` / `personalize` | Email          | User-authored subject/message + HTML wrapper                                         |
-| Campaign SMS                  | `src/lib/campaigns.functions.ts`                             | SMS            | Same personalization tokens; provider currently throws `SMS provider not configured` |
+| Campaign SMS                  | `src/lib/campaigns.functions.ts`                             | SMS            | Same personalization tokens; **DG-08:** bulk send is a visible-fail stub (`SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1`) until a provider is attached |
 | Join / register OTP           | **DECIDED, not shipped** — messaging contracts               | SMS or WhatsApp | Code only; never log plaintext. Channel chosen at `POST /api/join/otp/request`. Same OTP for customer **login and lost-access** (no password). [OTP](loyalty-page.md#otp-verification-decided) · [credential recovery](11-authentication-migration.md#credential-recovery-decided) |
 
 ## Personalization tokens to preserve
@@ -73,7 +73,7 @@ Until a real provider replaces the stubs:
 
 1. Keep Supabase enqueue/log RPCs if they remain useful.
 2. Do not bind template modules to Lovable SDK types.
-3. Keep SMS **and WhatsApp** channel UX for OTP; stub transport fails explicitly when send is attempted.
+3. Keep SMS **and WhatsApp** channel UX for OTP; stub transport fails explicitly when send is attempted. **DG-08:** bulk **SMS campaigns** stay visible; send refuses with `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1` (do not fan-out per recipient).
 4. Do not delete templates or change copy during framework migration.
 5. Do not let features depend directly on delivery providers.
 6. Email stub must not silently pretend success in production paths without an explicit no-op/log policy recorded at stub implementation.
@@ -83,4 +83,4 @@ Until a real provider replaces the stubs:
 - Pixel/HTML diff auth emails against current renders.
 - Diff transactional HTML strings for join/notification/security messages.
 - Confirm campaign preview/send uses the same wrapper and tokens.
-- Confirm SMS draft/send path still uses the same message body when a provider is later attached.
+- Confirm SMS draft/send path still uses the same message body when a provider is later attached (DG-08: send is refused in Product MVP (Ship 1) / trial with the shared failure message).

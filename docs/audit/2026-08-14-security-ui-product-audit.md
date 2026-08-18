@@ -621,8 +621,9 @@ Owners: **Frontend** = this repo (honesty, guards, BFF hygiene). **Backend** = s
 - `vercel.json` crons / GitHub scheduled workflows / `supabase/functions/` — **not found**
 - Sentry / audit_log — **not found**
 - Social auth (Facebook / Google / Apple Sign-In) — **not found in any doc** (`DG-01`)
-- Subscription no-downgrade rule — **not found** (`DG-04`)
+- Subscription no-downgrade rule — **DECIDED** (`DG-04` ✓)
 - `profiles.currency` meaning + multi-currency — **RESOLVED** (UX-23 / DG-09: display metadata only; set once at onboarding; locked after `onboarding_completed`) ([data-contract](../backend/data-contract.md#profiles--merchant-display-currency-ux-23--dg-09))
+- Business Type / Industry closed lists — **RESOLVED** (UX-21 / DG-05: 18 official types; nested Industries; create + profile update) ([data-contract](../backend/data-contract.md#profiles--business-type--industry-ux-21--dg-05))
 - Marketing-tool integration strategy — **not found** (`DG-07`)
 - Automation `config` schema / trigger schedule — **DECIDED Product MVP (Ship 1) Hidden** (PM-18 / DG-10: hide Scheduled Automations UI; writes → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1`; G-09 send/opens stay deferred)
 - Customer share/refer UX — **DECIDED** (link/QR on wallet card; both-party rewards); default expiry **day counts** + portal **URL** still open (`DG-11`)
@@ -637,7 +638,7 @@ Owners: **Frontend** = this repo (honesty, guards, BFF hygiene). **Backend** = s
 
 **Sources scanned:** [product-manager-meeting-report.md](../product-manager-meeting-report.md), [settings-page.md](../frontend/settings-page.md), [analytics-page.md](../frontend/analytics-page.md), [campaigns-page.md](../frontend/campaigns-page.md), [loyalty-page.md](../frontend/loyalty-page.md), [11-authentication-migration.md](../frontend/11-authentication-migration.md), [17-messaging-templates.md](../frontend/17-messaging-templates.md), [system-architecture.md](../frontend/system-architecture.md), [dashboard-page.md](../frontend/dashboard-page.md), [data-contract.md](../backend/data-contract.md), [api-contract.md](../backend/api-contract.md), [deferred-decisions.md](../architecture/deferred-decisions.md), [ADR-005](../architecture/decisions/ADR-005-authentication.md), [gaps-and-solutions.md](../frontend/gaps-and-solutions.md). **No standalone PRD** exists in `docs/`.
 
-**Phase-name collision (read first):** Bare **“Phase 1”** collided across four tracks (product ship, Frontend Migration, Backend Remediation, feature scope). **Resolved:** canonical labels and scope live in [phase-1-scope.md](../product/phase-1-scope.md). Use **Product MVP (Ship 1)**, **Frontend Migration** (ADR-011 Phase 1), **Backend Remediation P[N]**, or **In/Out of Product MVP (Ship 1)** — never bare “Phase 1”. The checklist below is **Product MVP (Ship 1)**. **`DG-01`, `DG-02`, `DG-03`, `DG-09`, `DG-10` resolved/decided (2026-08-18):** Ship 1 UI exclusions = **comment out** blocks per [phase-1-scope.md § Implementation](../product/phase-1-scope.md#implementation--comment-out-do-not-refactor-decided) — not feature flags. Remaining open items: [deferred-decisions.md](../architecture/deferred-decisions.md).
+**Phase-name collision (read first):** Bare **“Phase 1”** collided across four tracks (product ship, Frontend Migration, Backend Remediation, feature scope). **Resolved:** canonical labels and scope live in [phase-1-scope.md](../product/phase-1-scope.md). Use **Product MVP (Ship 1)**, **Frontend Migration** (ADR-011 Phase 1), **Backend Remediation P[N]**, or **In/Out of Product MVP (Ship 1)** — never bare “Phase 1”. The checklist below is **Product MVP (Ship 1)**. **`DG-01`, `DG-02`, `DG-03`, `DG-08` (SMS campaigns visible-fail), `DG-09`, `DG-10` resolved/decided (2026-08-18):** Ship 1 UI exclusions = **comment out** blocks per [phase-1-scope.md § Implementation](../product/phase-1-scope.md#implementation--comment-out-do-not-refactor-decided) — not feature flags. Remaining open items: [deferred-decisions.md](../architecture/deferred-decisions.md).
 
 **Legend:** **Covered** = the rule is stated as product intent or as current UI behavior, with enough detail to implement or treat as a known gap. **Ambiguous** = mentioned, but missing lock, enum, formula, or Product MVP (Ship 1) exclusion. **Missing** = not found.
 
@@ -673,6 +674,7 @@ These checklist items are specified in page specs / glossary with enough technic
 | Loyalty **program types** `points` \| `visit` \| `tier` | Covered | [loyalty-page.md](../frontend/loyalty-page.md); [system-architecture.md](../frontend/system-architecture.md) L215 |
 | Referral **share** (personal link or QR on that program’s wallet card) + **both-party** rewards (points vs discount voucher; referrer gated on first paid invoice) | Covered as **DECIDED, not shipped** | loyalty-page [referral rewards](../frontend/loyalty-page.md#referral-rewards-decided); data-contract write rule 12. Remaining: default expiry **day counts** and portal **URL** (`DG-11`). |
 | Merchant **display currency** (`profiles.currency` display metadata; onboarding writer; Settings lock; ledger/order snapshot) | Covered as **DECIDED, not shipped** | [UX-23](../product/ui-ux-team-requests.md#ux-23--currency-meaning); [data-contract](../backend/data-contract.md#profiles--merchant-display-currency-ux-23--dg-09); [dashboard-page.md](../frontend/dashboard-page.md#merchant-display-currency) (`DG-09` ✓) |
+| Merchant **Business Type / Industry** (closed lists; onboarding + Settings update) | Covered as **DECIDED**; Settings still free-text (G-24) | [UX-21](../product/ui-ux-team-requests.md#ux-21--business-type-fixed-dropdown); [data-contract](../backend/data-contract.md#profiles--business-type--industry-ux-21--dg-05) (`DG-05` ✓) |
 | Scheduled **automations** hidden in Product MVP (Ship 1); writes → 503 | Covered as **DECIDED, not shipped** | [campaigns-page PM-18](../frontend/campaigns-page.md#pm-18--hide-scheduled-automations-product-mvp-ship-1); [deferred-decisions.md](../architecture/deferred-decisions.md) (`DG-10` ✓) |
 
 ---
@@ -698,17 +700,13 @@ Canonical inventory: [phase-1-scope.md § Code inventory](../product/phase-1-sco
 
 Ship 1: **comment out** Overview Revenue Impact card, Analytics Revenue tab, and all revenue stat tiles (Dashboard, Campaigns, Customers, Branches, Rewards). **Not** `"—"` placeholders. Subtitle trimmed while commented. See [UX-20](../product/ui-ux-team-requests.md#ux-20--analytics-revenue-impact-hide-vs-).
 
-#### Subscription: no downgrade (`DG-04`)
+#### Subscription: no downgrade (`DG-04`) — **RESOLVED 2026-08-18**
 
-Checklist: users **cannot downgrade** package.
+**DECIDED (UX-17 / DG-04):** no package **downgrade**. Allowed: **upgrade** (`PLAN_ORDER` higher) or **cancel** (keep current plan until period end). Product MVP (Ship 1) Billing stays a **placeholder**; launch does **not** need a paid upgrade/downgrade matrix. Placeholder must not write a lower `profiles.plan`. When billing is live, checkout + webhook are sole writers; lower plan → **400** `PLAN_DOWNGRADE_FORBIDDEN`. [settings Billing](../frontend/settings-page.md#plan-transitions-dg-04--no-downgrade) · [deferred-decisions.md](../architecture/deferred-decisions.md).
 
-Docs: Billing is a placeholder that **writes `profiles.plan` in any direction** (settings-page Billing; G-07). api-contract has `POST /api/billing/checkout` + webhook as sole writer — **no upgrade/downgrade matrix**, no “current plan ≥ new plan” rule, no proration. Deferred-decisions “Payment implementation” does not mention downgrade.
+#### Business Type as a **fixed dropdown** (`DG-05`) — **RESOLVED 2026-08-18**
 
-#### Business Type as a **fixed dropdown** (`DG-05`)
-
-Checklist: Business Type is a fixed dropdown in UI **and** backend.
-
-Docs: a profile field exists; **UI label “Business Type” writes `business_category`**, “Industry” writes `business_type`; `industry` has **no input** (G-24). Onboarding domain note says “business taxonomy” ([03-frontend-domains.md](../frontend/03-frontend-domains.md)) with **no option list**. No CHECK/enum, no “immutable after onboarding” rule, no confirmation that the control is a `<select>` rather than free text.
+**DECIDED (UX-21 / DG-05):** Business Type is a **predefined closed list** (18 official English labels). Chosen at **onboarding**; **editable** later from Settings/profile. UI “Business Type” writes `profiles.business_category`; UI “Industry” writes `profiles.business_type` (sub-type of the selected type). `profiles.industry` unused. Control: onboarding card picker + Settings `<select>`. No free-text; Others is a list value with its own Industries. [UX-21](../product/ui-ux-team-requests.md#ux-21--business-type-fixed-dropdown) · [data-contract](../backend/data-contract.md#profiles--business-type--industry-ux-21--dg-05) · [settings-page.md](../frontend/settings-page.md#business-type--industry-ux-21--dg-05).
 
 #### User management vs RBAC (`DG-06`)
 
@@ -731,11 +729,13 @@ Settings lists Mailchimp / Klaviyo. G-19: per-provider connect later. api-contra
 
 **Missing:** what is synced (lists, segments, suppressions), direction, identity match, whether Loyollo campaigns **or** the ESP is source of truth, and whether this is in or out of Product MVP (Ship 1).
 
-#### Communication channels (`DG-08`)
+#### Communication channels (`DG-08`) — **RESOLVED for SMS campaigns 2026-08-18**
 
 **Covered:** campaign channel is `email` \| `sms`; SMS stub fails; email needs a recipient email, SMS a phone; ADR-010 / 17-messaging defer the SMS provider; Notifications tab is owner email/report toggles; OTP channel is `sms` \| `whatsapp` (DECIDED, not shipped).
 
-**Missing as “channel rules”:** marketing vs transactional; opt-in/consent storage (join disclaimer is copy-only — this audit §4.1); frequency caps; quiet hours; preferred channel; unsubscribe vs `suppressed_emails`; whether SMS **campaigns** are in Product MVP (Ship 1) at all (UI still offers the channel).
+**DECIDED (DG-08, option 2 — visible-fail):** Product MVP (Ship 1) **keeps SMS campaigns visible**. Launch / send → **503** `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1` with one shared trial message; campaign stays draft (no recipient fan-out). Do **not** hide the channel picker. OTP SMS remains the messaging adapter stub. [campaigns-page.md](../frontend/campaigns-page.md#dg-08--sms-campaigns-visible-fail-product-mvp-ship-1) · [deferred-decisions.md](../architecture/deferred-decisions.md).
+
+**Still open as “channel rules”:** marketing vs transactional; opt-in/consent storage (join disclaimer is copy-only — this audit §4.1); frequency caps; quiet hours; preferred channel; unsubscribe vs `suppressed_emails`.
 
 #### Currency (`DG-09`) — **RESOLVED 2026-08-18**
 
@@ -776,11 +776,11 @@ Lock remaining open `DG-*` items in [phase-1-scope.md](../product/phase-1-scope.
 | ~~**DG-01**~~ | ~~Product MVP (Ship 1) exclusions list~~ | — | **Resolved 2026-08-18** — comment out per [phase-1-scope.md](../product/phase-1-scope.md) |
 | ~~**DG-02**~~ | ~~Integrations tab in/out of Ship 1~~ | — | **Resolved** — comment out tab |
 | ~~**DG-03**~~ | ~~Hide vs `"—"` Revenue Impact~~ | — | **Resolved** — comment out all revenue widgets |
-| **DG-04** | **No subscription downgrade** (and whether upgrades are paid-only) | settings-page Billing; api-contract billing; G-07 | Checkout contract has no plan-transition rules |
-| **DG-05** | Business Type: control type (select), **option enum**, column (`business_category` vs `business_type`), mutability | settings-page; G-24 | Labels already swapped; no taxonomy |
+| ~~**DG-04**~~ | ~~**No subscription downgrade** (and whether upgrades are paid-only)~~ | — | **Resolved 2026-08-18** — no downgrade; upgrade or cancel-to-period-end; Ship 1 placeholder OK without paid matrix |
+| ~~**DG-05**~~ | ~~Business Type: control type (select), **option enum**, column (`business_category` vs `business_type`), mutability~~ | — | **Resolved 2026-08-18** — UX-21 / [data-contract](../backend/data-contract.md#profiles--business-type--industry-ux-21--dg-05): 18 official types; Industry nested; create + profile update; Settings `<select>` |
 | **DG-06** | Admin-on-admin activate/deactivate; resource-level RBAC; staff using add-teammate | 11-auth; ADR-005 | Checklist asks for RBAC; docs freeze staff = admin |
 | **DG-07** | Marketing-tool strategy (Mailchimp/Klaviyo: objects, direction, Phase) | settings-page; api-contract integrations | Catalog ≠ strategy |
-| **DG-08** | Communication **policy** (consent, caps, SMS in/out of Product MVP (Ship 1)) | 17-messaging; campaigns-page; join | Channel enum ≠ rules |
+| ~~**DG-08**~~ | ~~Communication **policy** (consent, caps, SMS in/out of Product MVP (Ship 1))~~ | — | **SMS campaigns resolved 2026-08-18** — visible-fail stub (`SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1`). Consent / caps / quiet hours remain open (UX-24 remainder) |
 | ~~**DG-09**~~ | ~~What **Currency** is; ISO list; one-per-shop; `orders` currency~~ | — | **Resolved 2026-08-18** — UX-23 / [data-contract](../backend/data-contract.md#profiles--merchant-display-currency-ux-23--dg-09): display metadata; onboarding writer; Settings lock |
 | ~~**DG-10**~~ | ~~Automation **execution** (`config`, triggers, worker) **or** explicit Product MVP (Ship 1) “config only / hide Enable”~~ | — | **Decided 2026-08-18** — PM-18: hide UI; writes → 503; worker deferred |
 | **DG-11** | Referral default expiry **day counts** + customer-portal **URL** | loyalty-page; G-33 | Share mechanic + both-party rewards **DECIDED**; only expiry defaults + portal URL remain open |
@@ -808,14 +808,14 @@ Lock remaining open `DG-*` items in [phase-1-scope.md](../product/phase-1-scope.
 1. ~~Is **2FA** in Product MVP (Ship 1) or out?~~ **Out** — comment out Settings card (`DG-01` ✓).  
 2. ~~Are Facebook / Google / Apple Sign-In never, later, or hidden?~~ **Out / do not design** (`DG-01` ✓).  
 3. ~~Is the Analytics **Revenue Impact tab** removed or kept as `"—"`?~~ **Comment out** tab + all revenue widgets (`DG-03` ✓).  
-4. Allowed plan transitions: upgrade only? downgrade blocked even on placeholder Billing?  
-5. Canonical Business Type list and which `profiles` column stores it. Is the control a fixed `<select>`? Mutable after onboarding?  
+4. ~~Allowed plan transitions: upgrade only? downgrade blocked even on placeholder Billing?~~ **Resolved** — no downgrade; upgrade or cancel-to-period-end; placeholder must not write a lower plan (`DG-04` ✓).  
+5. ~~Canonical Business Type list and which `profiles` column stores it. Is the control a fixed `<select>`? Mutable after onboarding?~~ **Resolved** — 18 official types on `business_category`; Industry sub-types on `business_type`; Settings `<select>` editable after onboarding (`DG-05` ✓).  
 6. May an `admin` deactivate **another `admin`**? May `staff` create teammates?  
 7. ~~What does Settings **Currency** affect (display, billing, points-to-cash, orders)? Multi-currency: yes/no.~~ **Resolved** — display metadata only; one ISO code per shop at onboarding; locked after onboarding; orders/ledger snapshot `currency_code` (`DG-09` ✓).  
 8. ~~Per automation type: **when** it fires, **who** gets the message, **what** is sent, owner TZ. In Product MVP (Ship 1): config-only, hidden, or live?~~ **Decided** — hide Scheduled Automations UI; writes → 503; worker/config deferred (`DG-10` ✓).  
 9. Referral remaining: default expiry **day counts** and customer-portal **URL**. Share mechanic and both-party grants are **DECIDED** (`DG-11` partial).  
 10. Does “bill type” mean `program_type` (`points` / `visit` / `tier`), or a POS ticket class?  
-11. Product MVP (Ship 1): is **SMS** a real send path, a visible-fail stub, or hidden?  
+11. ~~Product MVP (Ship 1): is **SMS** a real send path, a visible-fail stub, or hidden?~~ **Visible-fail stub** — channel stays; send 503 `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1` (`DG-08` ✓).  
 12. After glossary lock, do Overview “At risk” and Engagement “At risk” **keep different cutoffs** (analytics-page documents both) or converge?
 
 ---
@@ -826,11 +826,11 @@ Lock remaining open `DG-*` items in [phase-1-scope.md](../product/phase-1-scope.
 |---|------|---------------------|--------------|
 | **1.1** | Settings exclusions (FB/Google/Apple auth, 2FA, POS, QR & Wallet) | **Yes** — Ship 1 = comment out | **Covered** (`DG-01` ✓, `DG-02` ✓) |
 | **1.2** | Overview Revenue Impact hidden in Product MVP (Ship 1) | **Yes** — comment out | **Covered** (`DG-03` ✓) |
-| **2.1** | No subscription downgrade | **No** | **Missing** (`DG-04`) |
-| **2.2** | Business Type fixed dropdown | Field **yes**; dropdown + enum **no** | **Ambiguous** (`DG-05`) |
+| **2.1** | No subscription downgrade | **Yes** — upgrade or cancel-to-period-end; Ship 1 placeholder | **Covered** (`DG-04` ✓) |
+| **2.2** | Business Type fixed dropdown | **Yes** — closed list; create + profile update | **Covered** (`DG-05` ✓) |
 | **2.3** | Admin add / deactivate with RBAC | Add + staff/customer status **yes**; admin-on-admin and RBAC matrix **no** | **Partial** (`DG-06`) |
 | **3.1** | Marketing tools strategy | Provider names **yes**; strategy **no** | **Missing** (`DG-07`) |
-| **3.2** | Communication channel rules | Channel enum **yes**; policy **no** | **Partial** (`DG-08`) |
+| **3.2** | Communication channel rules | **Yes** for SMS **campaigns** (visible-fail); consent/caps **no** | **Partial** (`DG-08` SMS ✓; UX-24 remainder) |
 | **3.3** | Currency definition | **Yes** — display metadata; onboarding writer; Settings lock; ledger/order snapshot | **Covered** (`DG-09` ✓) |
 | **4.1** | Scheduled automation execution | **Yes** — Ship 1 hide UI; writes → 503; worker deferred | **Covered** (`DG-10` ✓) |
 | **4.2** | Completed / Performance / 0% opens / SMS label | **Yes** | **Covered** |

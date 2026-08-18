@@ -9,7 +9,7 @@
 - **OBSERVED:** The generated route tree contains 31 page URLs, three API URLs, and two structural modules (`__root` and the onboarding layout).
 - **DECIDED:** Withdraw Lovable packages, routes, secrets, asset coupling, and host hooks from the project. See [ADR-009](decisions/ADR-009-lovable-withdrawal.md).
 - **DECIDED:** Keep current visual styles and current email/SMS message templates. See [ADR-010](decisions/ADR-010-style-and-template-parity.md).
-- **ACCEPTED RISK:** Concrete email/SMS providers deferred; use `src/lib/server/messaging/` adapter stubs (SMS fails explicitly until configured).
+- **ACCEPTED RISK:** Concrete email/SMS providers deferred; use `src/lib/server/messaging/` adapter stubs (SMS fails explicitly until configured). **DG-08:** bulk SMS campaigns stay visible and refuse send with `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1`.
 - **DECIDED:** Initial hosting target is Vercel. See [ADR-008](decisions/ADR-008-deployment.md).
 - **DECIDED:** Target Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x, and Node.js 24 LTS for Node-based deployments. Cloudflare Workers (if used) target `workerd` via OpenNext with separate Node compatibility validation. See [ADR-001](decisions/ADR-001-nextjs-version.md).
 - **DECIDED:** Keep the existing backend as the primary API; Next.js orchestrates and protects routes but does not replace backend ownership ([ADR-006](decisions/ADR-006-server-boundaries.md)).

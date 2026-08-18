@@ -639,6 +639,86 @@ The Shop’s **display currency** is a merchant-level property on `profiles`, no
 
 See [dashboard-page.md](../frontend/dashboard-page.md#merchant-display-currency) · [settings-page.md](../frontend/settings-page.md#currency-read-only-after-onboarding) · [UX-23](../product/ui-ux-team-requests.md#ux-23--currency-meaning).
 
+### `profiles` — Business Type + Industry (UX-21 / DG-05)
+
+Shop-level **taxonomy** on `profiles`. Display / reporting metadata only — not program type, not POS ticket class.
+
+| Column | Type | Null | Notes |
+|--------|------|------|-------|
+| `business_category` | text | no* | **Business Type**. One of the **18** official labels. *Required once onboarding completes. |
+| `business_type` | text | no* | **Industry** (nested activity). Must be an official sub-type of the selected `business_category`. *Required once onboarding completes. |
+| `industry` | text | yes | **Unused.** Do not expose in UI. Do not write from onboarding or Settings. |
+
+**Lifecycle (DECIDED 2026-08-18):**
+
+1. **Chosen at create** — onboarding step 2 picks Business Type; step 3 picks Industry for that type. Persist the pair above when onboarding completes.
+2. **Editable from profile** — after `onboarding_completed = true`, Settings General may PATCH both columns. Changing `business_category` to a type that does not contain the current `business_type` **must** also write a valid Industry for the new type (or clear-and-require before save). Unlike `currency`, these fields are **not** locked.
+3. **Closed list** — reject values that are not in the official labels (**400** `BUSINESS_TYPE_INVALID` / `BUSINESS_INDUSTRY_INVALID`). No free-text. **Others** is a first-class type with its own Industries.
+
+**Allowed writers:** onboarding (before complete) and Settings General (merchant self-serve, any time after). Support/migration later if needed.
+
+In-app label source: `src/data/businessTypes.ts` (`BUSINESS_CATEGORIES`). Stored strings are the English labels **exactly** as listed.
+
+**Official Business Type labels** (`business_category`):
+
+`Retail` · `Food & Beverage` · `Travel & Hospitality` · `Health & Wellness` · `Beauty & Personal Care` · `Home & Services` · `Professional Services` · `Entertainment & Leisure` · `Education & Childcare` · `Automotive` · `Financial & Payment` · `Telecom & Utilities` · `Gifts, Experiences & Specialty` · `B2B & Wholesale` · `Nonprofit & Community` · `Digital & Subscriptions` · `Logistics & Delivery` · `Others`
+
+**Official Industry labels** (`business_type`) by Business Type:
+
+| Business Type | Industry values |
+|---------------|-----------------|
+| Retail | Grocery / Supermarket; Convenience store; Pharmacy / Drugstore; Department store; Specialty retail; Electronics / Mobile phone store; Home goods / Furniture; Sporting goods / Outdoors; Books / Stationery; Pet supplies |
+| Food & Beverage | Quick-service / Fast food; Casual dining restaurants; Fine dining / Upscale restaurants; Cafés / Coffee shops; Bakeries / Dessert shops; Ice cream / Frozen yogurt; Food trucks / Street food; Bars / Pubs / Nightclubs; Juice / Smoothie bars; Catering services |
+| Travel & Hospitality | Hotels / Resorts / B&Bs; Motels / Inns; Hostels; Vacation rentals / Short-term stays; Travel agencies / Tour operators; Car rental / Car services; Airport parking / Limo services |
+| Health & Wellness | Pharmacies; Fitness centers / Gyms; Yoga / Pilates studios; Personal trainers; Spas / Massage therapists; Wellness clinics / Naturopathy; Nutritionists / Dietitians; Physical therapy / Rehab clinics |
+| Beauty & Personal Care | Hair salons / Barbershops; Nail salons / Manicure & pedicure; Skincare / Estheticians; Cosmetic clinics / Medi-spas; Barber shops |
+| Home & Services | Cleaning services (residential/commercial); Landscaping / Lawn care; Pest control; Plumbing / HVAC / Electrical; Handyman / Home repair; Home improvement / Hardware stores; Interior design / Decorators; Appliance repair |
+| Professional Services | Accounting / Bookkeeping; Legal / Law firms; Financial advisors / Wealth managers; Insurance brokers; Real estate agents / Brokers; Marketing / Advertising agencies; IT / Managed services; Consulting (business/management) |
+| Entertainment & Leisure | Movie theaters / Cinema; Live events / Concert venues; Escape rooms / Interactive experiences; Museums / Galleries; Amusement parks / Arcades; Sports venues / Clubs; Bowling / Billiards |
+| Education & Childcare | Daycare / Childcare centers; Tutoring / Test prep; Music / Art / Dance schools; Language schools; Professional training / Workshops |
+| Automotive | Auto repair / Service shops; Car wash / Detailing; Tire shops / Alignment; Auto parts stores; Vehicle sales / Dealers |
+| Financial & Payment | Banks / Credit unions; Payment processors / Fintech partners; Money transfer services; Insurance providers |
+| Telecom & Utilities | Mobile carriers / Retailers; Internet service providers; Utility companies |
+| Gifts, Experiences & Specialty | Florists; Gift shops / Card stores; Jewelry stores; Photo studios / Printing services; Event planners / Wedding services; Photography / Videography |
+| B2B & Wholesale | Office supplies / Stationery wholesale; Commercial suppliers / Distributors; Co-working spaces / Business centers |
+| Nonprofit & Community | Charities / Fundraising partners; Community centers / Clubs; Religious organizations |
+| Digital & Subscriptions | Streaming services / Media subscriptions; SaaS / Software subscriptions; Online education platforms; E-commerce marketplaces |
+| Logistics & Delivery | Courier / Same-day delivery; Food delivery platforms; Last-mile fulfillment |
+| Others | Tattoo & piercing studios; Dry cleaning / Laundry; Tailors / Alterations; Vending services; Farmers' markets / Local artisans |
+
+See [UX-21](../product/ui-ux-team-requests.md#ux-21--business-type-fixed-dropdown) · [settings-page.md](../frontend/settings-page.md#business-type--industry-ux-21--dg-05) · [G-24](../frontend/gaps-and-solutions.md#g-24--settings-field-labels-vs-columns).
+
+### `profiles` — merchant plan (DG-04)
+
+The Shop’s **subscription plan** is a merchant-level property on `profiles`. Rank (`PLAN_ORDER`): `starter` (0) < `growth` (1) < `premium` (2).
+
+| Column | Type | Null | Notes |
+|--------|------|------|-------|
+| `plan` | text | no | `starter` \| `growth` \| `premium`. Source of truth for `PLAN_LIMITS` / contact / admin caps. |
+
+**Transitions (DECIDED 2026-08-18):**
+
+| From current | Allowed writes |
+|--------------|----------------|
+| Initial (onboarding first pick) | Any plan — not a downgrade |
+| Paid / current plan | **Upgrade** only (`PLAN_ORDER` strictly higher) |
+| Any paid plan | **Cancel** — keep `plan` until period end; then typically `starter`. Immediate lower-plan write is **forbidden** |
+
+**Forbidden:** merchant self-serve write of a **lower** `plan` (downgrade). Not a proration/matrix problem — there is **no** downgrade path.
+
+**Product MVP (Ship 1):** Settings Billing and `/onboarding/plan` remain **placeholders**. Launch does **not** require checkout, invoices, or an upgrade/downgrade matrix. Placeholder Switch plan must still **not** write a lower plan.
+
+**Allowed writers (when billing is live):**
+
+| Writer | When |
+|--------|------|
+| Onboarding first pick | Initial `plan` only |
+| `POST /api/billing/checkout` + webhook | Upgrade (or first paid plan) |
+| `POST /api/billing/cancel` + webhook at period end | End subscription; may then write `starter` |
+| Support / migration (later) | Explicit admin tool only — out of merchant self-serve |
+
+Checkout or webhook that would set a lower plan → **400** `PLAN_DOWNGRADE_FORBIDDEN`. [UX-17](../product/ui-ux-team-requests.md#ux-17--billing-real-checkout-vs-non-operational) · [settings Billing](../frontend/settings-page.md#plan-transitions-dg-04--no-downgrade).
+
 ### `loyalty_programs` — independent programs
 
 | Column | Type | Null | Notes |
@@ -756,6 +836,8 @@ Default **day counts are not locked** (shop configures). Amounts keep today’s 
 | `tier_milestone_grants` | One payout per milestone per period | G-03 |
 | `rewards.cost_cents` integer NOT NULL DEFAULT 0 | Cash cost (`point_cost` ≠ money) | Analytics ROI |
 | `profiles.currency` locked after onboarding | Merchant display currency set once; Settings read-only | UX-23, [G-37](../frontend/gaps-and-solutions.md#g-37--hardcoded-usd--editable-settings-currency) |
+| `profiles.business_category` + `business_type` closed lists | Business Type + Industry; create + profile update | UX-21, DG-05, [G-24](../frontend/gaps-and-solutions.md#g-24--settings-field-labels-vs-columns) |
+| `profiles.plan` upgrade or cancel-to-period-end only | **DG-04** no downgrade; webhook rejects lower plan | G-07, UX-17 |
 | `profiles.role` enum + `profiles.account_status` enum | Role- and status-aware authz; closes S-01 | G-33, G-34, G-36, S-01 |
 | Enforce writers for `campaigns.opened_count`, rollup for `revenue_cents` | Stop dead performance columns | G-06, G-09 |
 
@@ -919,8 +1001,8 @@ FROM reward_metrics;
 3. **`campaigns.revenue_cents`:** derived/rollup from `orders` where `campaign_id` matches — not a column the UI or send path writes.
 4. **Earn vs redeem:** check-in may insert `customer_rewards` with `status=earned`; that is **not** a catalog redemption. Catalog redeem (physical) is `pending` (reserve `points_cost`, issue QR, `qr_expires_at` +10 min) → staff **scan** `completed` (atomic `UPDATE … WHERE status = 'pending'`; set `redeemed_at`, increment `rewards.redeemed_count`, attach `order_id` / `branch_id` when a ticket is present) or scheduled job `expired` (release reserve). Insufficient Available at create → error, no row. Staff cannot discretionary-reject a valid QR. Digital catalog rewards may complete instantly ([§16](../product/reward-redemption-flow.md#16-digital-rewards-exception)). **Gap:** previous spec was staff approve/reject — superseded; implementation still has no lifecycle ([G-20](../frontend/gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn)). [reward-redemption-flow.md](../product/reward-redemption-flow.md).
 5. **ROI exclusion:** redemptions without `order_id` or with `cost_cents` totaling 0 do not produce a numeric ROI.
-6. **Insight CTAs:** Send / Nudge / Create must call `POST /api/insights/:key/actions`, insert `insight_actions`, create a draft campaign from the insight audience, and enqueue `campaign_jobs` for `send` / `nudge` — never no-op UI.
-7. **Plan / billing:** checkout + webhook are the only writers of `profiles.plan`. Branch insert and enroll must enforce `PLAN_LIMITS` / contact caps server-side.
+6. **Insight CTAs:** Send / Nudge / Create must call `POST /api/insights/:key/actions`, insert `insight_actions`, create a draft campaign from the insight audience, and enqueue `campaign_jobs` for `send` / `nudge` — never no-op UI. **DG-08:** `channel: "sms"` on send/nudge → **503** `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1` (no job).
+7. **Plan / billing (DG-04):** checkout + webhook are the only writers of `profiles.plan` when billing is live. **No downgrade** — reject a lower `PLAN_ORDER` with **400** `PLAN_DOWNGRADE_FORBIDDEN`. Off a paid plan: **upgrade** or **cancel** (current plan until period end). Branch insert and enroll must enforce `PLAN_LIMITS` / contact caps server-side. Ship 1 may keep placeholder Billing; the placeholder must not write a lower plan.
 8. **Authz:** owner-scoped to the Shop (`owner_id`; `loyalty_program_id` as transitional alias). Service-role only in workers and public enroll ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)). **`profiles.role`** and **`profiles.account_status`** are required for every session ([profiles role and account status](#profiles--role-and-account-status-s-01-g-33-g-34-g-36)). Reject `role === 'customer'` or `account_status !== 'active'` on merchant APIs and `/app` routes. Merchant roles: **`admin`** (buyer) and **`staff`** (**same permissions as `admin` for now**). Do not use stored name `purchaser`. Catalog redemption **scan/verify** is **Shop-level**: `staff.branch.shop_id === redemption.shop_id`. Any authorized Staff from any Branch of that Shop may scan. Staff from another Shop must not. Never authorize on the redemption ID or `qr_code` alone. Product MVP (Ship 1): any existing Staff or Admin role may perform Redemption scan/verify; do not add extra role restrictions unless decided later. Staff cannot reject a valid, unexpired, un-redeemed QR.
 9. **Shop-customer identity (DECIDED, not shipped):** customers of the shop will register/login (role **customer**) to persist their data. KPIs must be **calculated** from stored activity, not only from owner **Add Customer**. Customer session must not be an `admin` / `staff` `/app` session. Identity schema is backend-owned. Owner manual add remains allowed.
 10. **Independent programs (DECIDED, not shipped):** a Shop may own many `loyalty_programs`. **Partial unique:** one `status = 'active'` per `owner_id`. Drop `UNIQUE (owner_id)` and **do not** use `UNIQUE (owner_id, program_type)`. Counter QR and `?ref=` resolve **only** to ACTIVE. Customer is **locked** to `enrolled_program_id`; switching ACTIVE does **not** migrate immediately. Catalog, wallet, ledger, earn, referrals = **program-scoped**. Campaigns stay Shop-scoped. **POS migrate** (cashier scan of **customer QR**, not merchant flip ACTIVE): if enrolled ≠ Shop ACTIVE **and** (target redeemed **or** `expires_at` lapsed) → archive leftover balances (non-spendable, Archived History, **not converted**) → enroll ACTIVE at **0** + Sign-up Bonus if enabled → continue the bill on the **new** program. Else award using **locked enrolled** rules. **Mutation guards (Product MVP (Ship 1)):** block DELETE / DISABLE / DRAFT if incomplete members + not expired, or program still valid with members, or `EXISTS` pending claims. Allow only if no PENDING **and** (members==0 OR expired OR 100% completed+redeemed). After expiry, archive leftover memberships in the same txn before delete. Archive **is** allowed with members/PENDING. UI **409** with counts + Wait vs Archive. Error codes: `PROGRAM_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_MUTATION_BLOCKED_ACTIVE_MEMBERS`, `PROGRAM_MUTATION_BLOCKED_NOT_EXPIRED`, `REWARD_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_ACTIVE_LIMIT`. Emergency force-soft-delete = later-phase. [program-model.md](../product/program-model.md) · [counter QR](../product/counter-qr-and-program-membership.md) · [ADR-016](../architecture/decisions/ADR-016-independent-programs.md).
@@ -930,8 +1012,10 @@ FROM reward_metrics;
 14. **OTP before member finalization (PM-06 + UX-75):** public **new** enroll and shop-customer self-register require a verified `otp_verifications` row (`channel` = `sms` \| `whatsapp`). Store `code_hash` only. TTL **180s**. 3 failed guesses → invalidate, **400** `OTP_MAX_ATTEMPTS_EXCEEDED`. 60s resend cooldown; 5 sends / 24h rolling per **phone** → **429** `OTP_RESEND_COOLDOWN` / `DAILY_OTP_LIMIT_REACHED` + `retry_after_seconds`. Failed / expired / missing OTP → no `customers` row, no referral, no reward. After successful **new-phone** OTP, enroll **requires** `full_name`, `email`, `birth_date` — **400** `ENROLL_VALIDATION_FAILED` with per-field `details`. No merchant optional override. Owner **Add Customer** should collect the same three; phone may still be omitted on owner-typed rows. Canonical paths: `POST /auth/otp/send` and `/auth/otp/verify`; join OTP request is an alias. [api-contract join](api-contract.md#join--otp--enroll).
 15. **Catalog redemption lifecycle (DECIDED Product MVP (Ship 1), not shipped):** create checks Available; if `Available < cost` → error, no row. If valid: persist **`reward_snapshot`**, `pending` + reserve snapshot `points_cost` + single-use `qr_code` with `qr_expires_at` +10 min. Create is idempotent. Staff **scan** uses the snapshot (`UPDATE … WHERE status = 'pending'` and QR still valid; affected rows = 1 → `COMPLETED` + consume reserved) even if lot `expires_at` passed during the TTL (**PM-04**). Already `completed` → **“already redeemed”**. Past due / `expired` → **“expired”**. Job: mark `pending` past `qr_expires_at` as `expired`, release Reserved, **purge** lots with `expires_at <= now()` (not returned to Available); live lots return to Available. Lot purge does not decrement `period_points_earned`. Combined pending cost cannot exceed available. Cross-Shop spend is forbidden. Program/reward PATCHes are **prospective only** — never rewrite ledger, spendable, period counter, or PENDING snapshots. Material catalog cuts → new **reward version**. Digital catalog rewards may complete instantly without QR. **Not Phase 1:** refund / reverse; emergency cancel+refund. **Do not implement** staff Approve/Reject for physical catalog rewards. [reward-redemption-flow.md](../product/reward-redemption-flow.md) · [api-contract](api-contract.md#catalog-redemption-lifecycle-decided-not-shipped).
 16. **Earn idempotency (DECIDED, not shipped):** each earning event (POS purchase, `Invoice.Paid`, visit stamp) has an idempotency key or unique business reference — Product MVP (Ship 1) cashier: `idempotency_key` and/or `(shop_id, invoice_number)` (**409** `INVOICE_DUPLICATE`). The same business event awards once (retry → no-op). Earn uses the **locked enrolled** program after the migrate decision. Concurrent earn and redeem must serialize to a consistent available balance; never trust a client-side total.
-17. **Staff POS (Product MVP (Ship 1)):** `POST /api/pos/scan` (customer QR → membership + eligibility + optional migrate) then `POST /api/pos/transactions` `{ customer_id, amount_cents, invoice_number, idempotency_key, branch_id? }`. Bill Amount + Invoice Number. Square/Clover still deferred (UX-19). Campaign automations writes → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (PM-18).
+17. **Staff POS (Product MVP (Ship 1)):** `POST /api/pos/scan` (customer QR → membership + eligibility + optional migrate) then `POST /api/pos/transactions` `{ customer_id, amount_cents, invoice_number, idempotency_key, branch_id? }`. Bill Amount + Invoice Number. Square/Clover still deferred (UX-19). Campaign automations writes → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (PM-18). **SMS campaign send (DG-08):** `channel = sms` → **503** `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1`; no recipient rows, status stays draft.
 18. **Merchant display currency (UX-23 / DG-09):** onboarding is the **sole merchant self-serve writer** of `profiles.currency`. After `onboarding_completed = true`, reject Settings/profile PATCH that changes `currency` (**400** `CURRENCY_LOCKED`). POS and order writers snapshot `currency_code` from `profiles.currency` at insert time. UI formatters read `profiles.currency` for shop-level aggregates; never hardcode `$` / `USD`. Historical rows keep their stored `currency_code`.
+19. **Merchant plan (DG-04):** no self-serve **downgrade**. Checkout / webhook may raise `PLAN_ORDER` or, after cancel + period end, write `starter`. Immediate lower-plan write → **400** `PLAN_DOWNGRADE_FORBIDDEN`. Placeholder Billing in Ship 1 must follow the same direction rule.
+20. **Merchant Business Type (UX-21 / DG-05):** onboarding and Settings may write `profiles.business_category` (Business Type) and `profiles.business_type` (Industry). Values must be from the official closed lists; Industry must belong to the selected type. Reject unknown strings (**400** `BUSINESS_TYPE_INVALID` / `BUSINESS_INDUSTRY_INVALID`). Do **not** write `profiles.industry`. These fields stay **editable** after `onboarding_completed` (unlike `currency`).
 
 ---
 
@@ -951,6 +1035,8 @@ One meaning everywhere (Dashboard, Customers, Analytics, Campaigns). Do not mix 
 | **Engagement buckets** (withdrawn) | ~~Champions / Loyal / Occasional / Dormant~~ — use **`lifecycle_state`** only for segmentation counts | [customer-lifecycle.md](customer-lifecycle.md) |
 | **Revenue** | `sum(orders.amount_cents)` in period | Never `campaigns.revenue_cents` as GMV |
 | **Display currency** | ISO 4217 on `profiles.currency`; set **once** at onboarding; read-only in Settings after setup | Merchant UI formatters; snapshot `currency_code` on `orders` / `points_ledger` at write |
+| **Business Type** | One of 18 official English labels on `profiles.business_category`. Chosen at onboarding; **editable** in Settings. | [Business Type + Industry](#profiles--business-type--industry-ux-21--dg-05) |
+| **Industry** | Nested activity under Business Type; `profiles.business_type`. Closed list. Not `profiles.industry` (unused). | Same |
 | **ROI from Rewards** | `(attributed order revenue − Σ cost_cents) / Σ cost_cents` for linked redemptions | [Reward ROI](#reward-roi-formula--sql) |
 | **Admin** (`admin`) | Buys Loyollo. Uses `/app`. Same as today’s **owner**. Never a shop customer. | `profiles.role = 'admin'`; `profiles.id` = session user; resources keyed by `owner_id`. [locked role matrix](../frontend/11-authentication-migration.md#locked-role-matrix) |
 | **Owner** | Alias of **`admin`** (legacy `owner_id` column) | `profiles.id` = `auth.uid()`; resources keyed by `owner_id` |

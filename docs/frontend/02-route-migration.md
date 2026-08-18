@@ -43,7 +43,7 @@
 | `/onboarding`                   | `onboarding/page.tsx`                         | `/onboarding`                   | Authenticated    | Onboarding | Dynamic                      | Nested `onboarding/layout.tsx`      |
 | `/onboarding/business-category` | `onboarding/business-category/page.tsx`       | `/onboarding/business-category` | Authenticated    | Onboarding | Dynamic                      | Preserve sequence                   |
 | `/onboarding/business-type`     | `onboarding/business-type/page.tsx`           | `/onboarding/business-type`     | Authenticated    | Onboarding | Dynamic                      | Preserve sequence                   |
-| `/onboarding/plan`              | `onboarding/plan/page.tsx`                    | `/onboarding/plan`              | Authenticated    | Onboarding | Dynamic                      | No real billing                     |
+| `/onboarding/plan`              | `onboarding/plan/page.tsx`                    | `/onboarding/plan`              | Authenticated    | Onboarding | Dynamic                      | Placeholder billing; first pick only (DG-04) |
 | `/onboarding/success`           | `onboarding/success/page.tsx`                 | `/onboarding/success`           | Authenticated    | Onboarding | Dynamic                      | Completion gate                     |
 | `/app`                          | `app/(shell)/page.tsx`                        | —                               | Authenticated    | Dashboard  | Dynamic/no-store             | Redirect to `/app/dashboard`        |
 | `/app/dashboard`                | `app/(shell)/dashboard/page.tsx`              | `/dashboard`                    | Authenticated    | Dashboard  | Dynamic/no-store             |                                     |

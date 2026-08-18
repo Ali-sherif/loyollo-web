@@ -5,6 +5,7 @@ import { assetSrc } from "@/lib/asset-src";
 import { Link, useNavigate, useRouterState } from "@/lib/navigation";
 import * as React from "react";
 import { sendCampaign } from "@/lib/client/campaigns-api";
+import { SMS_CAMPAIGNS_NOT_AVAILABLE_MESSAGE } from "@/lib/campaigns/sms-campaigns-policy";
 import { notifyCampaignCreated } from "@/lib/notify-client";
 import { toast } from "sonner";
 import {
@@ -902,6 +903,15 @@ export function CreateCampaignDialog({
               </Select>
             </div>
           </div>
+
+          {form.channel === "sms" && (
+            <p
+              role="status"
+              className="rounded-[10px] border border-[#d7ddea] bg-[#f4f6fb] px-3 py-2 text-[13px] leading-relaxed text-[#737373]"
+            >
+              {SMS_CAMPAIGNS_NOT_AVAILABLE_MESSAGE}
+            </p>
+          )}
 
           {form.channel === "email" && (
             <div className="space-y-1.5">

@@ -417,19 +417,22 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 
 | | |
 |--|--|
-| **Need / priority** | Decision + Design · **P1** |
+| **Need / priority** | **DECIDED** (transitions) · remaining Design · **P1** |
 | **Source** | [G-07](../frontend/gaps-and-solutions.md#g-07--plan-limits-are-ui-only-billing-is-a-placeholder) · **DG-04** · settings-page Billing · onboarding plan |
 
-**Locked**
+**Locked (DG-04, 2026-08-18)**
 
-- Checkout + webhook must be the **sole** writer of `profiles.plan`. Today Settings and onboarding write the field with “no payment will be charged.”
+- Checkout + webhook must be the **sole** writer of `profiles.plan` when billing is live. Today Settings and onboarding write the field with “no payment will be charged.”
+- **No downgrade.** Rank: `starter` < `growth` < `premium` (`PLAN_ORDER`). The merchant must not switch to a lower plan.
+- **Allowed:** **upgrade** to a higher plan, or **cancel**. Cancel keeps the current plan until the subscription period ends — it must not drop `profiles.plan` immediately.
+- **Product MVP (Ship 1)** may launch with Billing as an honest **placeholder**. A paid upgrade/downgrade matrix, proration, invoices, and provider are **not** launch blockers.
+- Placeholder Switch plan must **not** offer or apply a lower plan (even the free client write). First onboarding plan pick is an initial selection, not a downgrade.
 
 **Open**
 
-- Hide plan switch, mark “not available”, or design checkout (provider **not chosen**).
-- **No downgrade** is a checklist item **not in docs** — if product confirms it, the switcher must not offer a lower plan (or must block with copy).
+- Hide remaining paid CTAs, mark “not available”, or design real checkout (provider **not chosen**).
 - Upgrade CTA on Branches goes to `/pricing` — align that path with whatever Billing becomes.
-- Onboarding `/onboarding/plan` is the same placeholder.
+- Cancel-at-period-end copy/flow when a real subscription exists.
 
 #### UX-18 — Internal admin / support back office
 
@@ -496,12 +499,48 @@ Post–Ship 1: uncomment blocks when `orders` + attribution ship — do not add 
 
 | | |
 |--|--|
-| **Need / priority** | Decision + Design · **P1** |
-| **Source** | **DG-05** · [G-24](../frontend/gaps-and-solutions.md#g-24--settings-field-labels-vs-columns) · onboarding business-category / business-type |
+| **Need / priority** | **DECIDED** · was P1 |
+| **Source** | **DG-05** ✓ · [G-24](../frontend/gaps-and-solutions.md#g-24--settings-field-labels-vs-columns) · onboarding business-category / business-type |
 
-**Today:** UI label “Business Type” writes `business_category`; “Industry” writes `business_type`; `industry` has **no input**. No option list. Control type (select vs free text) and mutability after onboarding are unset.
+**Decision (2026-08-18):** **Business Type** is a **predefined closed list** (not free text). The merchant **selects it at account create** (onboarding) and **may update it later from Settings → General (profile)**. Unlike currency (UX-23), it is **not** locked after onboarding.
 
-**Need from UI/UX + product:** canonical option enum, which Settings vs onboarding field is the dropdown, labels that match columns, immutable-after-onboarding or not.
+**Two-level taxonomy** (already in onboarding):
+
+| UI label | Column | Values |
+|----------|--------|--------|
+| **Business Type** | `profiles.business_category` | One of the **18** official labels below |
+| **Industry** | `profiles.business_type` | One official sub-type **of the selected Business Type** |
+
+`profiles.industry` has **no input** — do not load, display, or save it.
+
+**Control:** closed picker. Onboarding may keep the existing card/radio grid; Settings General uses a **`<select>`** (or equivalent) bound to the same labels. Changing Business Type in Settings clears Industry if it no longer belongs to that type.
+
+**Official Business Type labels** (stored strings — English, exact):
+
+1. Retail
+2. Food & Beverage
+3. Travel & Hospitality
+4. Health & Wellness
+5. Beauty & Personal Care
+6. Home & Services
+7. Professional Services
+8. Entertainment & Leisure
+9. Education & Childcare
+10. Automotive
+11. Financial & Payment
+12. Telecom & Utilities
+13. Gifts, Experiences & Specialty
+14. B2B & Wholesale
+15. Nonprofit & Community
+16. Digital & Subscriptions
+17. Logistics & Delivery
+18. Others
+
+**Official Industry (sub-type) labels:** nested under each type in [data-contract](../backend/data-contract.md#profiles--business-type--industry-ux-21--dg-05). In-app source: `src/data/businessTypes.ts` (`BUSINESS_CATEGORIES`). Do not add ad-hoc strings.
+
+**Others:** a first-class type with its own predefined Industries (not a free-text escape). Onboarding’s extra “tell us about your business” text field is **not** an extra enum value and must not be persisted as `business_category` / `business_type`.
+
+Canonical contract: [data-contract](../backend/data-contract.md#profiles--business-type--industry-ux-21--dg-05) · [settings-page.md](../frontend/settings-page.md#business-type--industry-ux-21--dg-05).
 
 #### UX-22 — Marketing-tool strategy (Mailchimp / Klaviyo)
 
@@ -528,9 +567,9 @@ Catalog ≠ strategy. Until objects/direction/Phase are locked, treat like POS: 
 | **Need / priority** | Decision · **P1** |
 | **Source** | **DG-08** · campaigns channel `email` \| `sms` · 17-messaging SMS stub |
 
-**Open:** marketing vs transactional; stored opt-in on join; frequency caps; quiet hours; preferred channel; unsubscribe vs `suppressed_emails`; whether **SMS campaigns** are a real path, a visible-fail stub, or **hidden** in Product MVP (Ship 1).
+**Locked (DG-08 SMS campaigns, 2026-08-18) — option 2, show failure:** bulk **SMS campaigns** stay **visible** (channel picker, filters, list Type, SMS Sent). Sending is a **visible-fail stub**: **503** `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1` with one shared trial message; campaign stays draft (no recipient fan-out). Do **not** hide SMS. Do **not** pretend live delivery. Canonical copy and code: [campaigns-page.md](../frontend/campaigns-page.md#dg-08--sms-campaigns-visible-fail-product-mvp-ship-1). OTP SMS/WhatsApp is a separate adapter-stub path.
 
-If SMS is out of Product MVP (Ship 1), hide the channel picker. If it stays, design the explicit failure (today every SMS recipient fails with “SMS provider not configured”).
+**Still open:** marketing vs transactional; stored opt-in on join; frequency caps; quiet hours; preferred channel; unsubscribe vs `suppressed_emails`.
 
 #### UX-25 — Single “At risk” definition + engagement exclusivity
 
@@ -747,14 +786,14 @@ From [meeting report “Not decided”](../product-manager-meeting-report.md) an
 | UX-14 | Decision | P1 | Campaign Scheduled tab: design or hide |
 | UX-15 | Decision | P1 | Automations: hide / config-only / later |
 | UX-16 | Design | P2 | Campaign token hints + freeze-after-send |
-| UX-17 | Decision | P1 | Billing / onboarding plan: hide vs checkout |
+| UX-17 | **DECIDED** (DG-04) | — | No downgrade; upgrade or cancel-to-period-end; Ship 1 placeholder OK without paid matrix |
 | UX-18 | Decision | P2 | Internal `/admin` back office — product first |
 | UX-19 | **DECIDED** | — | Ship 1: comment out social/2FA/Integrations/Wallet UI ([phase-1-scope.md](./phase-1-scope.md)) |
 | UX-20 | **DECIDED** | — | Ship 1: comment out Revenue tab + all revenue widgets ([phase-1-scope.md](./phase-1-scope.md)) |
-| UX-21 | Decision | P1 | Business Type dropdown + enum + labels |
+| UX-21 | **DECIDED** (DG-05) | — | Business Type predefined select + official labels; editable in profile |
 | UX-22 | Decision | P2 | Mailchimp / Klaviyo: hide vs interest |
-| UX-23 | Decision | P1 | What Currency does |
-| UX-24 | Decision | P1 | Consent policy + SMS in/out of Product MVP (Ship 1) |
+| UX-23 | **DECIDED** (DG-09) | — | Currency = display metadata; set once at onboarding; Settings read-only |
+| UX-24 | **Partial** (DG-08 SMS visible-fail) | P1 | SMS campaigns visible-fail locked; consent/caps still open |
 | UX-25 | Decision | P1 | One At-risk definition; exclusive vs overlapping buckets |
 | UX-26 | Decision | P2 | “Bill type” = program type or POS ticket? |
 | UX-27…32 | Decision | P1 | Misleading labels / fake stats / `$0.00` |
@@ -765,7 +804,7 @@ From [meeting report “Not decided”](../product-manager-meeting-report.md) an
 
 ### Suggested design order
 
-1. ~~Close **UX-19, UX-20**~~ **Done (2026-08-18)** — Ship 1 exclusions = **comment out** per [phase-1-scope.md](./phase-1-scope.md). Still open: **UX-24, UX-25**.
+1. ~~Close **UX-19, UX-20**~~ **Done (2026-08-18)** — Ship 1 exclusions = **comment out** per [phase-1-scope.md](./phase-1-scope.md). ~~**UX-17** plan transitions~~ **Done (DG-04)** — no downgrade; upgrade or cancel-to-period-end. ~~**UX-21** Business Type~~ **Done (DG-05)** — predefined list; create + profile update. ~~**UX-24 SMS campaigns**~~ **Done (DG-08)** — visible-fail stub. Still open: UX-24 consent/caps, **UX-25**.
 2. Design **P0 new flows:** UX-01…03, UX-05…10, UX-75, UX-76, UX-61, UX-62, UX-66…70, UX-73. Case list: [customer-portal-journey.md](./customer-portal-journey.md).
 3. Honesty pass on existing merchant UI: UX-27…41, UX-53.
 4. Remaining P1/P2 after backend keystones (ledger, orders, events) have dates.
@@ -803,7 +842,7 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 | G-21 Birthday unused | UX-15 |
 | G-22 Avatar → dashboard | UX-42 |
 | G-23 Tabs / onboarding gate | UX-43, UX-44 |
-| G-24 Business Type labels | UX-21 |
+| G-24 Business Type labels | UX-21 ✓ **predefined select; create + profile update** |
 | G-25 Two password UIs | UX-45 |
 | G-26 MFA login challenge | UX-19, UX-56, UX-74 |
 | G-27 Delete-account cleanup | §5 |
@@ -824,12 +863,12 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 | DG-01 Product MVP (Ship 1) exclusions (social / 2FA / POS / Wallet) | UX-19 ✓ **comment out** |
 | DG-02 Integrations tab in/out of Product MVP (Ship 1) | UX-19 ✓ **comment out tab** |
 | DG-03 Hide vs `"—"` Revenue Impact | UX-20 ✓ **comment out** |
-| DG-04 No subscription downgrade | UX-17 |
-| DG-05 Business Type dropdown + enum | UX-21 |
+| DG-04 No subscription downgrade | UX-17 ✓ **no downgrade; cancel-to-term or upgrade** |
+| DG-05 Business Type dropdown + enum | UX-21 ✓ **predefined list; create + profile update** |
 | DG-06 RBAC / admin-on-admin / staff add-teammate | UX-01, UX-03 |
 | DG-07 Marketing-tool strategy | UX-22 |
-| DG-08 Communication / SMS policy | UX-24, UX-09 consent |
-| DG-09 Currency meaning | UX-23 |
+| DG-08 Communication / SMS policy | UX-24 ✓ **SMS campaigns visible-fail**; consent/caps still open |
+| DG-09 Currency meaning | UX-23 ✓ **display metadata; onboarding writer; Settings lock** |
 | DG-10 Automation execution | UX-15 |
 | DG-11 Referral remaining (expiry days, portal URL) | UX-07, UX-08 · §5 |
 | DG-12 Bill / ticket type | UX-26 |
@@ -840,7 +879,7 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 
 ### Meeting-report “not decided” → this file
 
-Portal URL → UX-08. Shop QR always **ACTIVE** program → UX-09 / UX-10 ([counter QR](./counter-qr-and-program-membership.md)). Catalog redeem pending/reserve/QR + snapshot → UX-07 / UX-11 ([redemption](./reward-redemption-flow.md)). OTP TTL/cap → **PM-06** (UX-05). Automations hidden in Product MVP (Ship 1) → PM-18. Currency display-only → UX-23.
+Portal URL → UX-08. Shop QR always **ACTIVE** program → UX-09 / UX-10 ([counter QR](./counter-qr-and-program-membership.md)). Catalog redeem pending/reserve/QR + snapshot → UX-07 / UX-11 ([redemption](./reward-redemption-flow.md)). OTP TTL/cap → **PM-06** (UX-05). Automations hidden in Product MVP (Ship 1) → PM-18. Currency display-only → UX-23. Subscription: no downgrade; cancel-to-period-end or upgrade → UX-17 / **DG-04**.
 
 ---
 

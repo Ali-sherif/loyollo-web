@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from "@/integrations/supabase/server";
-import { sendCampaign } from "@/lib/server/campaigns-service";
+import { CampaignSendError, sendCampaign } from "@/lib/server/campaigns-service";
 import { logger } from "@/lib/server/logger";
 
 export const runtime = "nodejs";
@@ -28,6 +28,12 @@ export async function POST(request: Request) {
     return Response.json(result);
   } catch (error) {
     logger.error("campaigns.send.failed", { error: String(error) });
+    if (error instanceof CampaignSendError) {
+      return Response.json(
+        { code: error.code, message: error.message, error: error.message },
+        { status: error.status },
+      );
+    }
     return Response.json(
       { error: error instanceof Error ? error.message : "Send failed" },
       { status: 400 },

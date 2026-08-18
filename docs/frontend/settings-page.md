@@ -79,14 +79,20 @@ flowchart TD
 
 Email falls back to `user.email`. Email input is **disabled** and **not** included in save payload (Auth email change is a different flow).
 
-### Label vs column mismatch
+### Business Type + Industry (UX-21 / DG-05)
 
-| UI label | Writes |
-|----------|--------|
-| Business Type | `business_category` |
-| Industry | `business_type` |
+**Target (DECIDED):** Business Type is a **predefined closed list**. Chosen at onboarding; **editable** on this page after setup (unlike [currency](#currency--read-only-after-onboarding)).
 
-`industry` is loaded into `ProfileRow` but **has no input**. Save sends `industry: form.industry` (stale from DB).
+| UI label | Column | Control |
+|----------|--------|---------|
+| Business Type | `business_category` | `<select>` of the **18** official type labels |
+| Industry | `business_type` | `<select>` of official sub-types **for the selected type** |
+
+`profiles.industry` is **unused** — do not load, display, or include in the save payload. Changing Business Type must reset Industry if it does not belong to the new type.
+
+Official labels: [data-contract](../backend/data-contract.md#profiles--business-type--industry-ux-21--dg-05) · in-app `src/data/businessTypes.ts`.
+
+**Today (gap [G-24](gaps-and-solutions.md#g-24--settings-field-labels-vs-columns)):** both fields are free-text `TextInput`; save still sends `industry`. Onboarding already uses the closed lists (card picker + sub-type grid).
 
 ### Save
 
@@ -152,11 +158,25 @@ No OAuth, no secrets, no POS ingest. Needed later for `orders` / Analytics reven
 
 Reads `profiles.plan`. Cards for starter / growth / premium (`PLAN_PRICES` 99 / 299 / 499, limits from `src/lib/plans.ts`).
 
-**Switch plan** writes `profiles.plan` directly. Confirm copy: “placeholder until real billing is connected — no payment will be charged.” Toast repeats that.
-
-This is what Branches uses for `PLAN_LIMITS`. An owner can set Premium with no payment.
+**Today (gap [G-07](gaps-and-solutions.md#g-07--plan-limits-are-ui-only-billing-is-a-placeholder)):** **Switch plan** writes `profiles.plan` directly. Confirm copy: “placeholder until real billing is connected — no payment will be charged.” Toast repeats that. This is what Branches uses for `PLAN_LIMITS`. An owner can set Premium with no payment.
 
 No invoices, no Stripe customer id, no webhook, no seat/contact enforcement beyond the Branches Add button.
+
+### Plan transitions (DG-04 — no downgrade)
+
+**DECIDED (2026-08-18):** Billing/payment screens stay **placeholders** for Product MVP (Ship 1). Launch does **not** require a paid upgrade/downgrade matrix, proration, or provider.
+
+| Transition | Allowed? |
+|------------|----------|
+| **Upgrade** (`PLAN_ORDER` higher: starter → growth → premium) | **Yes** |
+| **Downgrade** (lower plan) | **No** |
+| **Cancel** | **Yes** — keep current plan until the subscription period ends; do **not** drop `profiles.plan` immediately |
+
+Rank: `starter` (0) < `growth` (1) < `premium` (2) in `PLAN_ORDER` (`src/lib/plans.ts`).
+
+**Placeholder UI:** must not offer or apply a lower plan (even the free client write). First `/onboarding/plan` pick is an initial selection, not a downgrade. Cancel on placeholder must not write `starter` immediately (that would be a downgrade).
+
+**When billing is live:** checkout + webhook are the sole writers ([data-contract](../backend/data-contract.md#profiles--merchant-plan-dg-04)). Webhook / checkout reject a lower plan with **400** `PLAN_DOWNGRADE_FORBIDDEN`. [UX-17](../product/ui-ux-team-requests.md#ux-17--billing-real-checkout-vs-non-operational).
 
 ---
 
@@ -204,11 +224,11 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 |------|--------|--------|---------|--------|-----------------|
 | [G-37](gaps-and-solutions.md#g-37--hardcoded-usd--editable-settings-currency) | **Currency** | Editable after setup | Save still PATCHes `currency` | Column exists | Lock at onboarding; disabled UI; omit from PATCH |
 | [G-16](gaps-and-solutions.md#g-16--avatar-signed-urls-expire) | **Avatar URL** | Signed URL expires | — | Private bucket + stored token | Public bucket or path + sign on read |
-| [G-24](gaps-and-solutions.md#g-24--settings-field-labels-vs-columns) | **Business Type / Industry labels** | Swapped vs columns | — | Columns exist | Align labels |
+| [G-24](gaps-and-solutions.md#g-24--settings-field-labels-vs-columns) | **Business Type / Industry** | Free-text; still saves unused `industry` | — | Columns exist | `<select>` of official lists; omit `industry` |
 | — | **Email change** | Disabled | No change-email BFF | Auth identities | NestJS Auth API email-change + messaging template |
 | [G-15](gaps-and-solutions.md#g-15--notification-preferences-are-mostly-cosmetic) | **Notification prefs** | Toggles save | Owner BFF ignores `prefKey` | Prefs table OK | Gate insert + email; cron reports |
 | [G-19](gaps-and-solutions.md#g-19--integrations-never-connect) | **Integrations** | Pending ≠ connected | No OAuth/BFF | `metadata` unused | Ship 1: **comment out tab**; post–Ship 1: per-provider connect |
-| [G-07](gaps-and-solutions.md#g-07--plan-limits-are-ui-only-billing-is-a-placeholder) | **Billing** | Free plan switch | No Stripe | `profiles.plan` only | Checkout + webhook |
+| [G-07](gaps-and-solutions.md#g-07--plan-limits-are-ui-only-billing-is-a-placeholder) | **Billing** | Free plan switch | No Stripe | `profiles.plan` only | Checkout + webhook; **DG-04** no downgrade |
 | [G-07](gaps-and-solutions.md#g-07--plan-limits-are-ui-only-billing-is-a-placeholder) / [G-32](gaps-and-solutions.md#g-32--contact--admin-plan-limits-unused) | **Plan vs Branches** | Limits UI-only | Direct `branches.insert` | No cap | Server enforce |
 | [G-27](gaps-and-solutions.md#g-27--delete-account-cleanup) | **Delete account** | Auth user deleted | No storage cleanup | FK cascade TBD | Cascades + buckets + suppress |
 | [G-25](gaps-and-solutions.md#g-25--two-password-uis) | **Password page vs Security** | Duplicate UX | Two paths | — | One flow; always enqueue mail |
@@ -224,7 +244,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 2. Integrations tab **commented out** for Ship 1 (was: records interest only when visible)
 3. Notification switches are mostly cosmetic for in-app toasts
 4. Avatar signed URLs expire
-5. Field labels vs `profiles` columns are inconsistent
+5. Business Type / Industry still free-text in Settings (G-24); onboarding already uses the official closed lists (UX-21)
 6. Two password UIs; only one sends the email
 7. No team-members UI despite page subtitle mentioning “team members” — **DECIDED:** add admin/staff (G-34); **one account page, two tabs** (Team = `admin`+`staff`, Customers = `customer`); **`active`/`inactive`**; filters email / name / phone (role on Team tab) ([account status](11-authentication-migration.md#account-active--inactive-decided), [G-36](gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer))
 

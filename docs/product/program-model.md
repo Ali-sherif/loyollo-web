@@ -210,6 +210,10 @@ Canonical: `POST /auth/otp/send`, `POST /auth/otp/verify`. `POST /api/join/otp/r
 
 **RESOLVED (Product MVP (Ship 1) scope: Hidden)** with DG-10 and the G-09 **automations** bullet. Hide Scheduled Automations on `/app/campaigns`. Writes to `campaign_automations` → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or 404). Do **not** hide campaign list / Launch. G-09 send/opens stay deferred.
 
+## DG-08 — SMS campaigns visible-fail (Product MVP (Ship 1))
+
+**RESOLVED (visible-fail).** Keep campaign channel `sms` in merchant UI. Send → **503** `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1`. Canonical: [campaigns-page.md](../frontend/campaigns-page.md#dg-08--sms-campaigns-visible-fail-product-mvp-ship-1).
+
 ---
 
 ## UX-75 — New-phone onboarding required fields
@@ -241,5 +245,6 @@ Retain **phone E.164** to block delete/re-register referral abuse (`UNIQUE (refe
 | Independent programs / one ACTIVE / ADR-016 | This file · [ADR-016](../architecture/decisions/ADR-016-independent-programs.md) |
 | Counter QR, POS migrate, cashier | [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md) |
 | Redeem + snapshot + PM-04 | [reward-redemption-flow.md](./reward-redemption-flow.md) |
+| SMS campaigns (DG-08 visible-fail) | [campaigns-page.md](../frontend/campaigns-page.md#dg-08--sms-campaigns-visible-fail-product-mvp-ship-1) |
 | Schema / write rules | [data-contract.md](../backend/data-contract.md) |
 | HTTP | [api-contract.md](../backend/api-contract.md) |

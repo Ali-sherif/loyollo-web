@@ -1,3 +1,8 @@
+/**
+ * Official Business Type + Industry labels (UX-21 / DG-05).
+ * Canonical product list: docs/backend/data-contract.md
+ * (`profiles` — Business Type + Industry).
+ */
 import {
   ShoppingCart,
   Store,

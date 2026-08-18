@@ -1,6 +1,22 @@
 import "server-only";
 import { createAdminSupabaseClient } from "@/integrations/supabase/admin";
+import {
+  SMS_CAMPAIGNS_NOT_AVAILABLE_CODE,
+  SMS_CAMPAIGNS_NOT_AVAILABLE_MESSAGE,
+} from "@/lib/campaigns/sms-campaigns-policy";
 import { z } from "zod";
+
+export class CampaignSendError extends Error {
+  readonly code: string;
+  readonly status: number;
+
+  constructor(code: string, message: string, status = 400) {
+    super(message);
+    this.name = "CampaignSendError";
+    this.code = code;
+    this.status = status;
+  }
+}
 
 const SENDER_DOMAIN = "notify.loyollo.com";
 const FROM_DOMAIN = "loyollo.com";
@@ -63,6 +79,15 @@ export async function sendCampaign(input: { campaignId: string }, userId: string
   if (campaign.owner_id !== context.userId) throw new Error("Forbidden");
   if (campaign.status === "sending" || campaign.status === "active")
     throw new Error("Campaign is already sending or has been sent");
+
+  // DG-08: SMS channel stays visible; bulk send is a visible-fail stub (no recipient loop).
+  if (campaign.channel === "sms") {
+    throw new CampaignSendError(
+      SMS_CAMPAIGNS_NOT_AVAILABLE_CODE,
+      SMS_CAMPAIGNS_NOT_AVAILABLE_MESSAGE,
+      503,
+    );
+  }
 
   // Owner profile for personalization / from name
   const { data: profile } = await supabaseAdmin
@@ -144,10 +169,6 @@ export async function sendCampaign(input: { campaignId: string }, userId: string
     if (!recId) continue;
 
     try {
-      if (campaign.channel === "sms") {
-        throw new Error("SMS provider not configured");
-      }
-
       // Email path — enqueue via Lovable Emails transactional queue
       if (!c.email) throw new Error("Missing email address");
       const messageId = `campaign-${campaign.id}-${recId}`;

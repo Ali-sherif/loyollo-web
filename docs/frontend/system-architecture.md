@@ -334,7 +334,7 @@ Defined in `src/lib/plans.ts`:
 | growth | 3 | 3 | 10_000 | 299 |
 | premium | 8 | 8 | 50_000 | 499 |
 
-`profiles.plan` is the source of truth. Settings Billing **writes it without payment**. Branches hides Add at `PLAN_LIMITS[plan]`. Contact/admin limits are **not** enforced on `customers` insert.
+`profiles.plan` is the source of truth. Settings Billing **writes it without payment** (placeholder). **DG-04:** no downgrade — upgrade or cancel-to-period-end only. Branches hides Add at `PLAN_LIMITS[plan]`. Contact/admin limits are **not** enforced on `customers` insert.
 
 ---
 

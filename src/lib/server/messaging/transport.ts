@@ -15,6 +15,8 @@ import { logger } from "@/lib/server/logger";
  *   or surface an explicit error until a real provider is wired.
  *
  * SMS stub: fails explicitly (`SMS provider not configured` parity).
+ * Bulk SMS **campaigns** do not call this per recipient in Product MVP (Ship 1);
+ * they refuse send with `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1` (DG-08 visible-fail).
  */
 export const stubMessagingTransport: MessagingTransport = {
   async sendEmail(input: SendEmailInput): Promise<SendResult> {

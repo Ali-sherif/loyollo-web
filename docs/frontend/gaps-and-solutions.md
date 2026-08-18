@@ -98,8 +98,8 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Branches Add at cap; Settings Billing writes `profiles.plan` with “no payment will be charged” |
 | **Blocked by** | No Stripe customer; no server cap on inserts |
-| **Solution** | Checkout + webhook sole writer of plan; enforce caps on insert |
-| **Status** | `DEFERRED-BACKEND` |
+| **Solution** | Checkout + webhook sole writer of plan; enforce caps on insert. **DG-04 locked:** no downgrade; upgrade or cancel-at-period-end only. Ship 1 may keep placeholder Billing — do not build a paid matrix to launch. Placeholder must not write a lower plan. [settings Billing](settings-page.md#plan-transitions-dg-04--no-downgrade) |
+| **Status** | `DEFERRED-BACKEND` (transition rules **DECIDED** 2026-08-18) |
 | **Owner** | Backend program |
 | **Phase** | 5 |
 
@@ -131,7 +131,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Campaigns performance, Dashboard open rate, Automations Enable |
 | **Blocked by** | Fan-out in Next request (ADR-013); `opened_count` unused; automations CRUD only |
-| **Solution** | `campaign_jobs` + worker; ESP webhooks. **PM-18 / DG-10:** **hide Scheduled Automations** in **Product MVP (Ship 1)**; writes to `campaign_automations` → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or 404). Do **not** hide campaign list / Launch. G-09 **automations** = resolved hidden; G-09 **send/opens** stay deferred. **Lifecycle DECIDED (2026-08-14):** campaigns start as Draft (never Active); Active = send in progress (working); when all emails/SMS are processed write `completed` (`sent_count > 0`) or `failed` (`sent_count === 0`). Enable must not write `active` without sending (restore draft). Do not drop the Completed tab. Performance (`% Open` / `% Redeemed`) is a results column, not a status — see [campaigns-page.md](campaigns-page.md#product-meanings-decided) |
+| **Solution** | `campaign_jobs` + worker; ESP webhooks. **PM-18 / DG-10:** **hide Scheduled Automations** in **Product MVP (Ship 1)**; writes to `campaign_automations` → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or 404). Do **not** hide campaign list / Launch. G-09 **automations** = resolved hidden; G-09 **send/opens** stay deferred. **DG-08 (2026-08-18):** SMS **campaigns** stay **visible**; send → **503** `SMS_CAMPAIGNS_NOT_AVAILABLE_PHASE1` (visible-fail stub; no recipient fan-out). **Lifecycle DECIDED (2026-08-14):** campaigns start as Draft (never Active); Active = send in progress (working); when all emails/SMS are processed write `completed` (`sent_count > 0`) or `failed` (`sent_count === 0`). Enable must not write `active` without sending (restore draft). Do not drop the Completed tab. Performance (`% Open` / `% Redeemed`) is a results column, not a status — see [campaigns-page.md](campaigns-page.md#product-meanings-decided) |
 | **Status** | `DEFERRED-BACKEND` |
 | **Owner** | Backend program |
 | **Phase** | 6 |
@@ -302,10 +302,10 @@ These widgets are visible in production UI and systematically show **zero, even 
 
 | Field | Value |
 |-------|--------|
-| **Where** | “Business Type” → `business_category`; “Industry” → `business_type` |
-| **Blocked by** | Label mismatch |
-| **Solution** | Align labels; expose or drop `industry` |
-| **Status** | `FRONTEND-FIXABLE` |
+| **Where** | Settings General: “Business Type” / “Industry” are free-text; save still sends unused `industry` |
+| **Blocked by** | Settings not yet using the official closed lists |
+| **Solution** | **DECIDED (UX-21 / DG-05):** UI “Business Type” → `profiles.business_category` (18 official labels); UI “Industry” → `profiles.business_type` (sub-type of the selected type). Both are **`<select>`**, chosen at onboarding, **editable** in Settings. Drop `industry` from load/save. [data-contract](../backend/data-contract.md#profiles--business-type--industry-ux-21--dg-05) · [settings-page.md](settings-page.md#business-type--industry-ux-21--dg-05) |
+| **Status** | `FRONTEND-FIXABLE` (product rules **DECIDED** 2026-08-18) |
 | **Owner** | Frontend |
 | **Phase** | 0 |
 

@@ -61,7 +61,7 @@ Template inventory: [17-messaging-templates.md](17-messaging-templates.md). Lova
 - Apply the decision tree before implementing each former server function; record the chosen branch in the PR/slice notes.
 - Preserve Zod/input limits and response semantics where retained.
 - Keep admin client and service-role key server-only.
-- Authorize resource ownership after authentication; backend remains permission source of truth ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md) for Phase 1 RLS/storage).
+- Authorize resource ownership after authentication; backend remains permission source of truth ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md) for Frontend Migration RLS/storage).
 - Add explicit CSRF protection for cookie-authenticated mutations.
 - Test duplicate submissions, concurrent check-ins, campaign retries, queue visibility timeout, and partial failures.
 - Confirm any retained Route Handler duration and scheduling on Vercel (and OpenNext/`workerd` if Cloudflare is later evaluated).

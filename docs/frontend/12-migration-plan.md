@@ -9,7 +9,7 @@
 - Initial hosting is Vercel on Node 24 LTS; email/SMS providers are **ACCEPTED RISK** behind messaging adapter stubs.
 - Target lines: Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x.
 - Existing backend remains the primary API; Next.js is not a backend replacement.
-- **Auth (ADR-005 Option C):** NestJS independent IdP for `admin` / `staff` / `customer`; local JWT; native temp-password/reset and customer OTP. **No Supabase Auth** even in Phase 1.
+- **Auth (ADR-005 Option C):** NestJS independent IdP for `admin` / `staff` / `customer`; local JWT; native temp-password/reset and customer OTP. **No Supabase Auth** even during Frontend Migration.
 - Phase 2 remaining product APIs (separate program): NestJS 11.x, Prisma 7.x, PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md)). Not a frontend-migration slice.
 
 ## Before coding
@@ -30,7 +30,7 @@ Multiple AI models may execute this plan. Rules and parallelization map: [multi-
 
 1. Foundation spike: Next 16.3.x, TypeScript 6.0.x, Node 24 / Vercel, Tailwind/assets parity, root layout, `error`/`not-found`/`loading`, Metadata API, environment validation. — **done:** `src/app` (layout/page/error/not-found/loading), `next.config.ts`, `tsconfig.next.json`, `src/config/env.ts` (public + server), PostCSS/Tailwind via `src/styles.css`, `.nvmrc` 24 / `engines.node >=24`; default scripts `dev` / `build` / `start` are Next.
 2. Vendor/re-host assets currently tied to Lovable/CDN manifests. ΓÇö **done:** binaries under `src/assets/` (no `*.asset.json` / `__l5e`); OG at `public/og-image.png`; imports use local files; `npm run scan:assets` acceptance.
-3. Server infrastructure: backend factories, secret isolation, auth proof (route protection + session-aware rendering), portable logging. — **done (scaffolding, leftover):** `@supabase/ssr` factories still in tree but **must not** be the Phase 1 IdP ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Replace with Nest JWT session; D-28 remains **BLOCKED** until Nest HTTP-only cookies are proven.
+3. Server infrastructure: backend factories, secret isolation, auth proof (route protection + session-aware rendering), portable logging. — **done (scaffolding, leftover):** `@supabase/ssr` factories still in tree but **must not** be the Frontend Migration IdP ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Replace with Nest JWT session; D-28 remains **BLOCKED** until Nest HTTP-only cookies are proven.
 4. Messaging skeleton under `src/lib/server/messaging/` that renders existing templates without Lovable SDKs or direct provider coupling. — **done:** contracts + render + transport stubs (email refuses silently-success; SMS fails explicitly); auth templates under `templates/auth/`; campaign personalize/HTML helpers.
 5. Static marketing/legal routes with visual and SEO metadata parity. — **done:** `(marketing)/*`, `/legal/*` via feature pages + Metadata API.
 6. Auth and recovery routes, including first-party auth email webhook/preview BFF handlers (not `/lovable/*`). — **done:** `/auth/*` + `/api/email/auth/{webhook,preview}` + `/api/email/queue/process`.

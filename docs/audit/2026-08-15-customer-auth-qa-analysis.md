@@ -36,7 +36,7 @@ Every test case below is tagged **[SHIPPED]**, **[DECIDED-NOT-SHIPPED]**, or **[
 | R-07 | Customer scans QR → `/join/[programId]` → requests OTP (`POST /api/join/otp/request`, channel `sms`\|`whatsapp`) → enters code → `POST /api/join/enroll` verifies OTP in the same transaction as the `customers` INSERT | Customer | [DECIDED-NOT-SHIPPED for OTP gate] — enroll route exists today **without** the OTP step; add OTP-gated version per [api-contract §Join — OTP + enroll](../backend/api-contract.md) |
 | R-08 | Enroll with a valid `?ref=` referral code grants the **referred** party a reward (points/voucher) in the same transaction, immediately | Customer | [DECIDED-NOT-SHIPPED] |
 | R-09 | Returning phone/email in the same program on scan = check-in, **not** a new OTP, **not** a second referral | Customer | [DECIDED-NOT-SHIPPED] |
-| R-10 | Social auth registration (Google/Facebook/Apple) | Either | **[NOT-IN-DOCS]** — `DG-01` in the audit: never mentioned as included or excluded from Phase 1. Flag to PM before writing test cases against it. |
+| R-10 | Social auth registration (Google/Facebook/Apple) | Either | **Out of Product MVP (Ship 1)** — [phase-1-scope.md](../product/phase-1-scope.md) · UX-19. Flag to PM before writing test cases against it. |
 | R-11 | Magic-link sign-up/sign-in | Merchant | **Template exists** (`magiclink` React Email component, [17-messaging-templates.md](../frontend/17-messaging-templates.md)) but no UI flow is documented as wired — verify with engineering before testing as a real flow. |
 
 ### 1.2 Login

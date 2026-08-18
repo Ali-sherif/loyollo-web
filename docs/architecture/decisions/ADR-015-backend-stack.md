@@ -38,8 +38,8 @@ Prisma 7 requires a driver adapter for direct PostgreSQL connections (for exampl
 
 ## Consequences
 
-- **Auth is in NestJS from Phase 1.** Do not keep Supabase Auth as a Phase 1 IdP ([ADR-005](ADR-005-authentication.md) Option C). NestJS issues local JWTs and natively handles admin temp-passwords/resets and customer OTP.
-- Phase 1 frontend migration may still use existing data contracts for non-auth domains until Phase 2 cutover ([ADR-011](ADR-011-rls-storage-strategy.md)).
+- **Auth is in NestJS from Product MVP (Ship 1).** Do not keep Supabase Auth as the IdP during Frontend Migration ([ADR-005](ADR-005-authentication.md) Option C). NestJS issues local JWTs and natively handles admin temp-passwords/resets and customer OTP.
+- Frontend Migration may still use existing data contracts for non-auth domains until Frontend Migration Phase 2 cutover ([ADR-011](ADR-011-rls-storage-strategy.md)).
 - Phase 2 cutover: the frontend calls NestJS APIs for remaining domains; direct client Postgres / PostgREST traffic is retired.
 - Schema execution remains backend-owned.
 - Campaign workers remain outside Next.js ([ADR-013](ADR-013-campaign-messaging-runtime.md)); they may run as Nest processes. Queue **product** remains deferred.

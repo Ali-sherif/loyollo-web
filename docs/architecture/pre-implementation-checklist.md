@@ -18,9 +18,9 @@
 - [x] Next.js / React / TypeScript lines approved (16.3.x / 19.2.x / 6.0.x); exact patches at implementation start
 - [x] App Router architecture decisions approved (ADR-002 through ADR-007)
 - [x] Approved production route map (see `docs/frontend/02-route-migration.md`; restructured App Router URLs)
-- [x] Auth IdP: **DECIDED** — NestJS independent auth, local JWT, all roles; **no Supabase Auth** even in Phase 1 ([ADR-005](decisions/ADR-005-authentication.md) Option C)
+- [x] Auth IdP: **DECIDED** — NestJS independent auth, local JWT, all roles; **no Supabase Auth** even during Frontend Migration ([ADR-005](decisions/ADR-005-authentication.md) Option C)
 - [x] Nest JWT HTTP-only cookie / SSR session: **ACCEPTED RISK** — prove Next proxy + RSC validation; remains **BLOCKED** until PASSED. The `@supabase/ssr` spike ([spikes/auth-ssr-spike.md](spikes/auth-ssr-spike.md)) is **superseded** and must not be used as the remaining proof.
-- [x] RLS and storage policies: **DECIDED / APPROVED** for migration scope ΓÇö retain existing Lovable RLS/Storage as-is in Phase 1; Phase 2 custom Backend APIs own all data/storage access ([ADR-011](decisions/ADR-011-rls-storage-strategy.md))
+- [x] RLS and storage policies: **DECIDED / APPROVED** for migration scope — retain existing Lovable RLS/Storage as-is during Frontend Migration (ADR-011 Phase 1); Frontend Migration Phase 2 custom Backend APIs own all data/storage access ([ADR-011](decisions/ADR-011-rls-storage-strategy.md))
 - [x] Phase 2 backend stack: **DECIDED** ΓÇö NestJS 11.x, Prisma 7.x, PostgreSQL 18.x (latest stable patches at implementation); **not** a frontend-migration GO item ([ADR-015](decisions/ADR-015-backend-stack.md))
 - [x] Server-function ΓåÆ backend/BFF mapping revised to backend-primary boundary model ΓÇö **DECIDED / APPROVED** (decision tree + per-function rows in [15-server-function-mapping.md](../frontend/15-server-function-mapping.md); [ADR-006](decisions/ADR-006-server-boundaries.md))
 - [x] Public enrollment rate-limit/abuse controls: **DECIDED / APPROVED** ΓÇö edge/server rate limit (Vercel / Cloudflare / Upstash Redis) on public signup & enrollment; HTTP 429; frontend graceful UX ([ADR-012](decisions/ADR-012-public-enrollment-rate-limiting.md))

@@ -1,8 +1,8 @@
 # Analytics Page (`/app/analytics`)
 
-Reference for all components, conditions, and edge cases on the Analytics route. Includes domain notes for frontend + backend work (one program per owner **today**; **DECIDED** independent programs with one ACTIVE — [loyalty-page.md](loyalty-page.md#independent-programs-decided); how tiers are stored vs assigned, segment cutoffs, revenue placeholders), plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
+Reference for all components, conditions, and edge cases on the Analytics route. Includes domain notes for frontend + backend work (**today:** one program per owner in shipped code; **DECIDED:** independent programs with one ACTIVE, Analytics **Shop-scoped** — [ADR-016](../architecture/decisions/ADR-016-independent-programs.md) · [loyalty-page.md](loyalty-page.md#independent-programs-decided); how tiers are stored vs assigned, segment cutoffs, revenue placeholders), plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions).
 
-**Jump to:** [one program](#one-owner--one-loyalty-program) · [how tiers work](#how-customer-tiers-actually-work) · [point ranges](#loyalty-page-point-ranges-saved-vs-ui) · [segments](#customer-segments--card) · [members by tier](#members-by-tier--card--donut) · [engagement stats](#stat-cards-4) · [visit frequency](#visit-frequency-over-time--card--emptychart-disabled) · [insights](#engagement-insights--card-suggestion-cards-not-a-report) · [most engaged / tier column](#most-engaged-members--card--table) · [engagement levels](#engagement-levels--card--horizontal-bars) · [colliding labels](#three-different-systems-do-not-mix-them) · [revenue tab](#tab-3-revenuetab) · [ROI](#roi-from-rewards) · [channel](#revenue-by-channel--what-channel-means) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
+**Jump to:** [independent programs](#independent-programs-decided-adr-016) · [one program today](#one-owner--one-loyalty-program-today) · [how tiers work](#how-customer-tiers-actually-work) · [point ranges](#loyalty-page-point-ranges-saved-vs-ui) · [segments](#customer-segments--card) · [members by tier](#members-by-tier--card--donut) · [engagement stats](#stat-cards-4) · [visit frequency](#visit-frequency-over-time--card--emptychart-disabled) · [insights](#engagement-insights--card-suggestion-cards-not-a-report) · [most engaged / tier column](#most-engaged-members--card--table) · [engagement levels](#engagement-levels--card--horizontal-bars) · [colliding labels](#three-different-systems-do-not-mix-them) · [revenue tab](#tab-3-revenuetab) · [ROI](#roi-from-rewards) · [channel](#revenue-by-channel--what-channel-means) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
 **Source files:**
 
@@ -15,6 +15,33 @@ Reference for all components, conditions, and edge cases on the Analytics route.
 - Unique owner constraint: `supabase/migrations/20260713174353_034cd3b0-2acb-430d-b1d9-14efe9174840.sql`
 - Dashboard “at risk” (30-day recency): `src/components/dashboard/SetupCompleteDashboard.tsx`
 - Customers status filter: `src/features/customers/customers-page.tsx`
+- Independent programs: [ADR-016](../architecture/decisions/ADR-016-independent-programs.md) · [program-model.md](../product/program-model.md)
+
+---
+
+## Independent programs (DECIDED — ADR-016)
+
+**Status:** DECIDED 2026-08-18. **Shipped code on this page still uses the legacy one-row model** until [G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-independent-programs) backend + frontend migration land.
+
+A Shop may own **many independent programs**. **At most one is `ACTIVE`**. Analytics remain **Shop-scoped** — metrics aggregate **all customer identities** for the Shop, not a single program’s FK slice.
+
+| Concern | **Today (shipped code)** | **Target (ADR-016 + G-35)** |
+|---------|--------------------------|-----------------------------|
+| Program lookup | `loyalty_programs.maybeSingle()` by `owner_id` | Any program row exists → Shop has data; optional ACTIVE badge in chrome later |
+| Customers query | `customers` where `loyalty_program_id =` sole program id | `customers` where `loyalty_program_id IN (`all Shop program ids`)` — one identity per Shop |
+| Rewards query | `rewards` where `loyalty_program_id =` sole program id | `rewards` where `loyalty_program_id IN (`all Shop program ids`)` — top-redeemed spans all program catalogs |
+| Empty state | No program row → “Create a loyalty program…” | No programs at all → same; programs exist but none ACTIVE → still show Shop data (archived enrollments count) |
+| Points chart subtitle | “Weekly totals across all programs” | Correct by design once Shop-scoped query ships |
+
+Catalog, wallet, ledger, earn, and referrals are **program-scoped**. Analytics and campaigns are **Shop-scoped**. Do not sum spendable points across Shops; within a Shop, archived-program balances stay in **Archived History**, not ACTIVE spendable ([program-model.md](../product/program-model.md)).
+
+### Frontend migration checklist (Analytics)
+
+When G-35 schema ships, update **`analytics-page.tsx`** only:
+
+1. Replace `maybeSingle()` with fetch all programs for `owner_id`; collect `programIds`.
+2. Load `customers` and `rewards` with `.in("loyalty_program_id", programIds)`.
+3. Set `hasProgram` from `programIds.length > 0` (Shop has any program), not from a single row id.
 
 ---
 
@@ -66,10 +93,12 @@ flowchart TD
   J -->|no| K[Redirect /onboarding]
   J -->|yes| L{loyalty program exists?}
   L -->|no| M[ready=true, hasProgram=false]
-  L -->|yes| N[Load customers + rewards, ready=true]
+  L -->|yes| N["Load customers + rewards (today: one program id)"]
   M --> O[DashboardShell + tabs]
   N --> O
 ```
+
+> **Target (ADR-016):** step N loads customers/rewards for **all** Shop program ids. See [Independent programs](#independent-programs-decided-adr-016).
 
 ---
 
@@ -80,9 +109,9 @@ flowchart TD
 | State | Purpose |
 |-------|---------|
 | `fullName` | Shown in dashboard header |
-| `programId` | Whether a loyalty program exists |
-| `customers` | All customers for the program |
-| `rewards` | All rewards for the program |
+| `programId` | **Today:** sole program row id (proxy for “has program”). **Target:** remove; use `hasShopPrograms` |
+| `customers` | **Today:** customers for one `loyalty_program_id`. **Target:** all Shop customers across program ids |
+| `rewards` | **Today:** rewards for one program. **Target:** all Shop rewards across program ids |
 | `ready` | Data fetch finished |
 | `tab` | `"overview"` \| `"engagement"` \| `"revenue"` |
 
@@ -95,15 +124,16 @@ flowchart TD
 | `!isVerified` | → `/verify?email=...` |
 | `!profile.onboarding_completed` | → `/onboarding` |
 | No loyalty program | Stay on page, `hasProgram = false` |
-| Program exists | Load `customers` + `rewards` from Supabase |
+| Program exists | **Today:** load `customers` + `rewards` for that program id. **Target:** load for all Shop program ids |
 
 ### Data loading sequence
 
 1. Fetch `profiles` (`full_name`, `onboarding_completed`) for current user
-2. Fetch `loyalty_programs` where `owner_id = user.id`
-3. If program exists, parallel fetch:
-   - `customers` — `id, full_name, email, tier, points, visits, status, last_activity_at, created_at`
-   - `rewards` — `id, name, icon, point_cost, redeemed_count`
+2. **Today:** fetch `loyalty_programs` where `owner_id = user.id` with `.maybeSingle()`. **Target:** fetch all programs; derive `programIds` ([Independent programs](#independent-programs-decided-adr-016))
+3. If program exists (**today**), parallel fetch:
+   - `customers` — `id, full_name, email, tier, points, visits, status, last_activity_at, created_at` where `loyalty_program_id = program.id`
+   - `rewards` — `id, name, icon, point_cost, redeemed_count` where `loyalty_program_id = program.id`
+4. **Target:** same columns where `loyalty_program_id IN (programIds)`
 
 ### Loading UI
 
@@ -533,14 +563,14 @@ Use this when wiring frontend and backend. Analytics assumes the current product
 
 ### One owner → one loyalty program (today)
 
-**Today** a business **cannot** have more than one loyalty program.
+**Today (shipped code)** a business **cannot** have more than one loyalty program row:
 
 - DB: `CONSTRAINT loyalty_programs_owner_unique UNIQUE (owner_id)`  
   (`supabase/migrations/20260713174353_034cd3b0-2acb-430d-b1d9-14efe9174840.sql`)
 - App fetches with `.eq("owner_id", user.id).maybeSingle()` (expects 0 or 1 row)
-- App saves with `.upsert(..., { onConflict: "owner_id" })` — create or **overwrite** that one program
+- Analytics loads **that single program’s** `customers` and `rewards`
 
-**Intended (DECIDED):** independent programs; at most one ACTIVE. Analytics stay **Shop-scoped**. See [loyalty-page.md](loyalty-page.md#independent-programs-decided) and [G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-independent-programs).
+**Target (DECIDED — ADR-016):** independent programs; at most one **ACTIVE** per Shop. Analytics stay **Shop-scoped** — aggregate customers/rewards across **all** Shop program ids. See [Independent programs](#independent-programs-decided-adr-016), [loyalty-page.md](loyalty-page.md#independent-programs-decided), and [G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-independent-programs).
 
 There is **no** (today):
 
@@ -691,7 +721,9 @@ Points, visits, and `customers.tier` are **not** inputs to these metrics today.
 
 ### Loyalty program (from `loyalty_programs`)
 
-One row per `owner_id` (unique). Analytics loads that single program’s customers and rewards.
+**Today:** one row per `owner_id` (unique). Analytics loads that single program’s customers and rewards.
+
+**Target:** many rows per Shop; partial unique one `status = 'active'`. Analytics queries all program ids for the Shop ([Independent programs](#independent-programs-decided-adr-016)).
 
 ### Program tiers (from `loyalty_program_tiers`) — **not queried by Analytics**
 
@@ -748,7 +780,7 @@ Used on `/app/loyalty` for config UI. Not used to classify members on Analytics 
 
 ## Gaps (UI / API / DB) and recommended solutions
 
-Analytics is a **client-side dashboard** over two tables (`customers`, `rewards`) for one program. Most widgets are either **proxies**, **hardcoded rules**, or **empty shells**. Existing backend remains the primary API ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)); do not turn Next.js into an orders/POS backend ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
+Analytics is a **client-side dashboard** over two tables (`customers`, `rewards`). **Today** both are scoped to one program id; **target** both are Shop-scoped across all program ids. Most widgets are either **proxies**, **hardcoded rules**, or **empty shells**. Existing backend remains the primary API ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)); do not turn Next.js into an orders/POS backend ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
 Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [data-contract.md](../backend/data-contract.md) · [api-contract.md](../backend/api-contract.md) · [remediation-roadmap.md](../backend/remediation-roadmap.md).
 
@@ -756,6 +788,7 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 
 | G-ID | Widget | UI gap | API gap | DB gap | Recommended fix |
 |------|--------|--------|---------|--------|-----------------|
+| [G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-independent-programs) | **Shop-scoped data load** | Reads one program’s customers/rewards | `maybeSingle` + single FK filter | `UNIQUE (owner_id)` | `.in("loyalty_program_id", programIds)` for all Shop programs ([Independent programs](#independent-programs-decided-adr-016)) |
 | — | **This month / Export** | Buttons do nothing | No period query / export | All-time counters | Period query + export BFF; hide until then (Phase 0) |
 | — | **Stat deltas (↑/↓)** | Always `"—"` | No previous-period totals | No snapshots | Period aggregates (Phase 7) |
 | [G-11](gaps-and-solutions.md#g-11--customer-list-will-not-scale) | **Active members / repeat rate** | Works | Client loads **all** customers | OK | Move aggregation to backend |
@@ -782,6 +815,7 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 | `customer_rewards` (earned_at, redeemed_at) | Redemption events **without money** |
 | `campaigns.channel` (`email` \| `sms`), `campaigns.revenue_cents` | Messaging channel; **not** a substitute for orders |
 | Check-in in join/enroll service | **Write path** for visit events + tier updates |
+| One program per owner **today** | Single FK scope until G-35. **Target:** Shop-scoped `.in(programIds)` ([Independent programs](#independent-programs-decided-adr-016)) |
 
 ### Recommended revenue + visit data model
 
@@ -808,7 +842,7 @@ Short list:
 5. **Revenue metrics** — need orders/transactions linked to members (no equations today)
 6. **Month-over-month deltas** on stat cards — need historical snapshots
 7. **`customers.tier` never written** — enroll/check-in do not apply `loyalty_program_tiers.points_threshold`; Analytics donut will stay Untiered until backend assigns tiers (or Analytics computes from points)
-8. **One program per owner (today)** — **DECIDED:** independent programs + one ACTIVE ([loyalty-page.md](loyalty-page.md#independent-programs-decided))
+8. **One program per owner (today)** — Analytics reads one program’s customers/rewards. **DECIDED (ADR-016):** Shop-scoped queries across all program ids ([Independent programs](#independent-programs-decided-adr-016), [G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-independent-programs))
 9. **Segment/level cutoffs** — hardcoded in the frontend; not owner-configurable
 10. **Loyalty “Tier stats”** — member counts hardcoded `"0"` on `/app/loyalty`
 11. **Insight CTAs** — Send / Nudge / Explore / Create have no handlers; “1 visit from a reward” uses hardcoded `visits % 5 === 4`, not program `visits_required`

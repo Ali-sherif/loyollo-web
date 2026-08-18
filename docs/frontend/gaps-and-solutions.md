@@ -6,6 +6,8 @@ Prioritized backlog of what the **current UI promises** versus what **API + Post
 
 **Contracts (moved out of this file):** [data-contract.md](../backend/data-contract.md) · [api-contract.md](../backend/api-contract.md) · [remediation-roadmap.md](../backend/remediation-roadmap.md)
 
+**Terminology:** Never use bare “Phase 1.” Product ship = **[Product MVP (Ship 1)](../product/phase-1-scope.md)**. Next.js cutover = **Frontend Migration (ADR-011)**. The **`Phase`** column below = **Backend Remediation P[N]** only.
+
 **Jump to:** [critical](#critical) · [high](#high) · [medium](#medium) · [low](#low) · [already exists](#what-already-exists-do-not-rebuild) · [colliding labels](#colliding-labels-do-not-mix)
 
 **Page references:** [dashboard-page.md](dashboard-page.md) · [customers-page.md](customers-page.md) · [loyalty-page.md](loyalty-page.md) · [branches-page.md](branches-page.md) · [settings-page.md](settings-page.md) · [campaigns-page.md](campaigns-page.md) · [analytics-page.md](analytics-page.md) · [system-architecture.md](system-architecture.md)
@@ -118,7 +120,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Campaigns performance, Dashboard open rate, Automations Enable |
 | **Blocked by** | Fan-out in Next request (ADR-013); `opened_count` unused; automations CRUD only |
-| **Solution** | `campaign_jobs` + worker; ESP webhooks. **PM-18 / DG-10:** **hide Scheduled Automations** in Phase 1; writes to `campaign_automations` → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or 404). Do **not** hide campaign list / Launch. G-09 **automations** = resolved hidden; G-09 **send/opens** stay deferred. **Lifecycle DECIDED (2026-08-14):** campaigns start as Draft (never Active); Active = send in progress (working); when all emails/SMS are processed write `completed` (`sent_count > 0`) or `failed` (`sent_count === 0`). Enable must not write `active` without sending (restore draft). Do not drop the Completed tab. Performance (`% Open` / `% Redeemed`) is a results column, not a status — see [campaigns-page.md](campaigns-page.md#product-meanings-decided) |
+| **Solution** | `campaign_jobs` + worker; ESP webhooks. **PM-18 / DG-10:** **hide Scheduled Automations** in **Product MVP (Ship 1)**; writes to `campaign_automations` → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or 404). Do **not** hide campaign list / Launch. G-09 **automations** = resolved hidden; G-09 **send/opens** stay deferred. **Lifecycle DECIDED (2026-08-14):** campaigns start as Draft (never Active); Active = send in progress (working); when all emails/SMS are processed write `completed` (`sent_count > 0`) or `failed` (`sent_count === 0`). Enable must not write `active` without sending (restore draft). Do not drop the Completed tab. Performance (`% Open` / `% Redeemed`) is a results column, not a status — see [campaigns-page.md](campaigns-page.md#product-meanings-decided) |
 | **Status** | `DEFERRED-BACKEND` |
 | **Owner** | Backend program |
 | **Phase** | 6 |
@@ -243,7 +245,7 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Dashboard redemption donut; Loyalty catalog; customer wallet redeem |
 | **Blocked by** | Check-in inserts `earned`; no redeem lifecycle (pending / reserve / QR scan). Previous spec described staff approve/reject — **superseded**; do not implement that path. |
-| **Solution** | Customer Redeem → persist **`reward_snapshot`**; if Available < snapshot cost, error (no row); else `pending` + reserve + single-use QR (10 min). Staff **scan** uses snapshot (`UPDATE … WHERE status = 'pending'`, affected rows = 1) → `completed` + consume reserved (**PM-04:** even if lot `expires_at` passed during TTL). Already completed → “already redeemed”; expired → “expired”. Job marks past-due `pending` as `expired`, releases Reserved, **purges** expired reserved lots (not returned to Available). `Available = Total − Reserved`. Idempotent create and earn; Shop-level scan authz; Phase 1 any Staff/Admin. Digital catalog rewards may complete instantly. Donut uses `completed` events. Do not implement staff Approve/Reject. Snapshot / PM-04 / mutation guards are **DECIDED**. Not Phase 1: reverse / emergency cancel. [reward-redemption-flow.md](../product/reward-redemption-flow.md) · [loyalty-page.md](loyalty-page.md#reward-redemption-lifecycle-decided) |
+| **Solution** | Customer Redeem → persist **`reward_snapshot`**; if Available < snapshot cost, error (no row); else `pending` + reserve + single-use QR (10 min). Staff **scan** uses snapshot (`UPDATE … WHERE status = 'pending'`, affected rows = 1) → `completed` + consume reserved (**PM-04:** even if lot `expires_at` passed during TTL). Already completed → “already redeemed”; expired → “expired”. Job marks past-due `pending` as `expired`, releases Reserved, **purges** expired reserved lots (not returned to Available). `Available = Total − Reserved`. Idempotent create and earn; Shop-level scan authz; **Product MVP (Ship 1):** any Staff/Admin. Digital catalog rewards may complete instantly. Donut uses `completed` events. Do not implement staff Approve/Reject. Snapshot / PM-04 / mutation guards are **DECIDED**. **Out of Product MVP (Ship 1):** reverse / emergency cancel. [reward-redemption-flow.md](../product/reward-redemption-flow.md) · [loyalty-page.md](loyalty-page.md#reward-redemption-lifecycle-decided) |
 | **Status** | `DEFERRED-BACKEND` (product **DECIDED** including §14.1 snapshot + PM-04) |
 | **Owner** | Backend program |
 | **Phase** | 4 |
@@ -390,10 +392,10 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | `/app/customers` Add Customer; public `/join/[programId]`; Dashboard / Analytics KPIs |
 | **Blocked by** | No shop-customer auth. Rows are owner-created or anonymous join. KPIs use denormalized / owner-typed fields |
-| **Solution** | Customer **register/login** (role **customer**, not `admin` / `staff` `/app`). **Passwordless:** register, login, and recovery never use a password. Public new register uses **OTP** (SMS/WhatsApp, **PM-06**) before the member row is finalized. Lost access = **new OTP**. After OTP: inactive → generic block; existing in this Shop → wallet; existing **first time in this Shop** → link Shop (welcome is UX only); **new phone → UX-75 required `full_name` / `email` / `birth_date`**. Store customer-owned profile + activity. **Calculate KPIs** from that data. Owner manual add remains (no OTP) but should collect the same three fields. Wallet: **one card per Shop** (enrolled program + Archived History); never a cross-Shop total. Soft-delete only. Routes not locked. [program-model.md](../product/program-model.md) · [customer-portal-journey.md](../product/customer-portal-journey.md) · [OTP](loyalty-page.md#otp-verification-decided) |
-| **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14) |
+| **Solution** | **Split (see [phase-1-scope.md](../product/phase-1-scope.md#otp-vs-staff-pos--resolved-split)):** **In Product MVP (Ship 1)** — public **enroll OTP** (PM-06), UX-75 profile on new phone, membership row + **wallet QR** at enroll (Backend Remediation **P5**); owner manual add remains (no OTP). **Out of Product MVP (Ship 1)** — customer **portal sessions**: register/login/recovery app, `/api/me/wallet` behind customer JWT, lost-access OTP funnel when not enrolling. When portal ships: passwordless only; after OTP: inactive → block; existing in Shop → wallet; first time in Shop → link; new phone → UX-75. **Calculate KPIs** from stored activity (not only owner-typed fields). Wallet: one card per Shop; soft-delete only. [program-model.md](../product/program-model.md) · [customer-portal-journey.md](../product/customer-portal-journey.md) · [OTP](loyalty-page.md#otp-verification-decided) |
+| **Status** | `DEFERRED-BACKEND` (product **DECIDED** 2026-08-14; enroll path **In Product MVP (Ship 1)**) |
 | **Owner** | Backend program |
-| **Phase** | Later (customer portal; not product Phase 1 merchant roles) |
+| **Phase** | P5 (enroll OTP + wallet QR) · Later (portal sessions) |
 
 ### G-34 — Admin cannot create admin/staff with emailed temp password
 
@@ -461,6 +463,8 @@ These widgets are visible in production UI and systematically show **zero, even 
 ---
 
 ## Colliding labels (do not mix)
+
+**Phase names:** [phase-1-scope.md § Terminology](../product/phase-1-scope.md#terminology--four-different-phase-1-labels) — Product MVP (Ship 1) ≠ Frontend Migration ≠ Backend Remediation P[N].
 
 Canonical glossary: [data-contract.md § Unified glossary](../backend/data-contract.md#unified-glossary). History:
 

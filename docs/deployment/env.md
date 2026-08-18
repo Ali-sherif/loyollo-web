@@ -27,7 +27,7 @@ This inventory is the canonical list for deployment configuration. Source of tru
 
 Runtime: Next.js App Router (`npm run dev` / `npm run build`). Public client names are `NEXT_PUBLIC_*`. `next.config.ts` still maps leftover `VITE_*` / `SUPABASE_*` into public names if `NEXT_PUBLIC_*` is unset.
 
-**Auth IdP is NestJS** ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). The `SUPABASE_*` names below are leftover data-path scaffolding, **not** the Phase 1 identity provider. Do not add new Supabase Auth usage.
+**Auth IdP is NestJS** ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). The `SUPABASE_*` names below are leftover data-path scaffolding, **not** the identity provider during Frontend Migration. Do not add new Supabase Auth usage.
 
 | Variable                        | Required | Scope            | Environments | Used In                                                                 | Purpose                                       | Secret                |
 | ------------------------------- | -------- | ---------------- | ------------ | ----------------------------------------------------------------------- | --------------------------------------------- | --------------------- |
@@ -59,7 +59,7 @@ Do **not** set `LOVABLE_API_KEY` or `LOVABLE_SEND_URL`.
 
 The isolated `spikes/auth-ssr/` POC was **removed**. That harness targeted `@supabase/ssr` and is **superseded** ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). When D-28 is re-run, prove **NestJS local JWT** HTTP-only cookies in Next `proxy.ts` + RSC — not Supabase Auth. Nest auth env names belong in the backend program; do not add `SUPABASE_SERVICE_ROLE_KEY` as the IdP bootstrap.
 
-Historical leftover names (do not treat as the Phase 1 IdP):
+Historical leftover names (do not treat as the Frontend Migration IdP):
 
 | Variable                        | Required  | Scope           | Environments | Purpose                                                | Secret |
 | ------------------------------- | --------- | --------------- | ------------ | ------------------------------------------------------ | ------ |

@@ -1,7 +1,7 @@
 # Reward redemption flow (per program)
 
 **Date:** 2026-08-18  
-**Status:** DECIDED for Phase 1 lifecycle (not shipped). Former §14 items are **DECIDED** — see [§14](#14-decided-pending-edges).  
+**Status:** DECIDED for Product MVP (Ship 1) lifecycle (not shipped). Former §14 items are **DECIDED** — see [§14](#14-decided-pending-edges).  
 **Audience:** Product, UI/UX, QA, backend  
 **Does not authorize** schema, APIs, or Next.js implementation ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md), [ADR-016](../architecture/decisions/ADR-016-independent-programs.md)).
 
@@ -67,7 +67,7 @@ Stored status names: `pending` · `completed` · `expired` · `rejected`. Do not
 - `expired` — scheduled job (or scan of a past-due QR) released the reservation. Not a staff action.
 - `rejected` — **not** a staff action on a valid physical QR. Retained for other / non-QR flows if a created row must be invalidated without completing. Insufficient Available at create is an **error with no row**, not `rejected`.
 
-Optional later states (`cancelled` · `reversed`): **`cancelled` is later-phase only** (emergency force-delete). General refund / reversal is not Phase 1 ([§12](#12-refund--reversal-deferred--not-phase-1)).
+Optional later states (`cancelled` · `reversed`): **`cancelled` is later-phase only** (emergency force-delete). General refund / reversal is out of Product MVP (Ship 1) ([§12](#12-refund--reversal-deferred--out-of-product-mvp-ship-1)).
 
 ---
 
@@ -104,7 +104,7 @@ How reserved points interact with **lot** expiry (`points_ledger.expires_at`) is
 
 ## 4. State machine (server-enforced)
 
-Minimum Phase 1 lifecycle (physical / in-person handoff):
+Minimum Product MVP (Ship 1) lifecycle (physical / in-person handoff):
 
 ```text
 PENDING
@@ -382,21 +382,21 @@ The Frontend should only expose a scanner for the Staff’s Shop. The Backend mu
 
 Staff **cannot** discretionary-reject a valid, unexpired, un-redeemed QR. Invalid scans return specific errors (`already redeemed`, `expired`, wrong shop / program). They are not a `rejected` status chosen by staff.
 
-### Phase 1 role permissions (agreed)
+### Product MVP (Ship 1) role permissions (agreed)
 
 Any existing **Staff** or **Admin** role can perform Redemption **scan / verify** operations.
 
-Do **not** introduce additional role-based restrictions for Redemption in Phase 1 unless explicitly decided later.
+Do **not** introduce additional role-based restrictions for Redemption in Product MVP (Ship 1) unless explicitly decided later.
 
 Existing authentication and authorization / security rules still apply (including the Shop boundary above).
 
 ---
 
-## 12. Refund / reversal (deferred — not Phase 1)
+## 12. Refund / reversal (deferred — out of Product MVP (Ship 1))
 
-General Refund / Reversal is **not** part of the Phase 1 Redemption flow.
+General Refund / Reversal is **not** part of the Product MVP (Ship 1) Redemption flow.
 
-Do **not** implement `COMPLETED → REVERSED` in Phase 1 APIs, UI, or state machine.
+Do **not** implement `COMPLETED → REVERSED` in Product MVP (Ship 1) APIs, UI, or state machine.
 
 **Later phase (specified):** emergency program `soft_deleted` may **cancel** remaining `PENDING` rows, auto-refund reserved points, and notify customers. That is not a merchant “reverse a completed redeem” tool.
 
@@ -426,7 +426,7 @@ Program / reward **edits are prospective only**. They apply to new earn and new 
 
 ### 14.2 Reward disabled / deleted while PENDING
 
-**DECIDED:** cannot `DELETE` / `DISABLE` / `DRAFT` a reward (or its program) while `EXISTS` pending claims — [program-model mutation guards](./program-model.md#7-mutation-guards-phase-1). **Archive** keeps PENDING completable (staff scan still works). UI 409 with pending count + Wait vs Archive.
+**DECIDED:** cannot `DELETE` / `DISABLE` / `DRAFT` a reward (or its program) while `EXISTS` pending claims — [program-model mutation guards](./program-model.md#7-mutation-guards-product-mvp-ship-1). **Archive** keeps PENDING completable (staff scan still works). UI 409 with pending count + Wait vs Archive.
 
 ### 14.3 Program disabled while PENDING
 
@@ -457,7 +457,7 @@ stateDiagram-v2
 
 ---
 
-## 15. Core constraints (Phase 1)
+## 15. Core constraints (Product MVP (Ship 1))
 
 1. Membership, points, stamps, wallet, and rewards are **program-scoped** under a Shop. Cross-Shop never mixes.
 2. A customer joins a **program** (via Shop ACTIVE QR), never a reward.
@@ -467,9 +467,9 @@ stateDiagram-v2
 6. A scheduled job expires `pending` past `qr_expires_at` and applies **PM-04** on release.
 7. Earn is **idempotent** per business event.
 8. A redemption never moves to another Shop or program.
-9. Staff authorization is **Shop-level**, server-side. Phase 1: any Staff or Admin may scan for that Shop.
+9. Staff authorization is **Shop-level**, server-side. Product MVP (Ship 1): any Staff or Admin may scan for that Shop.
 10. Reward eligibility / catalog `expires_at` is evaluated **at create**. Snapshot holds cost. QR TTL is 10 minutes, independent.
-11. General refund / reversal is **not** Phase 1. Emergency cancel+refund is later-phase only.
+11. General refund / reversal is **out of Product MVP (Ship 1)**. Emergency cancel+refund is later-phase only.
 12. Digital catalog rewards may complete instantly without QR ([§16](#16-digital-rewards-exception)).
 13. Mutation guards: no DELETE/DISABLE/DRAFT with PENDING / incomplete members / unexpired program; archive is allowed.
 

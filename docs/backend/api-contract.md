@@ -2,13 +2,13 @@
 
 **Status:** SPEC-READY (docs-only). Paths below are the **backend program** surface (or BFF that only forwards). Next.js must not become the system of record ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md), [ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)).
 
-**Stack (DECIDED):** NestJS 11.x + Prisma 7.x + PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md), [README.md](README.md#target-stack-decided)). **Auth is NestJS from Phase 1** (local JWT for `admin` / `staff` / `customer`; no Supabase Auth — [ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Other paths below are Nest HTTP contracts; remaining non-auth domains may still follow the Phase 2 cutover in [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md).
+**Stack (DECIDED):** NestJS 11.x + Prisma 7.x + PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md), [README.md](README.md#target-stack-decided)). **Auth is NestJS from Product MVP (Ship 1)** (local JWT for `admin` / `staff` / `customer`; no Supabase Auth — [ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Other paths below are Nest HTTP contracts; remaining non-auth domains may still follow the **Frontend Migration Phase 2** cutover in [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md).
 
-**Related:** [data-contract.md](data-contract.md) · [remediation-roadmap.md](remediation-roadmap.md) · [gaps-and-solutions.md](../frontend/gaps-and-solutions.md) · [program-model.md](../product/program-model.md) · [ADR-016](../architecture/decisions/ADR-016-independent-programs.md)
+**Related:** [data-contract.md](data-contract.md) · [remediation-roadmap.md](remediation-roadmap.md) · [gaps-and-solutions.md](../frontend/gaps-and-solutions.md) · [program-model.md](../product/program-model.md) · [phase-1-scope.md](../product/phase-1-scope.md) · [ADR-016](../architecture/decisions/ADR-016-independent-programs.md)
 
 Authz unless noted: **owner session** = **`admin`** (buyer of Loyollo; [data-contract glossary](data-contract.md#unified-glossary)). **`staff`** uses the same `/app` APIs with **the same permissions as `admin` for now**. Scope to the caller’s Shop (`owner_id`). Service-role only in workers and public enroll.
 
-**Shop-customer session (DECIDED, not shipped):** register/login for role **customer** is a separate authz plane from `admin` / `staff`. It must not authorize `/app` merchant APIs. **Passwordless:** login and lost access use OTP (SMS/WhatsApp), never merchant `/auth/forgot-password`. Endpoints and identity are backend-owned ([G-33](../frontend/gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows), [credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided)).
+**Shop-customer session (DECIDED, portal not shipped):** register/login for role **customer** is a separate authz plane from `admin` / `staff`. It must not authorize `/app` merchant APIs. **Passwordless:** login and lost access use OTP (SMS/WhatsApp), never merchant `/auth/forgot-password`. **Product MVP (Ship 1):** public enroll OTP + wallet QR only ([phase-1-scope.md](../product/phase-1-scope.md#otp-vs-staff-pos--resolved-split)). Portal sessions deferred ([G-33](../frontend/gaps-and-solutions.md#g-33--shop-customers-have-no-registerlogin-kpis-rely-on-owner-typed-rows)).
 
 ### Error envelope
 
@@ -22,7 +22,7 @@ Mutation, POS, OTP, and enroll errors use:
 }
 ```
 
-**Phase 1 codes:** `PROGRAM_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_MUTATION_BLOCKED_ACTIVE_MEMBERS`, `PROGRAM_MUTATION_BLOCKED_NOT_EXPIRED`, `REWARD_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_ACTIVE_LIMIT`, `INVOICE_DUPLICATE`, `REFERRAL_POINTS_REQUIRES_POINTS_ENABLED`, `OTP_MAX_ATTEMPTS_EXCEEDED`, `OTP_RESEND_COOLDOWN`, `DAILY_OTP_LIMIT_REACHED`, `AUTOMATIONS_NOT_AVAILABLE_PHASE1`, `ENROLL_VALIDATION_FAILED`. OTP 429 bodies include `retry_after_seconds` (in `details` or top-level — UI must not hardcode timers).
+**Product MVP (Ship 1) error codes:** `PROGRAM_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_MUTATION_BLOCKED_ACTIVE_MEMBERS`, `PROGRAM_MUTATION_BLOCKED_NOT_EXPIRED`, `REWARD_MUTATION_BLOCKED_PENDING_CLAIMS`, `PROGRAM_ACTIVE_LIMIT`, `INVOICE_DUPLICATE`, `REFERRAL_POINTS_REQUIRES_POINTS_ENABLED`, `OTP_MAX_ATTEMPTS_EXCEEDED`, `OTP_RESEND_COOLDOWN`, `DAILY_OTP_LIMIT_REACHED`, `AUTOMATIONS_NOT_AVAILABLE_PHASE1`, `ENROLL_VALIDATION_FAILED`. OTP 429 bodies include `retry_after_seconds` (in `details` or top-level — UI must not hardcode timers).
 
 ---
 
@@ -48,15 +48,15 @@ Mutation, POS, OTP, and enroll errors use:
 4. Staff **scan / verify** is one transaction: still `pending` **and** `qr_expires_at > now()` → consume reserved using **`reward_snapshot`** (ignore live `point_cost` if it diverged) → `completed`, set `redeemed_at`, increment `rewards.redeemed_count`, optional `branch_id` / `order_id`. **PM-04:** complete even if reserved lot `expires_at` passed during the QR window. The write **must** be `UPDATE … WHERE status = 'pending'` (and QR still valid) with **affected row count = 1**. Already `completed` → reject with **“already redeemed”**. `expired` or past `qr_expires_at` → reject with **“expired”**. Staff scanning is **verification**, not discretionary approval — do not ship `approve` / `reject` for a valid physical QR.
 5. A **scheduled job** finds `pending` rows with `qr_expires_at <= now()`, marks them `expired`, **releases** Reserved, then **purges** lots with `expires_at <= now()` (not returned to Available). Live lots return to Available. Do not decrement `period_points_earned`.
 6. When a ticket exists on complete: create or attach `orders` and set `customer_rewards.order_id` in the **same** scan/complete transaction. Rows without `order_id` are valid operationally but **excluded from ROI** until linked.
-7. Authz is **Shop-level**: `staff.branch.shop_id === redemption.shop_id`. Any authorized Staff from any Branch of that Shop may scan. Staff from another Shop must not. Do not authorize on `redemption_id` or `qr_code` alone. Frontend exposes a scanner; Backend enforces independently. Phase 1: any existing Staff or Admin role may perform Redemption scan/verify.
+7. Authz is **Shop-level**: `staff.branch.shop_id === redemption.shop_id`. Any authorized Staff from any Branch of that Shop may scan. Staff from another Shop must not. Do not authorize on `redemption_id` or `qr_code` alone. Frontend exposes a scanner; Backend enforces independently. Product MVP (Ship 1): any existing Staff or Admin role may perform Redemption scan/verify.
 8. Reward eligibility / expiry is evaluated **at create** and stored in `reward_snapshot`. Later live `rewards` PATCHes must not rewrite PENDING. QR TTL (10 minutes) is independent of lot `expires_at` (PM-04).
 9. Referral **voucher** redeem is `POST /api/vouchers/:id/redeem` on `vouchers` (`active` only; refuse `used` / `expired` / `now() >= expires_at`). Do not auto-apply to a cart. Not this catalog state machine.
 10. **Digital exception:** a purely digital catalog reward may complete in the create transaction (no QR, no staff scan). Physical / in-person handoff uses the QR path. [§16](../product/reward-redemption-flow.md#16-digital-rewards-exception).
-11. **Not Phase 1:** refund / reverse; emergency cancel+refund (`cancelled`). **Do not implement** staff Approve/Reject for physical catalog rewards (previous spec — superseded). Snapshot / PM-04 / mutation guards are **DECIDED** — implement them.
+11. **Out of Product MVP (Ship 1):** refund / reverse; emergency cancel+refund (`cancelled`). **Do not implement** staff Approve/Reject for physical catalog rewards (previous spec — superseded). Snapshot / PM-04 / mutation guards are **DECIDED** — implement them.
 
 ### Catalog redemption lifecycle (DECIDED, not shipped)
 
-Paths are illustrative (backend-owned). Shop-**`customer`** session for create; `admin` / `staff` for **scan/verify**, **Shop-scoped**. Phase 1: any existing Staff or Admin role may scan. Staff cannot reject a valid, unexpired, un-redeemed QR.
+Paths are illustrative (backend-owned). Shop-**`customer`** session for create; `admin` / `staff` for **scan/verify**, **Shop-scoped**. Product MVP (Ship 1): any existing Staff or Admin role may scan. Staff cannot reject a valid, unexpired, un-redeemed QR.
 
 | Method | Path | Purpose | Request | Response |
 |--------|------|---------|---------|----------|
@@ -67,7 +67,7 @@ Paths are illustrative (backend-owned). Shop-**`customer`** session for create; 
 
 **Superseded (do not implement for physical catalog rewards):** `POST /api/redemptions/:id/approve` and `POST /api/redemptions/:id/reject` as discretionary staff actions. Scan verifies; expiry is the job. `rejected` is not a staff choice on a valid QR.
 
-**Not Phase 1:** do not ship `POST /api/redemptions/:id/reverse`. Refund / reversal is deferred.
+**Out of Product MVP (Ship 1):** do not ship `POST /api/redemptions/:id/reverse`. Refund / reversal is deferred.
 
 ### Branches
 
@@ -126,7 +126,7 @@ Visit metrics in the same response (or nested under `engagement`) must use the P
 | Method | Path | Purpose | Request | Response | Unlocks |
 |--------|------|---------|---------|----------|---------|
 | POST | `/api/campaigns/:id/send` | Enqueue send (**202**) | Body optional | `{ job_id }` — worker outside Next ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)) | G-09 send (opens still deferred) |
-| POST/PATCH/DELETE | `/api/campaign_automations` … | **PM-18:** Phase 1 **hidden**. Writes return **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or omit routes → 404). Do **not** hide campaign list / Launch | — | `{ code, message }` | DG-10 |
+| POST/PATCH/DELETE | `/api/campaign_automations` … | **PM-18:** hidden in **Product MVP (Ship 1)**. Writes return **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or omit routes → 404). Do **not** hide campaign list / Launch | — | `{ code, message }` | DG-10 |
 
 Do **not** hide campaign list or Launch. G-09 **automations** = resolved hidden; G-09 send/opens stay deferred.
 
@@ -188,12 +188,12 @@ Canonical product: [program-model.md](../product/program-model.md). Paths illust
 | POST | `/api/programs/:id/activate` | Atomically archive previous ACTIVE; set this `active` | — | `{ program, archived_id? }`. **PM-07:** **400** `REFERRAL_POINTS_REQUIRES_POINTS_ENABLED` if activating non-points while referral kinds include `points` |
 | POST | `/api/programs/:id/archive` | Allowed **with** members / PENDING | — | `{ program }` |
 | DELETE / PATCH disable or draft | `/api/programs/:id` | **Mutation guards** | — | **409** with counts + Wait vs Archive: `PROGRAM_MUTATION_BLOCKED_*` |
-| POST | `/api/programs/:id/force-soft-delete` | **Not Phase 1** — documented stub | — | `501` / omit until later phase |
+| POST | `/api/programs/:id/force-soft-delete` | **Out of Product MVP (Ship 1)** — documented stub | — | `501` / omit until later phase |
 | PATCH | `/api/referral-settings` | **PM-07** kinds `points` \| `voucher` | Body | `{ settings }` or **400** `REFERRAL_POINTS_REQUIRES_POINTS_ENABLED` |
 
 Reward CRUD on a program: **409** `REWARD_MUTATION_BLOCKED_PENDING_CLAIMS` while PENDING exist. Material catalog cuts insert a `reward_version`.
 
-### Staff POS (Phase 1 cashier)
+### Staff POS (Product MVP Ship 1 cashier)
 
 Square/Clover still deferred (UX-19). Authz: `admin` / `staff`, Shop-scoped.
 

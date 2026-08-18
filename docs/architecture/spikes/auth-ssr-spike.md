@@ -1,7 +1,7 @@
 # Spike: Auth Cookie / SSR Session
 
 **Date:** 2026-08-11  
-**Status:** **SUPERSEDED** (2026-08-17) — this spike proved `@supabase/ssr`. [ADR-005](../decisions/ADR-005-authentication.md) **Option C** withdraws Supabase Auth even in Phase 1. Do **not** treat a PASS of this document as D-28 complete.
+**Status:** **SUPERSEDED** (2026-08-17) — this spike proved `@supabase/ssr`. [ADR-005](../decisions/ADR-005-authentication.md) **Option C** withdraws Supabase Auth even during Frontend Migration. Do **not** treat a PASS of this document as D-28 complete.
 
 **Replacement proof (D-28):** NestJS-issued local JWT in HTTP-only cookies via Next `proxy.ts` + RSC session validation against Nest. Recreate the harness against Nest auth APIs, not `@supabase/ssr`.
 

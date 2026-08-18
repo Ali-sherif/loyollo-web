@@ -29,4 +29,4 @@ Indexed UI vs API vs DB gaps (**G-01…G-36**): [../frontend/gaps-and-solutions.
 
 ## Current system (as built)
 
-How pages talk to the API today: [../frontend/system-architecture.md](../frontend/system-architecture.md). **Auth is NestJS from Phase 1** ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Remaining product data access still follows [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md) until Phase 2 Nest APIs replace direct client Postgres/PostgREST.
+How pages talk to the API today: [../frontend/system-architecture.md](../frontend/system-architecture.md). **Auth is NestJS from Product MVP (Ship 1)** ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Remaining product data access still follows [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md) until Frontend Migration Phase 2 Nest APIs replace direct client Postgres/PostgREST. Scope: [phase-1-scope.md](../product/phase-1-scope.md) · remediation: [remediation-roadmap.md](remediation-roadmap.md).

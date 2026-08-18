@@ -52,13 +52,13 @@ flowchart LR
 - Next.js 16.3.x, React/React DOM 19.2.x, TypeScript 6.0.x; package manager npm.
 - App Router; native route typing; Metadata API; `error`/`not-found`/`loading` ([ADR-002](../architecture/decisions/ADR-002-app-router.md)).
 - Existing backend remains primary API; Route Handlers/Server Actions only when justified ([ADR-006](../architecture/decisions/ADR-006-server-boundaries.md)).
-- Backend owns authz via **NestJS independent auth** (local JWT for `admin` · `staff` · `customer`); **no Supabase Auth** even in Phase 1 ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Next.js route protection + session-aware rendering; HTTP-only cookies where applicable. NestJS natively handles admin temp-passwords/resets and customer OTP. Locked roles: `admin` · `staff` (same permissions as `admin` for now) · `customer` ([11-authentication-migration.md](11-authentication-migration.md#locked-role-matrix)).
+- Backend owns authz via **NestJS independent auth** (local JWT for `admin` · `staff` · `customer`); **no Supabase Auth** even during Frontend Migration ([ADR-005](../architecture/decisions/ADR-005-authentication.md) Option C). Next.js route protection + session-aware rendering; HTTP-only cookies where applicable. NestJS natively handles admin temp-passwords/resets and customer OTP. Locked roles: `admin` · `staff` (same permissions as `admin` for now) · `customer` ([11-authentication-migration.md](11-authentication-migration.md#locked-role-matrix)). Product scope: [phase-1-scope.md](../product/phase-1-scope.md).
 - Server-function mapping **DECIDED**: Backend API / Server Action / BFF tree ([15-server-function-mapping.md](15-server-function-mapping.md)).
 - RSC by default; small Client islands; static/SSR/ISR per route ([ADR-003](../architecture/decisions/ADR-003-rendering-strategy.md)).
 - Hybrid data fetching: RSC initial reads; TanStack Query for interactive server state ([ADR-004](../architecture/decisions/ADR-004-data-and-state.md)).
 - Thin `app/`; domain logic in `features/` ([ADR-007](../architecture/decisions/ADR-007-project-structure.md)).
 - Production route map **APPROVED** ([02-route-migration.md](02-route-migration.md)).
-- RLS/storage Phase 1 retain existing policies; Phase 2 Backend-only access **DECIDED** ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md)).
+- RLS/storage Frontend Migration (ADR-011 Phase 1): retain existing policies; Frontend Migration Phase 2 Backend-only access **DECIDED** ([ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md)).
 - Public enrollment rate limits **DECIDED** ([ADR-012](../architecture/decisions/ADR-012-public-enrollment-rate-limiting.md)).
 - Campaign/messaging background runtime **DECIDED** ΓÇö outside Next.js ([ADR-013](../architecture/decisions/ADR-013-campaign-messaging-runtime.md)).
 - Phase 2 backend stack **DECIDED** — NestJS 11.x, Prisma 7.x, PostgreSQL 18.x ([ADR-015](../architecture/decisions/ADR-015-backend-stack.md)); not a migration slice.

@@ -16,7 +16,7 @@ Related Product Owner locks in the same pass (documented in [program-model.md](.
 - **PM-07** — referral `points` forbidden unless `is_points_enabled`
 - **PM-04** — reserved lots locked for the 10-minute QR TTL
 - **PM-06** — customer OTP 3 / 60s / 5 per 24h / 180s
-- **PM-18** — hide campaign automations in Phase 1
+- **PM-18** — hide campaign automations in **Product MVP (Ship 1)**
 - **UX-75** — `full_name`, `email`, `birth_date` required on new-phone enroll
 - **§14.1** — `reward_snapshot` at Redeem create; program edits prospective; material catalog changes = new reward version
 

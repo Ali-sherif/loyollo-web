@@ -9,8 +9,8 @@ DECIDED
 ### API boundary
 
 - Keep the existing backend as the primary business/API backend. Next.js must not become a second backend.
-- **Auth (Phase 1):** NestJS is the only IdP. Do **not** use Supabase Auth even as a bridge ([ADR-005](ADR-005-authentication.md) Option C).
-- Phase 1 product APIs may still use established contracts until the Nest cutover for those domains; **identity is not one of those exceptions**.
+- **Auth (Frontend Migration):** NestJS is the only IdP. Do **not** use Supabase Auth even as a bridge ([ADR-005](ADR-005-authentication.md) Option C).
+- Product MVP (Ship 1) APIs may still use established contracts until the Nest cutover for those domains; **identity is not one of those exceptions**.
 - Phase 2: the primary business API is **NestJS 11.x** over **PostgreSQL 18.x** via **Prisma 7.x** ([ADR-015](ADR-015-backend-stack.md)).
 - Next.js should not become a replacement for the existing backend.
 - Server Components may communicate with the backend directly when appropriate.
@@ -38,7 +38,7 @@ Old Server Function
 
 Prefer:
 
-- backend APIs (NestJS for auth from Phase 1; other domains per [ADR-011](ADR-011-rls-storage-strategy.md) until Phase 2 cutover) for business logic and persistence,
+- backend APIs (NestJS for auth from Product MVP (Ship 1); other domains per [ADR-011](ADR-011-rls-storage-strategy.md) until Frontend Migration Phase 2 cutover) for business logic and persistence,
 - server-only library functions when the frontend must orchestrate privileged calls without exposing secrets,
 - Server Components for render-time reads against the backend when a trustworthy session exists,
 - Server Actions only for narrow frontend-specific mutations or backend orchestration with a clear benefit over calling the API layer,

@@ -436,7 +436,7 @@ No live reward configured → honest empty. Several catalog rewards → one prim
 
 ## Reward redemption lifecycle (DECIDED)
 
-**Status:** DECIDED for Phase 1 lifecycle and agreed edge cases (not shipped). Five items remain pending owner decision. **Full lock:** [reward-redemption-flow.md](../product/reward-redemption-flow.md). Schema/API are backend-owned ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)). Gap: [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn).
+**Status:** DECIDED for Product MVP (Ship 1) lifecycle and agreed edge cases (not shipped). Five items remain pending owner decision. **Full lock:** [reward-redemption-flow.md](../product/reward-redemption-flow.md). Schema/API are backend-owned ([ADR-014](../architecture/decisions/ADR-014-product-data-ownership.md)). Gap: [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn).
 
 Catalog redeem is **not** an immediate point burn (physical / in-person handoff). The customer taps Redeem **on the enrolled program**; if `Available < snapshot cost` the request is refused with a clear error (no row). If valid, persist **`reward_snapshot`**, start `pending`, **reserve** snapshot cost, issue a **single-use QR** (10-minute expiry). Staff **scans** → atomic `PENDING → COMPLETED` using the snapshot (PM-04: even if lot `expires_at` passed during the window). Unscanned QRs expire via a **scheduled job** (`expired`, release Reserved, **purge** expired reserved lots). Earn ≠ redeem still holds. Purely digital catalog rewards may complete instantly ([§16](../product/reward-redemption-flow.md#16-digital-rewards-exception)).
 
@@ -444,7 +444,7 @@ Catalog redeem is **not** an immediate point burn (physical / in-person handoff)
 Select this Shop’s reward → PENDING + reserve + QR → Staff scan (COMPLETED) or job (EXPIRED)
 ```
 
-Locked (Phase 1):
+Locked (Product MVP (Ship 1)):
 
 - Redeem only rewards on the membership’s Shop. The row stays on that Shop forever — joining Shop B must not transfer it or spend Shop B points.
 - `Available = Total − Reserved`. Combined pending cost cannot exceed available. Concurrent Redeems check Available, not Total. Reservation happens at Redeem time, not at staff-scan time.
@@ -455,10 +455,10 @@ Locked (Phase 1):
 - Earn events (check-in / POS / `Invoice.Paid`) are idempotent on a unique business reference. Concurrent earn and redeem use the same consistency model (no negative balance, lost update, or double deduct).
 - Reward eligibility / expiry is snapshotted **at create**. Live catalog PATCHes are **prospective only**. Material cuts → new **reward version**. QR TTL (10 minutes) is independent of lot `expires_at` (**PM-04**).
 - Authz is **Shop-level**: `staff.branch.shop_id === redemption.shop_id` (today: owner of the capability rows). Any authorized Staff from any Branch of that Shop may scan. Staff from another Shop must not. Backend enforces independently of Frontend.
-- Phase 1: any existing Staff or Admin role may perform Redemption scan/verify. Do not add extra role restrictions unless decided later.
-- Refund / reversal is **not** Phase 1.
+- Product MVP (Ship 1): any existing Staff or Admin role may perform Redemption scan/verify. Do not add extra role restrictions unless decided later.
+- Refund / reversal is **out of Product MVP (Ship 1)**.
 
-**Closed (implement):** snapshot at create; program/reward edits prospective; PM-04 reserved-lot expiry; Phase 1 mutation guards. **Not Phase 1:** emergency cancel+refund. [§14.1](../product/reward-redemption-flow.md#141-reward-snapshot-prospective-edits-versions).
+**Closed (implement):** snapshot at create; program/reward edits prospective; PM-04 reserved-lot expiry; Product MVP (Ship 1) mutation guards. **Out of Product MVP (Ship 1):** emergency cancel+refund. [§14.1](../product/reward-redemption-flow.md#141-reward-snapshot-prospective-edits-versions).
 
 ---
 

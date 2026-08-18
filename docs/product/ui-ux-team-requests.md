@@ -8,6 +8,8 @@
 
 **There is no standalone PRD** in `docs/`. Product locks live in [product-manager-meeting-report.md](../product-manager-meeting-report.md) and the page specs. This file does not add new product decisions; it extracts what design still owes.
 
+**Product scope labels:** never use bare “Phase 1” — see [phase-1-scope.md](./phase-1-scope.md).
+
 Customer portal **case map** (every outcome on the 2026-08-16 diagram, plus cases the diagram omitted): [customer-portal-journey.md](./customer-portal-journey.md). Program model (Shop capabilities, one-per-type, one membership per Shop): [program-model.md](./program-model.md). Counter QR vs Shop membership: [counter-qr-and-program-membership.md](./counter-qr-and-program-membership.md). Customer reward progress: [customer-reward-progress.md](./customer-reward-progress.md). Catalog redeem (pending / reserve / QR verification): [reward-redemption-flow.md](./reward-redemption-flow.md).
 
 **Jump to:** [How to use](#how-to-use-this-document) · [Locked constraints](#locked-constraints-do-not-redesign) · [1. New screens](#1-new-screens--flows-to-design) · [2. UX decisions](#2-ux-decisions-hide-vs-honest-placeholder-vs-wire) · [3. Copy](#3-copy--content) · [4. Assets](#4-assets--brand) · [5. Not UI/UX](#5-not-uiux--do-not-design-as-if-these-exist) · [Index](#request-index) · [Traceability](#traceability-docs--this-file)
@@ -22,7 +24,7 @@ Each request is tagged:
 |-----|---------|
 | **UX-nn** | This file’s request ID. Use it in Figma / tickets. |
 | **Need** | `Design` (new screen/flow) · `Decision` (hide / keep / relabel) · `Copy` · `Asset` |
-| **Priority** | `P0` blocks a DECIDED product flow · `P1` honesty / Phase-1 ship look · `P2` later or optional |
+| **Priority** | `P0` blocks a DECIDED product flow · `P1` honesty / Product MVP (Ship 1) ship look · `P2` later or optional |
 | **Source** | `G-xx` gap, `DG-xx` docs gap, `A-01` audit, page spec, meeting report |
 
 **Locked facts** in each row must appear in the design. **Open** items are what UI/UX (with product) must close. Do not invent a parallel product rule.
@@ -243,7 +245,7 @@ Customer-portal **URLs are not locked** and are **not** on the approved route ma
 - Step sequence on the existing join page (branding from QR Experience tab **is** wired).
 - How referred reward is previewed before OTP (working: **referral banner** on the entry screen).
 - 429 / invalid OTP / expired OTP / already-used OTP / no live capability (`draft`/`disabled` must not accept join) empty states.
-- Marketing consent: today disclaimer is **copy-only**, no stored opt-in ([DG-08](#ux-24--communication-policy--sms-in-phase-1)). Design a real consent control if product includes it in Phase 1.
+- Marketing consent: today disclaimer is **copy-only**, no stored opt-in ([DG-08](#ux-24--communication-policy--sms-in-product-mvp-ship-1)). Design a real consent control if product includes it in Product MVP (Ship 1).
 
 Do **not** fold returning in-store check-in into the portal OTP diagram. Portal login is always OTP ([customer-portal-journey.md](./customer-portal-journey.md)).
 
@@ -311,18 +313,18 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 
 | | |
 |--|--|
-| **Need / priority** | Design · **P1** (**staff cashier POS is Phase 1**; Square/Clover still deferred — [UX-19](#ux-19--phase-1-exclusions-social-auth-2fa-pos-wallet)) |
+| **Need / priority** | Design · **P1** (**staff cashier POS is in Product MVP (Ship 1)**; Square/Clover still deferred — [UX-19](#ux-19--product-mvp-ship-1-exclusions-social-auth-2fa-pos-wallet)) |
 | **Source** | [G-20](../frontend/gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) · [reward-redemption-flow.md](./reward-redemption-flow.md) · audit §4.1 · **DG-01** |
 
 **Locked (when built)**
 
-- **Phase 1 cashier:** scan **customer QR** (`POST /api/pos/scan`) → optional **deferred migrate** → **Bill Amount + Invoice Number** (`POST /api/pos/transactions`). Square/Clover still deferred.
+- **Product MVP (Ship 1) cashier:** scan **customer QR** (`POST /api/pos/scan`) → optional **deferred migrate** → **Bill Amount + Invoice Number** (`POST /api/pos/transactions`). Square/Clover still deferred.
 - Identify member (QR / phone), award visit or spend (**idempotent** on `idempotency_key` / `(shop_id, invoice_number)`). Earn ≠ redeem. Catalog **Redeem** from the customer wallet is not a staff “create redemption” click — the customer taps Redeem; staff **scans the redemption QR** at checkout.
 - Catalog redeem: persist **`reward_snapshot`**; if Available < snapshot cost, refuse (no row); else `pending` + reserve + **single-use QR** (10-minute `qr_expires_at`). Staff **scan verifies** using the snapshot (atomic `PENDING → COMPLETED` + consume reserved; **PM-04**). Second scan / retry → **“already redeemed”**. Expired QR → **“expired”**. Create is idempotent.
 - Staff scanning is **verification**, not discretionary approval. Staff **cannot** reject a valid, unexpired, un-redeemed QR. Do **not** design an Approve / Reject pending list for physical catalog rewards.
-- Staff authz is **Shop-level**. Phase 1: any existing Staff or Admin role may perform Redemption scan/verify **and** cashier POS.
+- Staff authz is **Shop-level**. Product MVP (Ship 1): any existing Staff or Admin role may perform Redemption scan/verify **and** cashier POS.
 - Live catalog PATCHes are **prospective only**. Material cuts → new reward version.
-- Refund / reversal is **not** Phase 1.
+- Refund / reversal is **out of Product MVP (Ship 1)**.
 
 **Open**
 
@@ -343,7 +345,7 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 
 **Open**
 
-- Does the merchant see this list at all in Phase 1, or is review internal-only?
+- Does the merchant see this list at all in Product MVP (Ship 1), or is review internal-only?
 - Table columns, approve/reject copy, empty state.
 
 #### UX-13 — Loyalty program overview (create vs edit split)
@@ -389,7 +391,7 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 **Locked**
 
 - Seven types, CRUD, unique per type. **Enabled does not send.** `config` jsonb is never used.
-- **PM-18:** Phase 1 **hide** Scheduled Automations. Writes → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1`. Do **not** hide campaign list / Launch.
+- **PM-18:** Product MVP (Ship 1) **hide** Scheduled Automations. Writes → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1`. Do **not** hide campaign list / Launch.
 
 **Open**
 
@@ -444,11 +446,11 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 
 ## 2. UX decisions: hide vs honest placeholder vs wire
 
-These controls **already exist** and either lie, do nothing, or contradict Phase-1 scope. UI/UX + product must pick **hide**, **keep `"—"`**, **relabel**, or **wire**. Default engineering honesty (ADR-014) is `"—"` or hide — not fake numbers.
+These controls **already exist** and either lie, do nothing, or contradict Product MVP (Ship 1) scope. UI/UX + product must pick **hide**, **keep `"—"`**, **relabel**, or **wire**. Default engineering honesty (ADR-014) is `"—"` or hide — not fake numbers.
 
-### 2.1 Product Phase 1 exclusions (docs vs checklist)
+### 2.1 Product MVP (Ship 1) exclusions (docs vs checklist)
 
-#### UX-19 — Phase 1 exclusions: social auth, 2FA, POS, Wallet
+#### UX-19 — Product MVP (Ship 1) exclusions: social auth, 2FA, POS, Wallet
 
 | | |
 |--|--|
@@ -457,12 +459,12 @@ These controls **already exist** and either lie, do nothing, or contradict Phase
 
 | Item | Docs today | Checklist | What design must lock |
 |------|------------|-----------|------------------------|
-| Facebook / Google / Apple **Sign-In** | **Never mentioned** | Deferred from Phase 1 | Never / later / hidden buttons on `/auth/*` |
-| **2FA** | Settings documents **real TOTP enroll**; login challenge missing (G-26) | Deferred from Phase 1 | If Phase 1 **excludes** 2FA: hide Security 2FA card. If it **includes** enroll: design the **sign-in MFA challenge** ([UX-56](#ux-56)) |
-| **POS** (Square, Clover, Toast, Lightspeed, Shopify) | Catalog + “recorded your interest” | **Integrations** deferred | Hide Integrations POS rows vs interest-only. **Staff cashier** (Bill Amount + Invoice Number) **is Phase 1** — [UX-11](#ux-11--staff-pos-identify--award--redeem) |
-| **QR & Wallet** (Apple/Google Wallet) | Same catalog | Deferred | Hide vs interest-only. **Shop join QR on `/app/loyalty` stays in Phase 1** — different feature |
+| Facebook / Google / Apple **Sign-In** | **Never mentioned** | Out of Product MVP (Ship 1) | Never / later / hidden buttons on `/auth/*` |
+| **2FA** | Settings documents **real TOTP enroll**; login challenge missing (G-26) | Out of Product MVP (Ship 1) | If Product MVP (Ship 1) **excludes** 2FA: hide Security 2FA card. If it **includes** enroll: design the **sign-in MFA challenge** ([UX-56](#ux-56)) |
+| **POS** (Square, Clover, Toast, Lightspeed, Shopify) | Catalog + “recorded your interest” | **Integrations** deferred | Hide Integrations POS rows vs interest-only. **Staff cashier** (Bill Amount + Invoice Number) **is in Product MVP (Ship 1)** — [UX-11](#ux-11--staff-pos-identify--award--redeem) |
+| **QR & Wallet** (Apple/Google Wallet) | Same catalog | Deferred | Hide vs interest-only. **Shop join QR on `/app/loyalty` stays in Product MVP (Ship 1)** — different feature |
 
-Integrations tab as a whole: out of Phase 1, or visible catalog that never looks “Connectable.”
+Integrations tab as a whole: out of Product MVP (Ship 1), or visible catalog that never looks “Connectable.”
 
 #### UX-20 — Analytics Revenue Impact: hide vs `"—"`
 
@@ -471,7 +473,7 @@ Integrations tab as a whole: out of Phase 1, or visible catalog that never looks
 | **Need / priority** | Decision · **P0** |
 | **Source** | **DG-03** · G-06 · analytics-page Revenue tab + Overview AOV card |
 
-Checklist: **hide** Overview Revenue Impact and (by implication) the Revenue tab in Phase 1 (no POS). Specs: **keep** the tab and Overview card as `"—"`. Subtitle still says “revenue impact.”
+Checklist: **hide** Overview Revenue Impact and (by implication) the Revenue tab in Product MVP (Ship 1) (no third-party POS). Specs: **keep** the tab and Overview card as `"—"`. Subtitle still says “revenue impact.”
 
 **Pick one:** remove tab + Overview money card, or keep honest dashes and change the subtitle so it does not promise revenue.
 
@@ -506,16 +508,16 @@ Catalog ≠ strategy. Until objects/direction/Phase are locked, treat like POS: 
 
 `profiles.currency` is **display metadata only** (symbol/label). Changing it must **not** convert historical `*_cents`, points, or vouchers. Each `orders` / `points_ledger` row snapshots `currency_code` at write time. No FX. Design Settings + `$` widgets to use the display code — never imply conversion.
 
-#### UX-24 — Communication policy + SMS in Phase 1
+#### UX-24 — Communication policy + SMS in Product MVP (Ship 1)
 
 | | |
 |--|--|
 | **Need / priority** | Decision · **P1** |
 | **Source** | **DG-08** · campaigns channel `email` \| `sms` · 17-messaging SMS stub |
 
-**Open:** marketing vs transactional; stored opt-in on join; frequency caps; quiet hours; preferred channel; unsubscribe vs `suppressed_emails`; whether **SMS campaigns** are a real path, a visible-fail stub, or **hidden** in Phase 1.
+**Open:** marketing vs transactional; stored opt-in on join; frequency caps; quiet hours; preferred channel; unsubscribe vs `suppressed_emails`; whether **SMS campaigns** are a real path, a visible-fail stub, or **hidden** in Product MVP (Ship 1).
 
-If SMS is out of Phase 1, hide the channel picker. If it stays, design the explicit failure (today every SMS recipient fails with “SMS provider not configured”).
+If SMS is out of Product MVP (Ship 1), hide the channel picker. If it stays, design the explicit failure (today every SMS recipient fails with “SMS provider not configured”).
 
 #### UX-25 — Single “At risk” definition + engagement exclusivity
 
@@ -535,7 +537,7 @@ Four published rules:
 
 Engagement buckets: specs allow **overlap**; glossary wants **exclusive**.
 
-**Need:** one glossary for Phase 1, and whether Overview vs Engagement may keep different cutoffs. Then restyle labels so “At risk” / “Champion” are not four products.
+**Need:** one glossary for Product MVP (Ship 1), and whether Overview vs Engagement may keep different cutoffs. Then restyle labels so “At risk” / “Champion” are not four products.
 
 #### UX-26 — Loyalty ↔ “bill types”
 
@@ -556,7 +558,7 @@ Existing widgets that train the merchant to distrust numbers. Prefer relabel or 
 | **UX-28** | Customers “Returning Rate” | Silver count | A rate | G-12 | Relabel or hide until visit events |
 | **UX-29** | Branches performance donut | Even % split | Performance share | G-04 · ADR-014 | Hide or `"—"` until `branch_id` |
 | **UX-30** | Branch cards customers / redemptions | Program total ÷ N | Per-branch stats | G-04 | Same |
-| **UX-31** | Campaign Performance after send | `0% Open` / `0% Redeemed` | Measured results | G-09 · meeting report | `"—"` until opens/redemptions exist (Phase 1 does **not** track opens — already locked) |
+| **UX-31** | Campaign Performance after send | `0% Open` / `0% Redeemed` | Measured results | G-09 · meeting report | `"—"` until opens/redemptions exist (Product MVP (Ship 1) does **not** track opens — already locked) |
 | **UX-32a** | Auth promo cards | Hardcoded `+20%` / `863.5K` / `5.6M` | Product metrics | audit §3.6 · sign-in | Mark as marketing fiction or remove numbers |
 | **UX-32b** | Dashboard / Campaigns revenue | `$0.00` | GMV | G-06 | `"—"` or hide (same ruling as UX-20) |
 
@@ -594,7 +596,7 @@ Existing widgets that train the merchant to distrust numbers. Prefer relabel or 
 | **UX-53** | Campaigns Enable sets Active without sending | Align Enable/Disable/Launch with locked lifecycle (Enable → Draft) | G-09 · meeting report |
 | **UX-54** | No loyalty program: Customers/Campaigns empty list; Analytics has a dedicated empty canvas | One empty-program pattern | page specs |
 | **UX-55** | Session timeout lands on generic sign-in (`redirectedFrom` unused) | Design post-login return (allow-listed paths only) | audit S-16 |
-| **UX-56** | MFA enroll exists; sign-in may skip challenge | Design AAL2 challenge on `/auth/sign-in` **if 2FA is in Phase 1** (UX-19) | G-26 |
+| **UX-56** | MFA enroll exists; sign-in may skip challenge | Design AAL2 challenge on `/auth/sign-in` **if 2FA is in Product MVP (Ship 1)** (UX-19) | G-26 |
 | **UX-57** | Optional suppression-list read-only UI | Settings vs hide | G-30 |
 | **UX-58** | Email change disabled on Settings | Keep disabled with explanation, or design Auth email-change flow | settings-page |
 | **UX-59** | Reward “on completion” is a free-text label, not a catalog `rewards.id` | Picker from Rewards tab vs keep string | loyalty-page |
@@ -665,7 +667,7 @@ ADR-010: **no new visual language**. New screens reuse Figtree, navy/yellow, exi
 | **UX-71** | Empty states for: zero programs, inactive login, pending-review list, wallet with no programs, POS insufficient points | Reuse telescope where it still means “no data”; do not reuse it for **errors** (429, inactive) | P1 |
 | **UX-72** | Referral share sheet (copy link / save QR / native share) | On the wallet card | P1 |
 | **UX-73** | Teammate-created **email HTML** | New template; visual parity with existing React Email auth set | P0 |
-| **UX-74** | MFA challenge (if in Phase 1) | TOTP input; parity with Settings 2FA enroll QR | P1 |
+| **UX-74** | MFA challenge (if in Product MVP (Ship 1)) | TOTP input; parity with Settings 2FA enroll QR | P1 |
 
 Do **not** vendor new marketing assets via external CDN ([deferred-decisions](../architecture/deferred-decisions.md) asset vendoring is done).
 
@@ -734,12 +736,12 @@ From [meeting report “Not decided”](../product-manager-meeting-report.md) an
 | UX-16 | Design | P2 | Campaign token hints + freeze-after-send |
 | UX-17 | Decision | P1 | Billing / onboarding plan: hide vs checkout |
 | UX-18 | Decision | P2 | Internal `/admin` back office — product first |
-| UX-19 | Decision | P0 | Phase 1: social auth, 2FA, POS, Wallet, Integrations tab |
+| UX-19 | Decision | P0 | Product MVP (Ship 1): social auth, 2FA, POS, Wallet, Integrations tab |
 | UX-20 | Decision | P0 | Revenue Impact tab / money widgets: hide vs `"—"` |
 | UX-21 | Decision | P1 | Business Type dropdown + enum + labels |
 | UX-22 | Decision | P2 | Mailchimp / Klaviyo: hide vs interest |
 | UX-23 | Decision | P1 | What Currency does |
-| UX-24 | Decision | P1 | Consent policy + SMS in/out of Phase 1 |
+| UX-24 | Decision | P1 | Consent policy + SMS in/out of Product MVP (Ship 1) |
 | UX-25 | Decision | P1 | One At-risk definition; exclusive vs overlapping buckets |
 | UX-26 | Decision | P2 | “Bill type” = program type or POS ticket? |
 | UX-27…32 | Decision | P1 | Misleading labels / fake stats / `$0.00` |
@@ -750,7 +752,7 @@ From [meeting report “Not decided”](../product-manager-meeting-report.md) an
 
 ### Suggested design order
 
-1. Close **UX-19, UX-20, UX-24, UX-25** (Phase 1 scope) so the rest of the file does not produce out-of-scope screens.
+1. Close **UX-19, UX-20, UX-24, UX-25** (Product MVP (Ship 1) scope) so the rest of the file does not produce out-of-scope screens.
 2. Design **P0 new flows:** UX-01…03, UX-05…10, UX-75, UX-76, UX-61, UX-62, UX-66…70, UX-73. Case list: [customer-portal-journey.md](./customer-portal-journey.md).
 3. Honesty pass on existing merchant UI: UX-27…41, UX-53.
 4. Remaining P1/P2 after backend keystones (ledger, orders, events) have dates.
@@ -806,8 +808,8 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 
 | ID | UI/UX request |
 |----|----------------|
-| DG-01 Phase 1 exclusions (social / 2FA / POS / Wallet) | UX-19 |
-| DG-02 Integrations tab in/out of Phase 1 | UX-19 |
+| DG-01 Product MVP (Ship 1) exclusions (social / 2FA / POS / Wallet) | UX-19 |
+| DG-02 Integrations tab in/out of Product MVP (Ship 1) | UX-19 |
 | DG-03 Hide vs `"—"` Revenue Impact | UX-20 |
 | DG-04 No subscription downgrade | UX-17 |
 | DG-05 Business Type dropdown + enum | UX-21 |
@@ -825,7 +827,7 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 
 ### Meeting-report “not decided” → this file
 
-Portal URL → UX-08. Shop QR always **ACTIVE** program → UX-09 / UX-10 ([counter QR](./counter-qr-and-program-membership.md)). Catalog redeem pending/reserve/QR + snapshot → UX-07 / UX-11 ([redemption](./reward-redemption-flow.md)). OTP TTL/cap → **PM-06** (UX-05). Automations hidden Phase 1 → PM-18. Currency display-only → UX-23.
+Portal URL → UX-08. Shop QR always **ACTIVE** program → UX-09 / UX-10 ([counter QR](./counter-qr-and-program-membership.md)). Catalog redeem pending/reserve/QR + snapshot → UX-07 / UX-11 ([redemption](./reward-redemption-flow.md)). OTP TTL/cap → **PM-06** (UX-05). Automations hidden in Product MVP (Ship 1) → PM-18. Currency display-only → UX-23.
 
 ---
 

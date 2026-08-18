@@ -10,7 +10,7 @@ The leftover frontend still reflects Supabase browser auth in localStorage, auto
 
 Aligned with [ADR-005](../architecture/decisions/ADR-005-authentication.md) **Option C** (DECIDED 2026-08-17).
 
-1. **Do not use Supabase Auth** even in Phase 1. No GoTrue, no `@supabase/ssr`, no Supabase recovery/OTP as the identity provider.
+1. **Do not use Supabase Auth** even during Frontend Migration. No GoTrue, no `@supabase/ssr`, no Supabase recovery/OTP as the identity provider.
 2. Build a **fully independent NestJS auth system** for all roles (`admin`, `staff`, `customer`) with **local JWTs** issued and validated by Nest.
 3. NestJS natively handles admin/staff temp-passwords, first-login force-change, email password reset, admin re-issue temp password, and customer OTP (SMS/WhatsApp).
 4. Authorization ownership stays in the backend. NestJS is the final source of truth for permissions. Do not duplicate business authorization in the frontend.
@@ -23,12 +23,12 @@ Aligned with [ADR-005](../architecture/decisions/ADR-005-authentication.md) **Op
 
 **DECIDED.** Canonical stored names: `admin` · `staff` · `customer`. There are no other logged-in roles.
 
-This is **not** [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md) “Phase 1 — frontend migration” and **not** [remediation-roadmap](../backend/remediation-roadmap.md) Phase 1 (tier ladder).
+This is **not** [ADR-011](../architecture/decisions/ADR-011-rls-storage-strategy.md) “Phase 1 — Frontend migration” and **not** [Backend Remediation P1](../backend/remediation-roadmap.md#backend-remediation-p1--apply-the-tier-ladder--db-automation) (tier ladder).
 
 | Role | Who | Surface | Permissions |
 |------|-----|---------|-------------|
-| **`admin`** | Buys Loyollo (the shop). Same as today’s **owner** (`owner_id`). | Merchant **`/app`** | Full merchant access. Product Phase 1: the software-purchase account is this role. |
-| **`staff`** | Works for that shop (team). | Merchant **`/app`** | **For now: same permissions as `admin`.** Phase 1 Redemption: any existing Staff or Admin may **scan/verify** redemptions for that **Shop** (`staff.branch.shop_id === redemption.shop_id`); do not add extra redemption role restrictions unless decided later. Scan is verification, not discretionary approval. A later split (limited staff) is not locked. Subtypes (manager / cashier / …) are **not** locked. |
+| **`admin`** | Buys Loyollo (the shop). Same as today’s **owner** (`owner_id`). | Merchant **`/app`** | Full merchant access. Product MVP (Ship 1): the software-purchase account is this role. |
+| **`staff`** | Works for that shop (team). | Merchant **`/app`** | **For now: same permissions as `admin`.** Product MVP (Ship 1) Redemption: any existing Staff or Admin may **scan/verify** redemptions for that **Shop** (`staff.branch.shop_id === redemption.shop_id`); do not add extra redemption role restrictions unless decided later. Scan is verification, not discretionary approval. A later split (limited staff) is not locked. Subtypes (manager / cashier / …) are **not** locked. |
 | **`customer`** | Shops at that business (loyalty member). | Customer register/login — **not** `/app` | Customer data + calculated KPIs only. Never merchant `/app`. |
 
 **Today:** there is typically one `/app` login per shop; it is **`admin`**. When `staff` accounts exist, they may use `/app` with **the same permissions as `admin`** until a split is approved. `staff` is a **different role name**, not a different permission set yet.
@@ -124,6 +124,8 @@ Exact pixel layout is **not** locked. Same page may host add-teammate (G-34); no
 
 ## Shop-customer register and login (DECIDED)
 
+**Product MVP (Ship 1) vs portal (deferred):** Public **enroll OTP** (counter/door QR first join, PM-06) and **wallet QR issuance** are **in Product MVP (Ship 1)** — required before Staff POS can scan. Persistent **customer portal sessions** (register/login/recovery app, `/api/me/wallet` behind customer JWT) are **out of Product MVP (Ship 1)**. Canonical split: [phase-1-scope.md](../product/phase-1-scope.md).
+
 **We will add register and login for Customers of the shop** — not only the current behavior where the shop owner types customers in by hand.
 
 | Who | Auth | Role |
@@ -209,4 +211,4 @@ Inactive `customer` must not get a session from a new OTP ([G-36](gaps-and-solut
 
 ## Security gates
 
-CSRF is required if cookie-authenticated mutations are introduced. XSS remains material while leftover tokens are in localStorage; Phase 1 target is Nest JWT in HTTP-only cookies. Redirect destinations must be allow-listed. Secrets are referenced by name only. Frontend route gates must never substitute for NestJS permission checks.
+CSRF is required if cookie-authenticated mutations are introduced. XSS remains material while leftover tokens are in localStorage; Frontend Migration target is Nest JWT in HTTP-only cookies. Redirect destinations must be allow-listed. Secrets are referenced by name only. Frontend route gates must never substitute for NestJS permission checks.

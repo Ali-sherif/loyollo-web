@@ -89,7 +89,7 @@ stateDiagram-v2
 
 ---
 
-## 4. Cashier transaction (Phase 1)
+## 4. Cashier transaction (Product MVP (Ship 1))
 
 Staff POS app (not third-party POS integrations):
 

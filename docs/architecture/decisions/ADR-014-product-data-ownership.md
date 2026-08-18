@@ -8,7 +8,7 @@ DECIDED
 
 The authenticated product UI (`/app/*`) advertises metrics and flows that have no backing table, writer, or API: orders/revenue, visit/QR event logs, assigned tiers, per-branch attribution, referrals attribution, redeem vs earn, billing enforcement, header search, and campaign open/automation workers. These gaps are catalogued as **G-01…G-32** in [gaps-and-solutions.md](../../frontend/gaps-and-solutions.md).
 
-[ADR-006](ADR-006-server-boundaries.md) keeps the existing backend as the primary API; Next.js must not become a second backend. [ADR-011](ADR-011-rls-storage-strategy.md) freezes Lovable-era schema/RLS for Phase 1 (frontend migration) and assigns all data/storage access to a **custom Backend and Database program** in Phase 2.
+[ADR-006](ADR-006-server-boundaries.md) keeps the existing backend as the primary API; Next.js must not become a second backend. [ADR-011](ADR-011-rls-storage-strategy.md) freezes Lovable-era schema/RLS for Frontend Migration (ADR-011 Phase 1) and assigns all data/storage access to a **custom Backend and Database program** in Frontend Migration Phase 2.
 
 Shipping new product tables from this frontend repo (or writing them from Next BFF handlers) would violate those decisions and expand migration risk.
 

@@ -55,7 +55,7 @@ There are **three** account roles in the product. No other logged-in roles.
 
 `admin` / `staff` must never be given to a shop customer. `customer` must never open `/app` as merchant.
 
-This “Phase 1” is the **product** first ship — not Next.js migration Phase 1 (ADR-011) and not remediation Phase 1 (tiers).
+This “Product MVP (Ship 1)” is the **product** first ship — not Frontend Migration (ADR-011) and not Backend Remediation P1 (tiers). Canonical scope: [phase-1-scope.md](product/phase-1-scope.md).
 
 ---
 
@@ -73,7 +73,9 @@ Shop customers get role **`customer`**. They register/login so we **store their 
 
 Customer-portal URLs and the exact KPI list are **not** locked. Implementation is backend-owned ([ADR-014](architecture/decisions/ADR-014-product-data-ownership.md)).
 
-**DECIDED:** `customer` register, login, and recovery are **passwordless** (OTP via SMS or WhatsApp). There is no customer forgot-password. Lost access = a new OTP. Staff use the owner `/auth/forgot-password` flow after their account exists. [Credential recovery](frontend/11-authentication-migration.md#credential-recovery-decided).
+**DECIDED:** Public **enroll OTP (PM-06)** and wallet QR are **in Product MVP (Ship 1)** ([phase-1-scope.md](product/phase-1-scope.md)). Customer **portal sessions** (register/login/recovery app) are **out of Product MVP (Ship 1)** — see G-33 split in that doc.
+
+**DECIDED:** When the portal ships, `customer` register, login, and recovery are **passwordless** (OTP via SMS or WhatsApp). There is no customer forgot-password. Staff use the owner `/auth/forgot-password` flow after their account exists. [Credential recovery](frontend/11-authentication-migration.md#credential-recovery-decided).
 
 Working design journey (2026-08-16, not a new ADR): one OTP funnel for portal register/login; first-shop link and profile setup as extra screens; in-store returning check-in still without OTP. [customer-portal-journey.md](product/customer-portal-journey.md).
 
@@ -178,11 +180,11 @@ Each Shop card: enrolled program + **Archived History**. Points: spendable / **a
 
 The customer redeems only rewards on their **enrolled program**. Redeem → persist **`reward_snapshot`**; if Available < snapshot cost, refuse (no row); else `pending` + single-use QR (10-minute expiry) → staff **scan** using the snapshot (`completed`, **PM-04**) or scheduled job (`expired`, release + purge expired reserved lots).
 
-**Closed:** §14.1 snapshot; prospective program/reward edits; PM-04 reserved-lot expiry; Phase 1 mutation guards. **Not Phase 1:** emergency cancel+refund. **PM-08** is decided (period vs spendable). **PM-07** voucher-only when ACTIVE is not points.
+**Closed:** §14.1 snapshot; prospective program/reward edits; PM-04 reserved-lot expiry; Product MVP (Ship 1) mutation guards. **Out of Product MVP (Ship 1):** emergency cancel+refund. **PM-08** is decided (period vs spendable). **PM-07** voucher-only when ACTIVE is not points.
 
 ---
 
 ## Not decided in this discussion
 
-Open tracking, SMS delivery, campaign **send/opens** (G-09 send — automations **hidden** PM-18). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever. Whether `staff` can also use the add-teammate form. Customer-portal **URLs**. Default referral expiry **day counts**. Merchant UI for **Pending Review**. Device-fingerprint algorithm. SMS vs WhatsApp **provider**. Gender/city on UX-75 (G-17). General `COMPLETED → REVERSED`. Refund / reversal is deferred (not Phase 1). **Resolved 2026-08-18:** independent programs; PM-06 OTP limits; UX-75 required fields; PM-07/08/04; currency display-only; customer soft-delete; staff cashier POS.
+Open tracking, SMS delivery, campaign **send/opens** (G-09 send — automations **hidden** PM-18). Exact **staff** subtype names. Whether `staff` permissions stay equal to `admin` forever. Whether `staff` can also use the add-teammate form. Customer-portal **URLs**. Default referral expiry **day counts**. Merchant UI for **Pending Review**. Device-fingerprint algorithm. SMS vs WhatsApp **provider**. Gender/city on UX-75 (G-17). General `COMPLETED → REVERSED`. Refund / reversal is deferred (out of Product MVP (Ship 1)). **Resolved 2026-08-18:** independent programs; PM-06 OTP limits; UX-75 required fields; PM-07/08/04; currency display-only; customer soft-delete; staff cashier POS.
 

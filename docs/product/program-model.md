@@ -50,9 +50,9 @@ Stored names: `draft` · `active` · `archived` · `disabled` · `expired` · `s
 | **`draft`** | Not live. New customers cannot join. |
 | **`active`** | The Shop default. QR and `?ref=` land here. At most one per Shop. |
 | **`archived`** | Hidden from new customers. Existing enrolled members + PENDING claims stay functional. Switching default ACTIVE archives the previous ACTIVE (allowed with members). |
-| **`disabled`** | Turned off. Blocked while members/PENDING/unexpired — [mutation guards](#7-mutation-guards-phase-1). |
+| **`disabled`** | Turned off. Blocked while members/PENDING/unexpired — [mutation guards](#7-mutation-guards-product-mvp-ship-1). |
 | **`expired`** | `expires_at` lapsed (program end-of-life). Distinct from in-program **tier period** reset. |
-| **`soft_deleted`** | Emergency later-phase only — not Phase 1. |
+| **`soft_deleted`** | Emergency later-phase only — out of Product MVP (Ship 1). |
 
 `archived` is **not** disable/draft/delete.
 
@@ -144,9 +144,9 @@ If not eligible: award using **locked enrolled program** rules.
 
 ---
 
-## 6. In-store cashier (Phase 1 staff POS)
+## 6. In-store cashier (Product MVP (Ship 1) staff POS)
 
-Not Square/Clover/Toast (those stay deferred — UX-19). Phase 1 is the **staff POS app**:
+Not Square/Clover/Toast (those stay deferred — UX-19). Product MVP (Ship 1) is the **staff POS app**:
 
 1. Cashier scans **customer QR**.
 2. Indexed check `(owner_id, program_id, is_active)` + migration eligibility.
@@ -158,7 +158,7 @@ Idempotency: `idempotency_key` and/or `(shop_id, invoice_number)`.
 
 ---
 
-## 7. Mutation guards (Phase 1)
+## 7. Mutation guards (Product MVP (Ship 1))
 
 **Block `DELETE`, `DISABLE`, and `DRAFT`** on a program or reward when any of:
 
@@ -172,7 +172,7 @@ Idempotency: `idempotency_key` and/or `(shop_id, invoice_number)`.
 
 UI on 409: counts (`pending_claims`, `incomplete_members`, `expires_at`) and **Wait** vs **Archive/Deactivate**.
 
-**Later phase (specified, not Phase 1):** force `soft_deleted` → cancel PENDING → auto-refund reserved points → notify. Not a general `COMPLETED → REVERSED` path.
+**Later phase (specified, out of Product MVP (Ship 1)):** force `soft_deleted` → cancel PENDING → auto-refund reserved points → notify. Not a general `COMPLETED → REVERSED` path.
 
 ---
 
@@ -206,9 +206,9 @@ Canonical: `POST /auth/otp/send`, `POST /auth/otp/verify`. `POST /api/join/otp/r
 
 ---
 
-## PM-18 — Hide Scheduled Automations (Phase 1)
+## PM-18 — Hide Scheduled Automations (Product MVP (Ship 1))
 
-**RESOLVED (Phase 1 Scope: Hidden)** with DG-10 and the G-09 **automations** bullet. Hide Scheduled Automations on `/app/campaigns`. Writes to `campaign_automations` → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or 404). Do **not** hide campaign list / Launch. G-09 send/opens stay deferred.
+**RESOLVED (Product MVP (Ship 1) scope: Hidden)** with DG-10 and the G-09 **automations** bullet. Hide Scheduled Automations on `/app/campaigns`. Writes to `campaign_automations` → **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or 404). Do **not** hide campaign list / Launch. G-09 send/opens stay deferred.
 
 ---
 

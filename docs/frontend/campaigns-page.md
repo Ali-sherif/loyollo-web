@@ -1,8 +1,8 @@
 # Campaigns Page (`/app/campaigns`)
 
-Reference for all components, conditions, and edge cases on the Campaigns list route, plus the linked detail page (`/app/campaigns/[campaignId]`), send pipeline, audience matching, and automations. Includes domain notes for frontend + backend work, plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions). **Today** campaigns hang off the owner’s single `loyalty_programs` row. **DECIDED:** campaigns are **Shop-scoped** (`owner_id`; `loyalty_program_id` is a transitional alias — [data-contract](../backend/data-contract.md#independent-programs-decided-not-shipped)). **PM-18:** hide **Scheduled Automations** in Phase 1; do **not** hide campaign list / Launch.
+Reference for all components, conditions, and edge cases on the Campaigns list route, plus the linked detail page (`/app/campaigns/[campaignId]`), send pipeline, audience matching, and automations. Includes domain notes for frontend + backend work, plus a [UI / API / DB gap analysis](#gaps-ui--api--db-and-recommended-solutions). **Today** campaigns hang off the owner’s single `loyalty_programs` row. **DECIDED:** campaigns are **Shop-scoped** (`owner_id`; `loyalty_program_id` is a transitional alias — [data-contract](../backend/data-contract.md#independent-programs-decided-not-shipped)). **PM-18:** hide **Scheduled Automations** in Product MVP (Ship 1); do **not** hide campaign list / Launch.
 
-**Jump to:** [product meanings](#product-meanings-decided) · [route](#route-structure) · [page flow](#high-level-page-flow) · [stat cards](#stat-cards-4) · [status tabs](#status-tabs) · [filters](#search--filters--sort) · [table](#campaign-table) · [row menu](#row-menu) · [create / edit](#create--edit-dialog) · [send](#launch--send-pipeline) · [audience](#how-audience-actually-resolves) · [status machine](#campaign-status-machine) · [automations](#scheduled-automations) · [detail page](#detail-page-appcampaignscampaignid) · [performance](#performance--open--redeemed) · [personalization](#personalization-tokens) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
+**Jump to:** [independent programs](#independent-programs-decided-adr-016) · [product meanings](#product-meanings-decided) · [route](#route-structure) · [page flow](#high-level-page-flow) · [stat cards](#stat-cards-4) · [status tabs](#status-tabs) · [filters](#search--filters--sort) · [table](#campaign-table) · [row menu](#row-menu) · [create / edit](#create--edit-dialog) · [send](#launch--send-pipeline) · [audience](#how-audience-actually-resolves) · [status machine](#campaign-status-machine) · [automations](#scheduled-automations) · [detail page](#detail-page-appcampaignscampaignid) · [performance](#performance--open--redeemed) · [personalization](#personalization-tokens) · [gaps](#gaps-ui--api--db-and-recommended-solutions)
 
 **Source files:**
 
@@ -24,6 +24,35 @@ Reference for all components, conditions, and edge cases on the Campaigns list r
 - Related: [analytics-page.md](analytics-page.md) (tiers, “at risk”, `revenue_cents`)
 - Glossary: [data-contract.md § Unified glossary](../backend/data-contract.md#unified-glossary)
 - Product note: [product-manager-meeting-report.md](../product-manager-meeting-report.md)
+- Independent programs: [ADR-016](../architecture/decisions/ADR-016-independent-programs.md) · [program-model.md](../product/program-model.md)
+
+---
+
+## Independent programs (DECIDED — ADR-016)
+
+**Status:** DECIDED 2026-08-18. **Shipped code on this page still uses the legacy one-row model** until [G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-independent-programs) backend + frontend migration land.
+
+A Shop may own **many independent programs** (Points, Visit, Tier, …). **At most one is `ACTIVE`** (the default). Counter QR and `?ref=` resolve only to ACTIVE. Customers stay locked on `enrolled_program` until deferred POS migration.
+
+**Campaigns stay Shop-scoped** — they belong to the **Shop** (`owner_id`), not to a single program. `loyalty_program_id` on `campaigns` is a **transitional FK** only (required by today’s schema).
+
+| Concern | **Today (shipped code)** | **Target (ADR-016 + G-35)** |
+|---------|--------------------------|-----------------------------|
+| List campaigns | `campaigns` where `loyalty_program_id =` owner’s sole program row | `campaigns` where `owner_id = user.id` (all Shop campaigns) |
+| Resolve program for create | `loyalty_programs.maybeSingle()` by `owner_id` | Require an **`ACTIVE`** program; set `loyalty_program_id` to that row (transitional alias) |
+| Create gate | Toast if **no program row** | Toast if **no ACTIVE program** (draft-only Shop cannot launch) |
+| Send audience (`campaigns-service`) | Customers where `loyalty_program_id = campaign.loyalty_program_id` | **Shop-scoped:** customers across **all** of the owner’s programs (`loyalty_program_id IN (shop program ids)`) — one identity per Shop, members may be enrolled on different programs |
+| Automations | Already `owner_id`-scoped | Unchanged |
+
+Canonical product: [program-model.md](../product/program-model.md) · [loyalty-page.md](loyalty-page.md#independent-programs-decided) · [data-contract](../backend/data-contract.md#independent-programs-decided-not-shipped).
+
+### Frontend migration checklist (Campaigns)
+
+When G-35 schema ships, update **these files only** (do not invent a parallel plan):
+
+1. **`campaigns-page.tsx`** — load list by `owner_id`; resolve `activeProgramId` via `status = 'active'` (partial unique); gate create/launch on ACTIVE, not “any row”.
+2. **`campaigns-service.ts`** — audience query joins all Shop program ids, not `campaign.loyalty_program_id` alone.
+3. **`campaign-detail-page.tsx`** — no program switcher; ownership remains `owner_id` RLS.
 
 ---
 
@@ -125,12 +154,14 @@ flowchart TD
   J -->|yes| L[Fetch loyalty_programs for owner]
   L --> M{program exists?}
   M -->|no| N[programId=null, campaigns=empty, ready=true]
-  M -->|yes| O[Load campaigns for program, ready=true]
+  M -->|yes| O["Load campaigns for loyalty_program_id (today)"]
   N --> P[DashboardShell + list + automations]
   O --> P
 ```
 
-Unlike Analytics, there is **no empty-state for “no loyalty program”** on the main canvas. The list is simply empty. Create/Launch then toasts “Create your loyalty program first.”
+> **Target (ADR-016):** step O becomes `Load campaigns where owner_id = user.id`. Create requires an **ACTIVE** program, not merely any row. See [Independent programs](#independent-programs-decided-adr-016).
+
+Unlike Analytics, there is **no empty-state for “no loyalty program”** on the main canvas. The list is simply empty. Create/Launch then toasts “Create your loyalty program first.” (**Target:** “Activate a loyalty program first” when programs exist but none are ACTIVE.)
 
 ---
 
@@ -141,8 +172,8 @@ Unlike Analytics, there is **no empty-state for “no loyalty program”** on th
 | State | Purpose |
 |-------|---------|
 | `firstName` | Dashboard header greeting (first token of `full_name`, else email local-part) |
-| `programId` | Owner’s single loyalty program, or `null` |
-| `campaigns` | All campaigns for that program |
+| `programId` | **Today:** owner’s sole `loyalty_programs` row id, or `null`. **Target:** ACTIVE program id (transitional FK for insert only) |
+| `campaigns` | **Today:** campaigns for that one `loyalty_program_id`. **Target:** all campaigns for `owner_id` |
 | `ready` | Data fetch finished |
 | `tab` | `"all"` \| `"active"` \| `"scheduled"` \| `"draft"` \| `"completed"` |
 | `search` | Free-text filter |
@@ -164,13 +195,13 @@ Unlike Analytics, there is **no empty-state for “no loyalty program”** on th
 | `!isVerified` | → `/verify?email=...` |
 | `!profile.onboarding_completed` | → `/onboarding` |
 | No loyalty program | Stay on page, `programId = null`, `campaigns = []` |
-| Program exists | Load `campaigns` for `loyalty_program_id` |
+| Program exists | **Today:** load `campaigns` for `loyalty_program_id`. **Target:** load by `owner_id` |
 
 ### Data loading sequence
 
 1. Fetch `profiles` (`full_name`, `onboarding_completed`) for current user
-2. Fetch `loyalty_programs` where `owner_id = user.id` (expects 0 or 1 **today** — unique on `owner_id`). **DECIDED:** independent programs; **partial unique** one ACTIVE; Shop-scoped campaigns ([loyalty-page.md](loyalty-page.md#independent-programs-decided))
-3. If program exists, fetch `campaigns` ordered by `created_at` descending
+2. **Today:** fetch `loyalty_programs` where `owner_id = user.id` with `.maybeSingle()` (expects 0 or 1 — `UNIQUE (owner_id)`). **Target:** fetch all programs; resolve **ACTIVE** (`status = 'active'`); list campaigns by **`owner_id`**, not program FK ([Independent programs](#independent-programs-decided-adr-016))
+3. If program exists (**today**), fetch `campaigns` where `loyalty_program_id = program.id`, ordered by `created_at` descending
 
 Columns loaded:
 
@@ -384,11 +415,12 @@ Submit is blocked until `name.trim()` and `message.trim()` are non-empty.
 | Save as draft | Insert `status: "draft"`, toast “Campaign saved as draft” |
 | Launch campaign | Insert draft, then immediately `runSend(id)` |
 
-Insert always starts as **draft**, even when launching. `owner_id` and `loyalty_program_id` are set from the session / loaded program.
+Insert always starts as **draft**, even when launching. `owner_id` and `loyalty_program_id` are set from the session / loaded program (**target:** `loyalty_program_id` = ACTIVE program id — transitional alias only).
 
-If `programId` is null:
+If `programId` is null (**today:** no program row; **target:** no ACTIVE program):
 
-> “Create your loyalty program first” — toast action navigates to `/loyalty-program`.
+> **Today:** “Create your loyalty program first” — toast action navigates to `/loyalty-program`.  
+> **Target:** “Activate a loyalty program first” when draft/archived programs exist but none is ACTIVE.
 
 On success, `notifyCampaignCreated` fires a best-effort POST to `/api/notifications/owner` (`prefKey: campaign_created`, link `/app/campaigns/{id}`).
 
@@ -420,11 +452,13 @@ Matching on send uses `audience.toLowerCase()` **substring** checks (`includes("
 
 ## How audience actually resolves
 
-Send loads customers for `campaign.loyalty_program_id`, then applies **one** of the SQL filters (if-else), then optional birthday filter, then channel contact filter.
+**Today:** send loads customers for `campaign.loyalty_program_id` only.
+
+**Target (ADR-016):** send loads customers **Shop-scoped** — all rows whose `loyalty_program_id` belongs to `campaign.owner_id` (one customer identity per Shop; members may be enrolled on archived or ACTIVE programs). Then applies **one** of the SQL filters (if-else), then optional birthday filter, then channel contact filter.
 
 ```mermaid
 flowchart TD
-  A[All customers in program] --> B{audience lowercase}
+  A["All customers in program (today) / all Shop customers (target)"] --> B{audience lowercase}
   B -->|contains vip| C["tier ILIKE vip"]
   B -->|else contains gold| D["tier ILIKE gold"]
   B -->|else contains silver| E["tier ILIKE silver"]
@@ -633,11 +667,11 @@ Alert dialog. Hard `DELETE` from `campaigns`. Recipients cascade (`ON DELETE CAS
 
 ---
 
-## Scheduled automations
+## PM-18 — Hide Scheduled Automations (Product MVP (Ship 1))
 
-**PM-18 / DG-10 (DECIDED Phase 1):** **hide** this section in merchant UI. Writes to `campaign_automations` return **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or omit routes → 404). Do **not** hide the campaign list or Launch. G-09 send/opens stay deferred.
+**PM-18 / DG-10 (DECIDED Product MVP (Ship 1)):** **hide** this section in merchant UI. Writes to `campaign_automations` return **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1` (or omit routes → 404). Do **not** hide the campaign list or Launch. G-09 send/opens stay deferred.
 
-`AutomationsSection` today is always rendered when `user` exists (including when there is no loyalty program). It is **CRUD for config rows only**. No worker, no schedule, no send. Until Phase 1 hide ships, treat the UI as dishonest.
+`AutomationsSection` today is always rendered when `user` exists (including when there is no loyalty program). It is **CRUD for config rows only**. No worker, no schedule, no send. Until Product MVP (Ship 1) hide ships, treat the UI as dishonest.
 
 Table: `campaign_automations`. Unique `(owner_id, type)` — **one row per type per owner**.
 
@@ -778,7 +812,7 @@ Owners **SELECT** only via campaign ownership. Inserts/updates go through **serv
 ### Related (not owned by this page)
 
 - `customers` — audience + detail donut (`tier`, `status`, `email`, `phone`, `birth_date`, `created_at`)
-- `loyalty_programs` — one per owner
+- `loyalty_programs` — **today:** one per owner (`UNIQUE owner_id`). **Target:** many per Shop; partial unique one ACTIVE
 - `email_send_log` + `enqueue_email` / `mint_unsubscribe_token` RPCs — email path
 - `loyalty_program_tiers` — **not queried**; intended ladder for VIP/Gold/Silver audiences
 
@@ -845,7 +879,8 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 
 | G-ID | Widget / flow | UI gap | API gap | DB gap | Recommended fix |
 |------|---------------|--------|---------|--------|-----------------|
-| — | **Create without program** | Toast only | n/a | One program per owner **today** | Keep; **DECIDED** Shop capabilities ([G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-one-config-per-capability)) |
+| — | **Create without program** | Toast only | n/a | One program per owner **today** | **Today:** keep. **Target:** gate on ACTIVE program ([G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-independent-programs)) |
+| [G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-independent-programs) | **Program scope (list + send)** | List + send tied to one program row | Send filters one `loyalty_program_id` | `UNIQUE (owner_id)` | Shop-scoped list (`owner_id`); Shop-scoped send audience; ACTIVE gate on create |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Scheduled tab / `scheduled_at`** | Tab always 0 | No schedule job | Column unused | Hide tab or schedule worker |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Completed tab** | Always 0 | Send writes `active` | No lifecycle | **DECIDED:** after all messages processed, write `completed` (do not drop the tab; do not leave successful sends as Active) |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Enable / Disable vs Launch** | Enable sets `active` without sending | Send blocks `active` | One status, two meanings | **DECIDED:** Active = working only; Enable restores draft; send refuses `completed` as finished |
@@ -862,7 +897,7 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 | — | **Lovable `enqueue_email`** | n/a | Still RPC | Queue TBD | Withdraw per ADR-009/013 |
 | — | **Personalization UX** | Tokens undocumented | Tokens work on send | n/a | Hint + sample preview |
 | — | **Edit after send** | Allowed, silent | No versioning | Message overwritten | Freeze or snapshot |
-| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Automations** | Look live | No runner | `config` unused | **PM-18:** **hide** in Phase 1; writes **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1`. Do not hide campaign list / Launch |
+| [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Automations** | Look live | No runner | `config` unused | **PM-18:** **hide** in Product MVP (Ship 1); writes **503** `AUTOMATIONS_NOT_AVAILABLE_PHASE1`. Do not hide campaign list / Launch |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Detail Top Engaged / Rewards** | Empty / `0` | No events | No opens/clicks | Engagement events |
 | [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **Detail donut** | Other = untiered | Uses stored `tier` | Same as Analytics | Tier-write |
 | — | **List loads all campaigns** | Client filter/sort | No list API | OK at small N | Paginated list when volume grows |
@@ -878,7 +913,7 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 | `{{name}}` / `{{first_name}}` / `{{business_name}}` + HTML wrapper | Content parity |
 | `campaign_automations` unique type | Config store once a worker exists |
 | `enqueue_email` / `email_send_log` / unsubscribe token | Observability until queue product is chosen |
-| One program per owner **today** | Scope all campaigns. **DECIDED:** Shop-scoped campaigns (one catalog per Shop; `loyalty_program_id` is a transitional alias) |
+| One program per owner **today** | Scope all campaigns to that row until G-35. **Target:** Shop-scoped list + audience ([Independent programs](#independent-programs-decided-adr-016)) |
 
 ### Recommended send + attribution model
 
@@ -917,7 +952,7 @@ Short list:
 12. **Messaging** — send service duplicates campaign HTML helpers instead of contracts
 13. **Detail engagement / rewards redeemed** — placeholders
 14. **Personalization tokens** — work on send, hidden in the UI
-15. **One program per owner (today)** — campaigns belong to that program; no program switcher. **DECIDED:** Shop-scoped campaigns ([loyalty-page.md](loyalty-page.md#independent-programs-decided))
+15. **One program per owner (today)** — list + send scoped to that program’s `loyalty_program_id`. **DECIDED (ADR-016):** Shop-scoped campaigns + Shop-scoped send audience; `loyalty_program_id` is transitional ([Independent programs](#independent-programs-decided-adr-016), [G-35](gaps-and-solutions.md#g-35--shop-loyalty-is-one-row-not-independent-programs))
 
 ---
 

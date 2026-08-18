@@ -4,25 +4,25 @@
 
 DECIDED
 
-**Revised 2026-08-17:** Option C. Supabase Auth is withdrawn even in Phase 1. NestJS owns a fully independent auth system for all roles.
+**Revised 2026-08-17:** Option C. Supabase Auth is withdrawn even during Frontend Migration (ADR-011 Phase 1). NestJS owns a fully independent auth system for all roles.
 
 ## Context
 
 The current frontend still reflects a Supabase browser client that persisted sessions in localStorage and attached bearer tokens to server functions. Protected routes redirected in client effects. Auth and permission contracts previously lived with Supabase Auth + RLS / server policies.
 
-That model is retired. The product is **fully replacing Supabase**. Phase 1 must not keep Supabase Auth as a bridge, adapter, or dual-write IdP.
+That model is retired. The product is **fully replacing Supabase**. Frontend Migration must not keep Supabase Auth as a bridge, adapter, or dual-write IdP.
 
 ## Options
 
 | Option | Approach | Outcome |
 |--------|----------|---------|
-| A | Keep Supabase Auth in Phase 1; replace later | Rejected — Phase 1 would still depend on Supabase Auth |
+| A | Keep Supabase Auth during Frontend Migration; replace later | Rejected — Frontend Migration would still depend on Supabase Auth |
 | B | Hybrid: NestJS for some roles, Supabase Auth for others | Rejected — two IdPs and two recovery models |
 | **C** | **Independent NestJS auth for `admin`, `staff`, and `customer`; local JWT; native temp-password/reset and customer OTP** | **Chosen** |
 
 ## Decision
 
-- **Do not use Supabase Auth** (no GoTrue, no `@supabase/ssr` session, no Supabase recovery/OTP/MFA as the IdP) even in Phase 1.
+- **Do not use Supabase Auth** (no GoTrue, no `@supabase/ssr` session, no Supabase recovery/OTP/MFA as the IdP) even during Frontend Migration.
 - Build a **fully independent auth system in NestJS** (backend program, [ADR-015](ADR-015-backend-stack.md)) for **all** roles: `admin`, `staff`, `customer`.
 - NestJS issues and validates **local JWTs** (self-signed access/refresh tokens). Next.js is not the token issuer.
 - NestJS natively handles:
@@ -58,9 +58,9 @@ Locked stored names: **`admin`** · **`staff`** · **`customer`**. No other logg
 
 ### Migration approach
 
-Phase 1 replaces Supabase Auth entirely. NestJS is the only IdP. Next.js route protection and session-aware rendering consume Nest-issued JWTs (HTTP-only cookies on the frontend host). Client checks may remain for UX only.
+Frontend Migration replaces Supabase Auth entirely. NestJS is the only IdP. Next.js route protection and session-aware rendering consume Nest-issued JWTs (HTTP-only cookies on the frontend host). Client checks may remain for UX only.
 
-Prove the Nest JWT cookie/SSR path in a focused spike covering redirect, refresh, MFA (if still in product scope), recovery, customer OTP, and email verification before declaring cookie migration complete. Until that spike succeeds, do not assume authenticated Server Component reads are available for protected data. The old `@supabase/ssr` spike ([auth-ssr-spike.md](../spikes/auth-ssr-spike.md)) is **superseded** and must not be treated as the remaining proof.
+Prove the Nest JWT cookie/SSR path in a focused spike covering redirect, refresh, MFA (if still in **Product MVP (Ship 1)** scope), recovery, customer OTP, and email verification before declaring cookie migration complete. Until that spike succeeds, do not assume authenticated Server Component reads are available for protected data. The old `@supabase/ssr` spike ([auth-ssr-spike.md](../spikes/auth-ssr-spike.md)) is **superseded** and must not be treated as the remaining proof.
 
 ## Risks
 

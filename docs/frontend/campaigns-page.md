@@ -229,7 +229,9 @@ Wrapped in `DashboardShell` with sidebar, header, notifications, and mobile nav.
 
 ### Stat cards (4)
 
-All four always render. They use **all loaded campaigns**, not the current tab/search/filter.
+All four always render when revenue card is not commented out. They use **all loaded campaigns**, not the current tab/search/filter.
+
+> **Product MVP (Ship 1):** **Comment out** the **Campaign Revenue** stat card ([phase-1-scope.md](../product/phase-1-scope.md)).
 
 | Card | Calculation |
 |------|-------------|
@@ -750,10 +752,12 @@ Center: `{total}` / “Total customers.” Empty send → 0 and a gray ring.
 
 ### Campaign Stats
 
+> **Product MVP (Ship 1):** **Comment out** the **Revenue Influenced** tile ([phase-1-scope.md](../product/phase-1-scope.md)).
+
 | Tile | Today |
 |------|--------|
 | Recipients | Count of `status === "sent"` |
-| Revenue Influenced | `$` + `revenue_cents / 100` (always `$0` until written) |
+| Revenue Influenced | `$` + `revenue_cents / 100` *(comment out Ship 1)* |
 | Rewards Redeemed | **Hardcoded `0`** |
 
 Green banner if `total > 0`: “Delivered to N recipient(s) (F failed).” `failed_count` comes from the campaign row.
@@ -886,7 +890,7 @@ Indexed backlog: [gaps-and-solutions.md](gaps-and-solutions.md) · contracts: [d
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Enable / Disable vs Launch** | Enable sets `active` without sending | Send blocks `active` | One status, two meanings | **DECIDED:** Active = working only; Enable restores draft; send refuses `completed` as finished |
 | [G-09](gaps-and-solutions.md#g-09--campaign-send--opens--automations) | **Performance % Open** | Shows `0%` after send | No open webhook | `opened_count` unused | ESP/pixel; until then `"—"` |
 | [G-20](gaps-and-solutions.md#g-20--rewardsredeemed_count-vs-earn) | **SMS “% Redeemed”** | Misleading label | No redemption join | No `campaign_id` on rewards | Hide until tracked |
-| [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Campaign Revenue** | `$0.00` looks real | Never written | No orders | Orders + `campaign_id`; UI `"—"` |
+| [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Campaign Revenue** | `$0.00` looks real | Never written | No orders | Ship 1: **comment out**; post–Ship 1: orders + `campaign_id` |
 | [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **At Risk audience** | Label matches Customers | Query `"at-risk"` | DB `"at_risk"` | One status value |
 | [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **VIP / Gold / Silver audience** | Options exist | `ilike` on empty `tier` | `tier` unset | Write tier on enroll/check-in |
 | [G-21](gaps-and-solutions.md#g-21--birthday-stored-automation-unused) | **Birthday audience** | Month-only, server TZ | Filter in JS | `birth_date` optional | SQL + owner TZ |

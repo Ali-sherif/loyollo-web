@@ -154,6 +154,8 @@ No special block for `is_main`. Confirm dialog then `delete`. Because customers 
 
 ## Performance — card
 
+> **Product MVP (Ship 1):** **Comment out** this entire “By revenue” Performance section ([phase-1-scope.md](../product/phase-1-scope.md)).
+
 Donut “By revenue”. `perfSlices` splits **100% evenly** across branches (remainder to the first). Center label `"—"`. **This month** button has no handler.
 
 Empty when `branches.length === 0`.
@@ -186,7 +188,7 @@ Header: name, active toggle, Main badge, contact, **Edit**.
 | Widget | Shown |
 |--------|--------|
 | Customer Engagement | Grey fake bars (Jan 01–08), not data |
-| Branch Stats | Customers / Visits / Rewards / Revenue Influenced all `"—"` |
+| Branch Stats | Customers / Visits / Rewards / Revenue Influenced all `"—"` *(comment out **Revenue Influenced** tile Ship 1)* |
 | Top Customers | Empty copy — needs `branch_id` on enrollment |
 | Top Rewards | Empty copy — needs `branch_id` on redemptions |
 | This month | Dead button |

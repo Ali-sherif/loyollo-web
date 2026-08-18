@@ -120,6 +120,8 @@ Toggles can be saved and still have **no effect** on in-app inserts.
 
 ## Integrations tab
 
+> **Product MVP (Ship 1):** **Comment out** the `"integrations"` tab entry, the `IntegrationsTab` panel branch, and (when tab is restored) the `"QR & Wallet"` category. Do **not** use feature flags. Marker and file list: [phase-1-scope.md § Code inventory](../product/phase-1-scope.md#code-inventory--blocks-to-comment-out-for-ship-1).
+
 Catalog (UI only until credentials exist):
 
 | Category | Providers |
@@ -161,6 +163,8 @@ Does **not** navigate away. Strength via `passwordFeedback`.
 
 ### 2FA (`TwoFactorCard`)
 
+> **Product MVP (Ship 1):** **Comment out** `<TwoFactorCard />` in `SecurityTab`. TOTP enroll UI is out of scope; sign-in MFA challenge (G-26) is deferred with it. Post–Ship 1: uncomment — do not add `ENABLE_2FA` flags.
+
 Supabase `auth.mfa`: `listFactors` → `enroll({ factorType: "totp" })` → QR + secret → `challenge` + `verify`. Disable `unenroll`s all TOTP factors.
 
 This is **real** Auth MFA, not a stub. Completeness depends on Supabase project MFA being enabled. Login challenge UX on `/auth/sign-in` must also handle AAL2 (verify separately).
@@ -191,21 +195,21 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 | [G-24](gaps-and-solutions.md#g-24--settings-field-labels-vs-columns) | **Business Type / Industry labels** | Swapped vs columns | — | Columns exist | Align labels |
 | — | **Email change** | Disabled | No change-email BFF | Auth identities | Supabase email-change + messaging template |
 | [G-15](gaps-and-solutions.md#g-15--notification-preferences-are-mostly-cosmetic) | **Notification prefs** | Toggles save | Owner BFF ignores `prefKey` | Prefs table OK | Gate insert + email; cron reports |
-| [G-19](gaps-and-solutions.md#g-19--integrations-never-connect) | **Integrations** | Pending ≠ connected | No OAuth/BFF | `metadata` unused | Per-provider connect; POS → `orders` |
+| [G-19](gaps-and-solutions.md#g-19--integrations-never-connect) | **Integrations** | Pending ≠ connected | No OAuth/BFF | `metadata` unused | Ship 1: **comment out tab**; post–Ship 1: per-provider connect |
 | [G-07](gaps-and-solutions.md#g-07--plan-limits-are-ui-only-billing-is-a-placeholder) | **Billing** | Free plan switch | No Stripe | `profiles.plan` only | Checkout + webhook |
 | [G-07](gaps-and-solutions.md#g-07--plan-limits-are-ui-only-billing-is-a-placeholder) / [G-32](gaps-and-solutions.md#g-32--contact--admin-plan-limits-unused) | **Plan vs Branches** | Limits UI-only | Direct `branches.insert` | No cap | Server enforce |
 | [G-27](gaps-and-solutions.md#g-27--delete-account-cleanup) | **Delete account** | Auth user deleted | No storage cleanup | FK cascade TBD | Cascades + buckets + suppress |
 | [G-25](gaps-and-solutions.md#g-25--two-password-uis) | **Password page vs Security** | Duplicate UX | Two paths | — | One flow; always enqueue mail |
 | [G-23](gaps-and-solutions.md#g-23--settings-tabs-not-in-the-url-onboarding-not-gated) | **Tabs not in URL** | Refresh loses tab | — | — | `?tab=` |
 | [G-23](gaps-and-solutions.md#g-23--settings-tabs-not-in-the-url-onboarding-not-gated) | **Onboarding skip** | Reachable mid-onboarding | — | — | Same onboarding redirect |
-| [G-26](gaps-and-solutions.md#g-26--mfa-enroll-vs-login-challenge) | **MFA at login** | Enroll works | Sign-in may not challenge | Auth | Handle `mfa_challenge` |
+| [G-26](gaps-and-solutions.md#g-26--mfa-enroll-vs-login-challenge) | **MFA at login** | Enroll UI exists in source | **Ship 1:** comment out enroll card | Auth | Post–Ship 1: uncomment + handle `mfa_challenge` |
 
 ---
 
 ## Known limitations
 
 1. Billing is a DB field, not a subscription
-2. Integrations record interest only
+2. Integrations tab **commented out** for Ship 1 (was: records interest only when visible)
 3. Notification switches are mostly cosmetic for in-app toasts
 4. Avatar signed URLs expire
 5. Field labels vs `profiles` columns are inconsistent

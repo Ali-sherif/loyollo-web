@@ -448,36 +448,49 @@ Do **not** fold returning in-store check-in into the portal OTP diagram. Portal 
 
 These controls **already exist** and either lie, do nothing, or contradict Product MVP (Ship 1) scope. UI/UX + product must pick **hide**, **keep `"—"`**, **relabel**, or **wire**. Default engineering honesty (ADR-014) is `"—"` or hide — not fake numbers.
 
+**Ship 1 exclusions (UX-19, UX-20):** use **comment out** in source — not feature flags. Canonical rule: [phase-1-scope.md § Implementation](./phase-1-scope.md#implementation--comment-out-do-not-refactor-decided).
+
 ### 2.1 Product MVP (Ship 1) exclusions (docs vs checklist)
 
 #### UX-19 — Product MVP (Ship 1) exclusions: social auth, 2FA, POS, Wallet
 
 | | |
 |--|--|
-| **Need / priority** | Decision · **P0** |
-| **Source** | **DG-01**, **DG-02** · settings Integrations · ADR-005 · G-26 |
+| **Need / priority** | **DECIDED** · was P0 |
+| **Source** | **DG-01** ✓, **DG-02** ✓ · settings Integrations · ADR-005 · G-26 · [phase-1-scope.md](./phase-1-scope.md#ship-1-ui-exclusion-lock-decided) |
 
-| Item | Docs today | Checklist | What design must lock |
-|------|------------|-----------|------------------------|
-| Facebook / Google / Apple **Sign-In** | **Never mentioned** | Out of Product MVP (Ship 1) | Never / later / hidden buttons on `/auth/*` |
-| **2FA** | Settings documents **real TOTP enroll**; login challenge missing (G-26) | Out of Product MVP (Ship 1) | If Product MVP (Ship 1) **excludes** 2FA: hide Security 2FA card. If it **includes** enroll: design the **sign-in MFA challenge** ([UX-56](#ux-56)) |
-| **POS** (Square, Clover, Toast, Lightspeed, Shopify) | Catalog + “recorded your interest” | **Integrations** deferred | Hide Integrations POS rows vs interest-only. **Staff cashier** (Bill Amount + Invoice Number) **is in Product MVP (Ship 1)** — [UX-11](#ux-11--staff-pos-identify--award--redeem) |
-| **QR & Wallet** (Apple/Google Wallet) | Same catalog | Deferred | Hide vs interest-only. **Shop join QR on `/app/loyalty` stays in Product MVP (Ship 1)** — different feature |
+**Decision (2026-08-18):** All items below are **out of Product MVP (Ship 1)**. Merchant UI is hidden by **commenting out** the JSX blocks — **not** feature flags, env vars, or `{flag && …}`. Marker: `/* OUT OF SCOPE Ship 1: … */`. Inventory: [phase-1-scope.md § Code inventory](./phase-1-scope.md#code-inventory--blocks-to-comment-out-for-ship-1).
 
-Integrations tab as a whole: out of Product MVP (Ship 1), or visible catalog that never looks “Connectable.”
+| Item | Product MVP (Ship 1) | Ship 1 implementation |
+|------|----------------------|------------------------|
+| Facebook / Google / Apple **Sign-In** | **Out** | Do not add buttons on `/auth/*` |
+| **2FA** | **Out** | **Comment out** Settings → Security `TwoFactorCard` |
+| **POS** (Square, Clover, Toast, Lightspeed, Shopify) | **Out** | **Comment out** Settings → Integrations tab + all toggles. **Staff cashier** (Bill Amount + Invoice Number) **is in** — [UX-11](#ux-11--staff-pos-identify--award--redeem) |
+| **QR & Wallet** (Apple/Google Wallet passes) | **Out** | **Comment out** Integrations `"QR & Wallet"` rows. **Shop join QR on `/app/loyalty` stays in** — different feature |
 
-#### UX-20 — Analytics Revenue Impact: hide vs `"—"`
+Integrations tab as a whole: **commented out** for Ship 1 (not interest-only catalog).
+
+#### UX-20 — Analytics Revenue Impact (DECIDED — comment out)
 
 | | |
 |--|--|
-| **Need / priority** | Decision · **P0** |
-| **Source** | **DG-03** · G-06 · analytics-page Revenue tab + Overview AOV card |
+| **Need / priority** | **DECIDED** · was P0 |
+| **Source** | **DG-03** ✓ · G-06 · analytics-page Revenue tab + Overview AOV card · [phase-1-scope.md](./phase-1-scope.md#ship-1-ui-exclusion-lock-decided) |
 
-Checklist: **hide** Overview Revenue Impact and (by implication) the Revenue tab in Product MVP (Ship 1) (no third-party POS). Specs: **keep** the tab and Overview card as `"—"`. Subtitle still says “revenue impact.”
+**Decision (2026-08-18):** **Comment out** — do not keep tab/card as `"—"` placeholders in Ship 1.
 
-**Pick one:** remove tab + Overview money card, or keep honest dashes and change the subtitle so it does not promise revenue.
+| Surface | Ship 1 implementation |
+|---------|------------------------|
+| Analytics **Revenue Impact** tab + `RevenueTab` | **Comment out** tab entry and panel |
+| Overview **Revenue impact** card | **Comment out** entire `<Card>` |
+| Page subtitle | Trim “revenue impact” while card is commented |
+| Dashboard **Total Revenue** | **Comment out** stat card |
+| Campaigns **Campaign Revenue** / detail **Revenue Influenced** | **Comment out** |
+| Customers **Revenue** column + sort | **Comment out** |
+| Branches **Performance / By revenue** + detail **Revenue Influenced** | **Comment out** |
+| Rewards detail **Total Revenue** tile | **Comment out** |
 
-Same ruling should cover Dashboard **Total Revenue** (today sums `campaigns.revenue_cents` → `$0.00` looks like GMV) and Campaigns **Campaign Revenue** `$0.00`.
+Post–Ship 1: uncomment blocks when `orders` + attribution ship — do not add flags.
 
 #### UX-21 — Business Type fixed dropdown
 
@@ -560,7 +573,7 @@ Existing widgets that train the merchant to distrust numbers. Prefer relabel or 
 | **UX-30** | Branch cards customers / redemptions | Program total ÷ N | Per-branch stats | G-04 | Same |
 | **UX-31** | Campaign Performance after send | `0% Open` / `0% Redeemed` | Measured results | G-09 · meeting report | `"—"` until opens/redemptions exist (Product MVP (Ship 1) does **not** track opens — already locked) |
 | **UX-32a** | Auth promo cards | Hardcoded `+20%` / `863.5K` / `5.6M` | Product metrics | audit §3.6 · sign-in | Mark as marketing fiction or remove numbers |
-| **UX-32b** | Dashboard / Campaigns revenue | `$0.00` | GMV | G-06 | `"—"` or hide (same ruling as UX-20) |
+| **UX-32b** | Dashboard / Campaigns revenue | `$0.00` | GMV | G-06 | **Comment out** for Ship 1 (same ruling as UX-20) |
 
 ### 2.3 Dead or decorative controls
 
@@ -596,7 +609,7 @@ Existing widgets that train the merchant to distrust numbers. Prefer relabel or 
 | **UX-53** | Campaigns Enable sets Active without sending | Align Enable/Disable/Launch with locked lifecycle (Enable → Draft) | G-09 · meeting report |
 | **UX-54** | No loyalty program: Customers/Campaigns empty list; Analytics has a dedicated empty canvas | One empty-program pattern | page specs |
 | **UX-55** | Session timeout lands on generic sign-in (`redirectedFrom` unused) | Design post-login return (allow-listed paths only) | audit S-16 |
-| **UX-56** | MFA enroll exists; sign-in may skip challenge | Design AAL2 challenge on `/auth/sign-in` **if 2FA is in Product MVP (Ship 1)** (UX-19) | G-26 |
+| **UX-56** | MFA enroll exists; sign-in may skip challenge | **Out of Ship 1** — comment out `TwoFactorCard`; do **not** design sign-in MFA challenge until product re-opens 2FA | G-26 |
 | **UX-57** | Optional suppression-list read-only UI | Settings vs hide | G-30 |
 | **UX-58** | Email change disabled on Settings | Keep disabled with explanation, or design Auth email-change flow | settings-page |
 | **UX-59** | Reward “on completion” is a free-text label, not a catalog `rewards.id` | Picker from Rewards tab vs keep string | loyalty-page |
@@ -736,8 +749,8 @@ From [meeting report “Not decided”](../product-manager-meeting-report.md) an
 | UX-16 | Design | P2 | Campaign token hints + freeze-after-send |
 | UX-17 | Decision | P1 | Billing / onboarding plan: hide vs checkout |
 | UX-18 | Decision | P2 | Internal `/admin` back office — product first |
-| UX-19 | Decision | P0 | Product MVP (Ship 1): social auth, 2FA, POS, Wallet, Integrations tab |
-| UX-20 | Decision | P0 | Revenue Impact tab / money widgets: hide vs `"—"` |
+| UX-19 | **DECIDED** | — | Ship 1: comment out social/2FA/Integrations/Wallet UI ([phase-1-scope.md](./phase-1-scope.md)) |
+| UX-20 | **DECIDED** | — | Ship 1: comment out Revenue tab + all revenue widgets ([phase-1-scope.md](./phase-1-scope.md)) |
 | UX-21 | Decision | P1 | Business Type dropdown + enum + labels |
 | UX-22 | Decision | P2 | Mailchimp / Klaviyo: hide vs interest |
 | UX-23 | Decision | P1 | What Currency does |
@@ -752,7 +765,7 @@ From [meeting report “Not decided”](../product-manager-meeting-report.md) an
 
 ### Suggested design order
 
-1. Close **UX-19, UX-20, UX-24, UX-25** (Product MVP (Ship 1) scope) so the rest of the file does not produce out-of-scope screens.
+1. ~~Close **UX-19, UX-20**~~ **Done (2026-08-18)** — Ship 1 exclusions = **comment out** per [phase-1-scope.md](./phase-1-scope.md). Still open: **UX-24, UX-25**.
 2. Design **P0 new flows:** UX-01…03, UX-05…10, UX-75, UX-76, UX-61, UX-62, UX-66…70, UX-73. Case list: [customer-portal-journey.md](./customer-portal-journey.md).
 3. Honesty pass on existing merchant UI: UX-27…41, UX-53.
 4. Remaining P1/P2 after backend keystones (ledger, orders, events) have dates.
@@ -808,9 +821,9 @@ Every indexed gap / docs-gap / audit item that has a **design** consequence is l
 
 | ID | UI/UX request |
 |----|----------------|
-| DG-01 Product MVP (Ship 1) exclusions (social / 2FA / POS / Wallet) | UX-19 |
-| DG-02 Integrations tab in/out of Product MVP (Ship 1) | UX-19 |
-| DG-03 Hide vs `"—"` Revenue Impact | UX-20 |
+| DG-01 Product MVP (Ship 1) exclusions (social / 2FA / POS / Wallet) | UX-19 ✓ **comment out** |
+| DG-02 Integrations tab in/out of Product MVP (Ship 1) | UX-19 ✓ **comment out tab** |
+| DG-03 Hide vs `"—"` Revenue Impact | UX-20 ✓ **comment out** |
 | DG-04 No subscription downgrade | UX-17 |
 | DG-05 Business Type dropdown + enum | UX-21 |
 | DG-06 RBAC / admin-on-admin / staff add-teammate | UX-01, UX-03 |

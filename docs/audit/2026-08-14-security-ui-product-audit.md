@@ -637,7 +637,7 @@ Owners: **Frontend** = this repo (honesty, guards, BFF hygiene). **Backend** = s
 
 **Sources scanned:** [product-manager-meeting-report.md](../product-manager-meeting-report.md), [settings-page.md](../frontend/settings-page.md), [analytics-page.md](../frontend/analytics-page.md), [campaigns-page.md](../frontend/campaigns-page.md), [loyalty-page.md](../frontend/loyalty-page.md), [11-authentication-migration.md](../frontend/11-authentication-migration.md), [17-messaging-templates.md](../frontend/17-messaging-templates.md), [system-architecture.md](../frontend/system-architecture.md), [dashboard-page.md](../frontend/dashboard-page.md), [data-contract.md](../backend/data-contract.md), [api-contract.md](../backend/api-contract.md), [deferred-decisions.md](../architecture/deferred-decisions.md), [ADR-005](../architecture/decisions/ADR-005-authentication.md), [gaps-and-solutions.md](../frontend/gaps-and-solutions.md). **No standalone PRD** exists in `docs/`.
 
-**Phase-name collision (read first):** Bare **“Phase 1”** collided across four tracks (product ship, Frontend Migration, Backend Remediation, feature scope). **Resolved:** canonical labels and scope live in [phase-1-scope.md](../product/phase-1-scope.md). Use **Product MVP (Ship 1)**, **Frontend Migration** (ADR-011 Phase 1), **Backend Remediation P[N]**, or **In/Out of Product MVP (Ship 1)** — never bare “Phase 1”. The checklist below is **Product MVP (Ship 1)**. `DG-01` exclusions are now listed in phase-1-scope.md; remaining open items are tracked in [deferred-decisions.md](../architecture/deferred-decisions.md).
+**Phase-name collision (read first):** Bare **“Phase 1”** collided across four tracks (product ship, Frontend Migration, Backend Remediation, feature scope). **Resolved:** canonical labels and scope live in [phase-1-scope.md](../product/phase-1-scope.md). Use **Product MVP (Ship 1)**, **Frontend Migration** (ADR-011 Phase 1), **Backend Remediation P[N]**, or **In/Out of Product MVP (Ship 1)** — never bare “Phase 1”. The checklist below is **Product MVP (Ship 1)**. **`DG-01`, `DG-02`, `DG-03` resolved (2026-08-18):** Ship 1 UI exclusions = **comment out** blocks per [phase-1-scope.md § Implementation](../product/phase-1-scope.md#implementation--comment-out-do-not-refactor-decided) — not feature flags. Remaining open items: [deferred-decisions.md](../architecture/deferred-decisions.md).
 
 **Legend:** **Covered** = the rule is stated as product intent or as current UI behavior, with enough detail to implement or treat as a known gap. **Ambiguous** = mentioned, but missing lock, enum, formula, or Product MVP (Ship 1) exclusion. **Missing** = not found.
 
@@ -660,13 +660,13 @@ These checklist items are specified in page specs / glossary with enough technic
 | Members by tier: group stored `customers.tier` string, **not** live ladder math | Covered | analytics-page L179–201 |
 | Top redeemed rewards: `redeemed_count > 0`, top 5 | Covered | analytics-page L203–207 |
 | Overview segments: Champions `>=10`, Loyal `3–9`, New `<=30d`, At risk `>60d`, **overlaps allowed** | Covered | analytics-page L223–231 |
-| Overview AOV / Revenue impact card: static `"—"` pending orders | Covered **as current spec** | analytics-page L233–248. **Not** covered as “hidden for Product MVP (Ship 1)” — see `DG-03`. |
+| Overview AOV / Revenue impact card: static `"—"` pending orders | Covered **as pre-Ship-1 spec** | analytics-page L233–248. **Ship 1:** **comment out** card — `DG-03` ✓ ([phase-1-scope.md](../product/phase-1-scope.md)). |
 | Engagement stats: avg visits `sum(visits)/count`; QR scans & days-between `"—"`; retention only if member `>=30` days old | Covered | analytics-page L260–277 |
 | Visit frequency chart **always empty/stubbed** | Covered | analytics-page L279–294 |
 | Insights: at-risk `20–60` days; “1 visit from reward” `visits % 5 === 4`; Peak Hour & Tier nudges static | Covered | analytics-page L296–305 |
 | Most engaged: top 5 by visits, then points | Covered | analytics-page L309–311 |
 | Engagement levels: Champions / Loyal / Occasional / At risk / Dormant cutoffs | Covered **as current spec** | analytics-page L327–339. Exclusive vs overlap is **not** locked — `DG-15`. |
-| Revenue Impact tab: 6 cards + 2 charts + 1 table, all `"—"` / empty pending `orders` | Covered **as current spec** | analytics-page L365–401; G-06. Hide-vs-keep is `DG-03`. |
+| Revenue Impact tab: 6 cards + 2 charts + 1 table, all `"—"` / empty pending `orders` | Covered **as pre-Ship-1 spec** | analytics-page L365–401; G-06. **Ship 1:** **comment out** tab — `DG-03` ✓. |
 | Admin **adds** `admin` or `staff` (temp password + first-login change) | Covered as **DECIDED, not shipped** | [11-authentication-migration.md](../frontend/11-authentication-migration.md#admin-adds-admin-or-staff-decided); G-34 |
 | **Credential recovery** (`admin`/`staff` = owner email reset + admin re-issue; `customer` = new OTP, no password) | Covered as **DECIDED, not shipped** | [credential recovery](../frontend/11-authentication-migration.md#credential-recovery-decided); G-33, G-34, S-03 |
 | Admin **activates/deactivates `staff` and `customer`** (one page, two tabs: Team / Customers) | Covered as **DECIDED, not shipped** | 11-auth account status; G-36 |
@@ -679,24 +679,22 @@ These checklist items are specified in page specs / glossary with enough technic
 
 Mentioned, but the docs do not lock the Product MVP (Ship 1) product rule, the enum, or the execution logic. **Do not treat these as decided.**
 
-#### Settings exclusions vs “catalog that never connects” (`DG-01`, `DG-02`)
+#### Settings exclusions (`DG-01`, `DG-02`) — **RESOLVED 2026-08-18**
 
-**QR nuance:** shop **join QR** on `/app/loyalty` **is** in Product MVP (Ship 1) and is documented as wired. The checklist item is **Settings → Integrations → QR & Wallet** (Apple Wallet / Google Wallet), which is a different feature.
+**QR nuance:** shop **join QR** on `/app/loyalty` **is** in Product MVP (Ship 1). The checklist item is **Settings → Integrations → QR & Wallet** (Apple/Google Wallet passes) — **comment out** for Ship 1.
 
-| Checklist | Docs today | Gap |
-|-----------|------------|-----|
-| FB / Google / Apple **Authentication** out of Product MVP (Ship 1) | **Never mentioned.** Auth docs cover email/password + MFA only ([ADR-005](../architecture/decisions/ADR-005-authentication.md), 11-auth). Deferred-decisions has no social-login row. | No social-login exclusion **or** inclusion. Cannot confirm they are deferred. |
-| **2FA** out of Product MVP (Ship 1) | **Opposite:** Settings documents **real** TOTP MFA ([settings-page.md](../frontend/settings-page.md#2fa-twofactorcard)); G-26 is “enroll works, login challenge missing.” ADR-005 verification list includes MFA. | If Product MVP (Ship 1) **excludes** 2FA, docs **contradict**. If Product MVP (Ship 1) **includes** enroll, whether login challenge is required in Product MVP (Ship 1) is still unspecified. |
-| **POS** (third-party integrations) out of Product MVP (Ship 1) | Integrations catalog lists Square/Clover/Toast/Lightspeed/Shopify POS; toggle records `pending`; “Needed later for `orders`” (settings-page L119–132). G-19 Backend Remediation P5. Remediation roadmap Backend Remediation P5 is “Orders + billing + POS”. | **Deferred-as-gap**, not **locked Product MVP (Ship 1) exclusion**. UI still shows Connect. Staff cashier POS **is** in Product MVP (Ship 1). |
-| **QR & Wallet** (Apple Wallet / Google Wallet) deferred | Same Integrations catalog row. No OAuth. | Same: visible, not excluded. No statement that the Integrations **tab** or those rows are hidden in Product MVP (Ship 1). |
+| Checklist | Ship 1 rule | Implementation |
+|-----------|-------------|----------------|
+| FB / Google / Apple **Authentication** out of Product MVP (Ship 1) | **Out** | Do not add `/auth/*` social buttons |
+| **2FA** out of Product MVP (Ship 1) | **Out** | **Comment out** Settings `TwoFactorCard` |
+| **POS** (third-party integrations) out of Product MVP (Ship 1) | **Out** | **Comment out** Integrations tab + toggles. Staff cashier POS **in** |
+| **QR & Wallet** (Apple/Google Wallet) deferred | **Out** | **Comment out** with Integrations tab |
 
-#### Overview “Revenue Impact” hidden vs placeholder (`DG-03`)
+Canonical inventory: [phase-1-scope.md § Code inventory](../product/phase-1-scope.md#code-inventory--blocks-to-comment-out-for-ship-1).
 
-Checklist: **exclude/hide** the Overview Revenue Impact block (and by implication the Revenue tab) in Product MVP (Ship 1) because there is no third-party POS revenue feed.
+#### Overview “Revenue Impact” (`DG-03`) — **RESOLVED 2026-08-18**
 
-Docs: the Overview AOV card and the **Revenue Impact tab stay visible** and show `"—"`. G-06 solution text says “hide until first order” as a **recommended fix**, not a locked Product MVP (Ship 1) UX. Analytics subtitle still promises “revenue impact.”
-
-**Contradiction:** honesty-with-dashes (ADR-014, analytics-page) vs hide-for-Product-MVP-Ship-1 (this checklist). Not resolved.
+Ship 1: **comment out** Overview Revenue Impact card, Analytics Revenue tab, and all revenue stat tiles (Dashboard, Campaigns, Customers, Branches, Rewards). **Not** `"—"` placeholders. Subtitle trimmed while commented. See [UX-20](../product/ui-ux-team-requests.md#ux-20--analytics-revenue-impact-hide-vs-).
 
 #### Subscription: no downgrade (`DG-04`)
 
@@ -777,9 +775,9 @@ Lock remaining open `DG-*` items in [phase-1-scope.md](../product/phase-1-scope.
 
 | ID | Missing decision | Suggested home | Why it blocks |
 |----|------------------|----------------|---------------|
-| **DG-01** | Product MVP (Ship 1) **exclusions list**: social auth (FB/Google/Apple), 2FA, POS, QR & Wallet — hide vs show-as-interest vs remove from Settings | settings-page + [phase-1-scope.md](../product/phase-1-scope.md) | 2FA is documented as **live**; social auth is **invisible**; Integrations still look connectable |
-| **DG-02** | Whether Settings Integrations tab is **out of Product MVP (Ship 1)** or interest-only catalog | settings-page | G-19 is Backend Remediation P5, not a ship/hide lock |
-| **DG-03** | Hide vs keep `"—"` for Overview Revenue Impact **and** Analytics Revenue tab in Product MVP (Ship 1) | analytics-page; G-06 | Checklist says hide; specs keep the tab |
+| ~~**DG-01**~~ | ~~Product MVP (Ship 1) exclusions list~~ | — | **Resolved 2026-08-18** — comment out per [phase-1-scope.md](../product/phase-1-scope.md) |
+| ~~**DG-02**~~ | ~~Integrations tab in/out of Ship 1~~ | — | **Resolved** — comment out tab |
+| ~~**DG-03**~~ | ~~Hide vs `"—"` Revenue Impact~~ | — | **Resolved** — comment out all revenue widgets |
 | **DG-04** | **No subscription downgrade** (and whether upgrades are paid-only) | settings-page Billing; api-contract billing; G-07 | Checkout contract has no plan-transition rules |
 | **DG-05** | Business Type: control type (select), **option enum**, column (`business_category` vs `business_type`), mutability | settings-page; G-24 | Labels already swapped; no taxonomy |
 | **DG-06** | Admin-on-admin activate/deactivate; resource-level RBAC; staff using add-teammate | 11-auth; ADR-005 | Checklist asks for RBAC; docs freeze staff = admin |
@@ -799,8 +797,8 @@ Lock remaining open `DG-*` items in [phase-1-scope.md](../product/phase-1-scope.
 
 | Topic | Side A | Side B | Resolve by |
 |-------|--------|--------|------------|
-| **2FA in Product MVP (Ship 1)** | Checklist: deferred / excluded | settings-page: real TOTP enroll; ADR-005 verifies MFA | `DG-01` |
-| **Revenue Impact visibility** | Checklist: hide in Product MVP (Ship 1) (no third-party POS) | analytics-page: keep tab + Overview card as `"—"`; subtitle still says “revenue impact” | `DG-03` |
+| ~~**2FA in Product MVP (Ship 1)**~~ | ~~Checklist: excluded~~ | ~~settings-page: live enroll~~ | **`DG-01` ✓** — comment out `TwoFactorCard` |
+| ~~**Revenue Impact visibility**~~ | ~~Checklist: hide~~ | ~~analytics-page: `"—"` placeholders~~ | **`DG-03` ✓** — comment out widgets |
 | **At risk** | Glossary: 30 days, one meaning | Overview >60d (this checklist); Engagement 20–60d; Dashboard >30d; campaigns `at-risk` vs `at_risk` | `DG-14` / G-08 |
 | **Engagement buckets** | Glossary: exclusive | analytics-page: overlaps allowed | `DG-15` |
 | **Staff permissions** | Checklist: “proper RBAC” | 11-auth / ADR-005: `staff` = `admin` until a later split | `DG-06` |
@@ -809,9 +807,9 @@ Lock remaining open `DG-*` items in [phase-1-scope.md](../product/phase-1-scope.
 
 ### 7.5 Open questions (no technical or business definition in docs)
 
-1. Is **2FA** in Product MVP (Ship 1) (code + settings-page) or out (this checklist)?  
-2. Are Facebook / Google / Apple Sign-In **never**, **later**, or **hidden**?  
-3. Is the Analytics **Revenue Impact tab** removed in Product MVP (Ship 1), or kept as `"—"`? Same for the Overview AOV card.  
+1. ~~Is **2FA** in Product MVP (Ship 1) or out?~~ **Out** — comment out Settings card (`DG-01` ✓).  
+2. ~~Are Facebook / Google / Apple Sign-In never, later, or hidden?~~ **Out / do not design** (`DG-01` ✓).  
+3. ~~Is the Analytics **Revenue Impact tab** removed or kept as `"—"`?~~ **Comment out** tab + all revenue widgets (`DG-03` ✓).  
 4. Allowed plan transitions: upgrade only? downgrade blocked even on placeholder Billing?  
 5. Canonical Business Type list and which `profiles` column stores it. Is the control a fixed `<select>`? Mutable after onboarding?  
 6. May an `admin` deactivate **another `admin`**? May `staff` create teammates?  
@@ -828,8 +826,8 @@ Lock remaining open `DG-*` items in [phase-1-scope.md](../product/phase-1-scope.
 
 | # | Item | Explicitly in docs? | Docs verdict |
 |---|------|---------------------|--------------|
-| **1.1** | Settings exclusions (FB/Google/Apple auth, 2FA, POS, QR & Wallet) | Social auth: **no**. 2FA: **yes, as live**. POS / Wallet: **catalog, not exclusion**. | **Missing** as Product MVP (Ship 1) exclusions; 2FA **contradicts** (`DG-01`, `DG-02`) |
-| **1.2** | Overview Revenue Impact hidden in Product MVP (Ship 1) | Placeholders **yes**; hide **no** | **Ambiguous** (`DG-03`) |
+| **1.1** | Settings exclusions (FB/Google/Apple auth, 2FA, POS, QR & Wallet) | **Yes** — Ship 1 = comment out | **Covered** (`DG-01` ✓, `DG-02` ✓) |
+| **1.2** | Overview Revenue Impact hidden in Product MVP (Ship 1) | **Yes** — comment out | **Covered** (`DG-03` ✓) |
 | **2.1** | No subscription downgrade | **No** | **Missing** (`DG-04`) |
 | **2.2** | Business Type fixed dropdown | Field **yes**; dropdown + enum **no** | **Ambiguous** (`DG-05`) |
 | **2.3** | Admin add / deactivate with RBAC | Add + staff/customer status **yes**; admin-on-admin and RBAC matrix **no** | **Partial** (`DG-06`) |
@@ -841,9 +839,9 @@ Lock remaining open `DG-*` items in [phase-1-scope.md](../product/phase-1-scope.
 | **4.3** | Loyalty ↔ bill types | Program types **yes**; POS bill types **no** | **Ambiguous / missing** (`DG-12`) |
 | **4.4** | Referral share + both-party rewards | **Yes** (DECIDED) | **Covered** (`DG-11` remaining: default expiry days / portal URL) |
 | **5.1** | Shared fetch: Overview+Engagement→customers; only Overview→rewards; Revenue→nothing; no “This month” filter | Usage **yes**; tab-conditional `rewards` fetch **no** | **Covered** on formulas / Revenue / date filter; fetch wording `DG-13` |
-| **5.2** | Overview 6 sections (formulas as listed) | **Yes** | **Covered** (AOV hide is `DG-03`; at-risk 60d vs glossary `DG-14`) |
+| **5.2** | Overview 6 sections (formulas as listed) | **Yes** | **Covered** (Revenue card **commented out** Ship 1; at-risk 60d vs glossary `DG-14`) |
 | **5.3** | Engagement 5 sections (formulas as listed) | **Yes** | **Covered** (overlap `DG-15`) |
-| **5.4** | Revenue Impact tab: 6 cards + 2 charts + 1 table, non-calculating pending `orders` | **Yes** | **Covered** as placeholders; hide-vs-keep is `DG-03` |
+| **5.4** | Revenue Impact tab: 6 cards + 2 charts + 1 table, non-calculating pending `orders` | **Yes** | **Covered** — Ship 1: **comment out** tab (`DG-03` ✓) |
 
 ---
 

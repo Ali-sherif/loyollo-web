@@ -87,8 +87,8 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Customers Revenue; Dashboard Total Revenue; Analytics Revenue tab; Branch by revenue; Campaigns `$0.00` |
 | **Blocked by** | **No `orders` table**; `campaigns.revenue_cents` is not GMV |
-| **Solution** | `orders` + attribution; rollup campaign revenue; hide until first order |
-| **Status** | `DEFERRED-BACKEND` |
+| **Solution** | `orders` + attribution; rollup campaign revenue; **Ship 1:** **comment out** all revenue UI blocks per [phase-1-scope.md](../product/phase-1-scope.md) — not `"—"` placeholders, not feature flags |
+| **Status** | `DEFERRED-BACKEND` (UI exclusion **DECIDED** for Ship 1) |
 | **Owner** | Backend program |
 | **Phase** | 5 (hide: 0) |
 
@@ -234,8 +234,8 @@ These widgets are visible in production UI and systematically show **zero, even 
 |-------|--------|
 | **Where** | Settings → Integrations → `status=pending` |
 | **Blocked by** | No OAuth/API keys; POS is orders write path |
-| **Solution** | Per-provider connect; keep honest modal until then |
-| **Status** | `DEFERRED-BACKEND` |
+| **Solution** | Per-provider connect when tab is restored post–Ship 1. **Ship 1:** **comment out** Integrations tab ([phase-1-scope.md](../product/phase-1-scope.md)) |
+| **Status** | `DEFERRED-BACKEND` (Integrations UI **commented out** Ship 1) |
 | **Owner** | Backend program |
 | **Phase** | 5 |
 
@@ -313,10 +313,10 @@ These widgets are visible in production UI and systematically show **zero, even 
 
 | Field | Value |
 |-------|--------|
-| **Where** | Settings 2FA real; sign-in may skip AAL2 |
-| **Blocked by** | Sign-in MFA challenge incomplete |
-| **Solution** | Handle `mfa_challenge` on `/auth/sign-in` |
-| **Status** | `FRONTEND-FIXABLE` |
+| **Where** | Settings 2FA in source; sign-in may skip AAL2 |
+| **Blocked by** | 2FA **out of Ship 1** — enroll card should be commented out |
+| **Solution** | **Ship 1:** comment out `TwoFactorCard`. **Post–Ship 1:** uncomment + handle `mfa_challenge` on `/auth/sign-in` |
+| **Status** | `DEFERRED` (Ship 1: comment out; login challenge when 2FA re-opens) |
 | **Owner** | Frontend |
 | **Phase** | 0 |
 

@@ -266,7 +266,7 @@ When `programId` exists: PNG, join URL, Download PNG, Print PDF (popup), Share (
 | Delete | `delete` |
 | Export PDF | Client `jspdf` of the catalog |
 
-Reward performance dialog: `redeemed_count` is real; **revenue and per-tier redemption counts are 0**. Check-in can insert `customer_rewards` and increment nothing on `rewards.redeemed_count` unless some other path does (join-service earn path does **not** bump `redeemed_count` — it inserts `status: "earned"`, not redeemed). **Intended:** catalog redeem is `pending` → `completed` (staff QR scan) / `expired` (10-minute job) ([redemption](#reward-redemption-lifecycle-decided)); only `completed` increments `redeemed_count`. **Gap:** no lifecycle shipped; previous spec was staff approve/reject — do not implement that.
+Reward performance dialog: `redeemed_count` is real; **revenue and per-tier redemption counts are 0**. **Product MVP (Ship 1):** **comment out** the **Total Revenue** stat tile in this dialog ([phase-1-scope.md](../product/phase-1-scope.md)). Check-in can insert `customer_rewards` and increment nothing on `rewards.redeemed_count` unless some other path does (join-service earn path does **not** bump `redeemed_count` — it inserts `status: "earned"`, not redeemed). **Intended:** catalog redeem is `pending` → `completed` (staff QR scan) / `expired` (10-minute job) ([redemption](#reward-redemption-lifecycle-decided)); only `completed` increments `redeemed_count`. **Gap:** no lifecycle shipped; previous spec was staff approve/reject — do not implement that.
 
 ---
 

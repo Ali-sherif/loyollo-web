@@ -156,7 +156,9 @@ Wrapped in `DashboardShell` with sidebar, header, notifications, and mobile nav.
 
 ### Tab bar
 
-Three tabs switch `tab` state:
+> **Product MVP (Ship 1):** **Comment out** the **Revenue Impact** tab entry, `<RevenueTab />` panel branch, and Overview **Revenue impact** card. Trim page subtitle (drop “revenue impact”). See [phase-1-scope.md § Code inventory](../product/phase-1-scope.md#code-inventory--blocks-to-comment-out-for-ship-1).
+
+Three tabs switch `tab` state (Revenue tab present in source until commented):
 
 | Tab | Component | Data dependency |
 |-----|-----------|-----------------|
@@ -261,6 +263,8 @@ Percentage is of total customers; shows `"—"` if no customers.
 These numbers are not demo placeholders: a customer with 12 visits really counts as a Champion. The `10` / `3` / `30` / `60` values are product defaults in code.
 
 ### Revenue impact (within Overview) — `Card`
+
+> **Product MVP (Ship 1):** **Comment out** this entire card block. Do not show `"—"` placeholders in Ship 1.
 
 **No equations run.** Every value is `"—"`. This is a layout for money metrics that need **order/transaction data**, which does not exist yet. Points and visits are **not** used as a stand-in for revenue.
 

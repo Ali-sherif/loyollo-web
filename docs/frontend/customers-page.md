@@ -200,7 +200,9 @@ Date filter **excludes** customers with null `last_activity_at`.
 
 ## Customer table
 
-Columns: Customer (avatar + name + email), Phone, Tier, Points, **Revenue (`—`)**, Visits, Last Visit, Status, menu.
+> **Product MVP (Ship 1):** **Comment out** the **Revenue** column and `revenue_desc` / `revenue_asc` sort options ([phase-1-scope.md](../product/phase-1-scope.md)).
+
+Columns: Customer (avatar + name + email), Phone, Tier, Points, **Revenue (`—`)** *(comment out Ship 1)*, Visits, Last Visit, Status, menu.
 
 | Field | Render |
 |-------|--------|
@@ -344,7 +346,7 @@ Indexed backlog + ownership: [gaps-and-solutions.md](gaps-and-solutions.md) · c
 |------|--------|--------|---------|--------|-----------------|
 | [G-12](gaps-and-solutions.md#g-12--stat-card-label-bugs-on-customers) | **New this month / Returning Rate** | Labels ≠ formulas (Gold/VIP and Silver counts) | No | OK | Relabel or compute correctly; return rate from `visit_events` |
 | [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **At-risk tab vs Dashboard** | Tab uses `status`; Overview uses 30-day recency | No shared rules | `status` never updated | One module; optional job from recency |
-| [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Revenue column / sort** | `"—"`; sort uses points | No spend API | No `orders` | Orders per customer; until then hide |
+| [G-06](gaps-and-solutions.md#g-06--revenue-is-a-dead-column-everywhere) | **Revenue column / sort** | `"—"`; sort uses points | No spend API | No `orders` | Ship 1: **comment out** column + sort |
 | [G-03](gaps-and-solutions.md#g-03--customer-tier-is-never-assigned) | **Tier column / filter** | Usually empty / Bronze-on-detail | Enroll/check-in never set `tier` | Free text, not FK | Write `tier` / `tier_id` on check-in |
 | [G-08](gaps-and-solutions.md#g-08--three-at-risk-definitions) | **Churned / At-Risk tabs** | Always 0 | No writer | Enum unused | Job or drop tabs until written |
 | [G-36](gaps-and-solutions.md#g-36--no-admin-account-list-or-activeinactive-for-staffcustomer) | **Account active/inactive** | No login gate | No account status | Distinct from member `status` | One page, two tabs (Team / Customers); `active`/`inactive` + filters |

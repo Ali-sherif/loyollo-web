@@ -41,7 +41,7 @@ There are **two separate levels**. Don't mix the screens.
 | [UX-01](./ui-ux-team-requests.md#ux-01--add-teammate-form-admin-creates-admin-or-staff)                                    | Add-teammate form (name, email, role `admin`\|`staff`)              | Merchant       | **No UI**                                                                               |
 | [UX-02](./ui-ux-team-requests.md#ux-02--first-login-force-password-change)                                                 | First login: must change temporary password before `/app`           | Merchant/Staff | **No UI**                                                                               |
 | [UX-03](./ui-ux-team-requests.md#ux-03--account-list--activeinactive)                                                      | One page, two tabs (Team = admin/staff, Customers) + active/inactive + filters (role, email, name, phone) | Merchant       | **No UI**                                                                               |
-| [UX-56](./ui-ux-team-requests.md) / [UX-19](./ui-ux-team-requests.md#ux-19--product-mvp-ship-1-exclusions-social-auth-2fa-pos-wallet) | MFA challenge after password on `/auth/sign-in`                     | Merchant       | Enroll exists; the login screen is **missing**. Decide: 2FA in Product MVP (Ship 1) or hide the card |
+| [UX-56](./ui-ux-team-requests.md) / [UX-19](./ui-ux-team-requests.md#ux-19--product-mvp-ship-1-exclusions-social-auth-2fa-pos-wallet) | MFA challenge after password on `/auth/sign-in`                     | Merchant       | **Out of Ship 1** — comment out Settings `TwoFactorCard`; do not design sign-in MFA until 2FA re-opens |
 | [UX-61](./ui-ux-team-requests.md#ux-61--teammate-created-email)                                                            | "Added to store" email + email + temporary password                 | Copy           | **New** — don't touch `invite.tsx`                                                      |
 | [UX-62](./ui-ux-team-requests.md#ux-62--otp-sms--whatsapp-text)                                                            | OTP message text (SMS / WhatsApp)                                   | Copy           | **New** — TTL **180s** (PM-06); UI still uses `retry_after_seconds`                     |
 
@@ -52,11 +52,11 @@ There are **two separate levels**. Don't mix the screens.
 | [UX-04](./ui-ux-team-requests.md#ux-04--admin-re-issue-temporary-password) | Admin re-issues a temporary password for a locked-out teammate   |
 | [UX-68](./ui-ux-team-requests.md)                                          | OTP picker states + 429 toast                                    |
 | [UX-70](./ui-ux-team-requests.md)                                          | active / inactive chips (not the same as the member's `at_risk`) |
-| [UX-74](./ui-ux-team-requests.md)                                          | MFA challenge screen (if 2FA is in Product MVP (Ship 1))                      |
+| [UX-74](./ui-ux-team-requests.md)                                          | MFA challenge screen (**deferred** — 2FA out of Ship 1; comment out enroll UI first) |
 
 ### 1.3 Don't design these as part of the login flow
 
-- Google / Facebook / Apple buttons on `/auth/*` — **not locked** for Product MVP (Ship 1) ([UX-19](./ui-ux-team-requests.md#ux-19--product-mvp-ship-1-exclusions-social-auth-2fa-pos-wallet)). Wait for a product decision before drawing the buttons.
+- Google / Facebook / Apple buttons on `/auth/*` — **out of Product MVP (Ship 1)**; do not design ([UX-19](./ui-ux-team-requests.md#ux-19--product-mvp-ship-1-exclusions-social-auth-2fa-pos-wallet)).
 - Forgot-password for the customer — **forbidden**. The customer has no password.
 - Customer entering `/app` or `/auth/reset-password` — **forbidden**.
 
@@ -341,10 +341,10 @@ Design the state from **PM-06** (`retry_after_seconds` / `expires_at`). Do not h
 
 ## 7. Suggested work order for design
 
-1. Product MVP (Ship 1) decision: social buttons + 2FA shown or hidden (**UX-19**). Without this decision you'll be designing screens outside scope.
+1. ~~Product MVP (Ship 1) decision: social buttons + 2FA~~ **DECIDED (2026-08-18):** both **out**; comment out Settings 2FA + Integrations per [phase-1-scope.md](./phase-1-scope.md).
 2. Customer P0 flow: UX-05, UX-06, UX-08, UX-07, UX-09, UX-75, UX-76 + OTP copy (**UX-62**). Use [customer-portal-journey.md](./customer-portal-journey.md) as the case list.
 3. Team P0 flow: UX-01, UX-02, UX-03 + teammate email (**UX-61**).
-4. MFA challenge on sign-in if 2FA is in Product MVP (Ship 1) (**UX-56 / UX-74**).
+4. ~~MFA challenge on sign-in if 2FA is in Product MVP (Ship 1)~~ **Deferred** with 2FA (UX-19 ✓).
 
 ---
 

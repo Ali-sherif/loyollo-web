@@ -128,7 +128,8 @@ function OnboardingIndexPage() {
     // silently created as NULL and lost from the Settings page later.
     // Only include those keys when the metadata is a non-empty string so we
     // never overwrite an existing value with NULL on a repeat visit.
-    const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+    const meta = ((user as { user_metadata?: Record<string, unknown> }).user_metadata ??
+      {}) as Record<string, unknown>;
     const seed: Record<string, unknown> = {};
     if (typeof meta.full_name === "string" && meta.full_name.trim()) {
       seed.full_name = meta.full_name;

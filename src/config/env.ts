@@ -14,6 +14,7 @@ const serverEnvSchema = z.object({
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_PUBLISHABLE_KEY: z.string().min(1).optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  NEST_API_URL: z.string().url().optional(),
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
@@ -31,7 +32,17 @@ export function getServerEnv(): ServerEnv {
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_PUBLISHABLE_KEY: process.env.SUPABASE_PUBLISHABLE_KEY,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    NEST_API_URL: process.env.NEST_API_URL,
   });
+}
+
+/** NestJS auth API base URL (ADR-005 Option C). */
+export function getNestApiUrl(): string {
+  return (
+    process.env.NEST_API_URL ||
+    getServerEnv().NEST_API_URL ||
+    "http://localhost:4000"
+  );
 }
 
 /** Resolve public Supabase URL (Next public names, then leftover Vite names). */

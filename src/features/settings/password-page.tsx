@@ -4,14 +4,13 @@ import { Link, useNavigate, useRouterState } from "@/lib/navigation";
 import * as React from "react";
 import { Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { passwordFeedback } from "@/lib/password";
 import loyolloLogoSignup from "@/assets/loyollo-logo-signup.svg";
 
 function ChangePasswordPage() {
   const navigate = useNavigate();
-  const { user, updatePassword } = useAuth();
+  const { user, changePassword } = useAuth();
 
   const [current, setCurrent] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -48,19 +47,13 @@ function ChangePasswordPage() {
     if (Object.keys(errs).length > 0) return;
 
     setLoading(true);
-    // Verify current password via re-authentication.
-    const { error: signInErr } = await getAuthSupabase().auth.signInWithPassword({
-      email: user!.email!,
-      password: current,
-    });
-    if (signInErr) {
-      setLoading(false);
-      setFieldErrors((e) => ({ ...e, current: "Current password is incorrect" }));
-      return;
-    }
-    const { error: updErr } = await updatePassword(password);
+    const { error: updErr } = await changePassword(current, password);
     setLoading(false);
     if (updErr) {
+      if (updErr.toLowerCase().includes("current password")) {
+        setFieldErrors((e) => ({ ...e, current: "Current password is incorrect" }));
+        return;
+      }
       setSubmitError(updErr);
       return;
     }

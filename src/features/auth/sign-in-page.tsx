@@ -76,9 +76,8 @@ function SignInPage() {
       if (result.needsVerification) setNeedsVerification(true);
       return;
     }
-    // Route based on onboarding completion.
-    const { data: sessionData } = await getAuthSupabase().auth.getUser();
-    const uid = sessionData.user?.id;
+    // Route based on onboarding completion (Nest session user from sign-in BFF).
+    const uid = result.user?.id;
     if (uid) {
       const { data: profile } = await getAuthSupabase()
         .from("profiles")

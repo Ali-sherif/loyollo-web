@@ -1,16 +1,17 @@
-import * as React from "react";
-import type { Session, User, AuthError } from "@supabase/supabase-js";
-import { tryGetAuthSupabase } from "@/integrations/supabase/auth-client";
+"use client";
 
-const SUPABASE_NOT_CONFIGURED =
-  "Supabase is not configured for local development. See docs/deployment/env.md.";
-import { resolveHref } from "@/lib/navigation/paths";
+import * as React from "react";
+
+import type { SessionUser } from "@/lib/server/auth/types";
+
+const AUTH_NOT_CONFIGURED =
+  "Authentication service is not configured. See docs/deployment/env.md.";
 
 type AuthContextValue = {
-  session: Session | null;
-  user: User | null;
+  user: SessionUser | null;
   loading: boolean;
   isVerified: boolean;
+  refreshSession: () => Promise<SessionUser | null>;
   signUp: (params: {
     email: string;
     password: string;
@@ -21,7 +22,7 @@ type AuthContextValue = {
   signIn: (
     email: string,
     password: string,
-  ) => Promise<{ error: string | null; needsVerification?: boolean }>;
+  ) => Promise<{ error: string | null; needsVerification?: boolean; user?: SessionUser | null }>;
   signOut: () => Promise<void>;
   resendVerification: (
     email: string,
@@ -32,168 +33,155 @@ type AuthContextValue = {
     alreadyVerified?: boolean;
     rateLimited?: boolean;
   }>;
-
   verifyEmailOtp: (email: string, token: string) => Promise<{ error: string | null }>;
   resetPasswordForEmail: (email: string) => Promise<{ error: string | null }>;
-  updatePassword: (newPassword: string) => Promise<{ error: string | null }>;
+  resetPassword: (token: string, password: string) => Promise<{ error: string | null; user?: SessionUser | null }>;
+  changePassword: (
+    currentPassword: string,
+    newPassword: string,
+  ) => Promise<{ error: string | null; user?: SessionUser | null }>;
 };
 
 const AuthContext = React.createContext<AuthContextValue | undefined>(undefined);
 
-function friendlyError(error: AuthError | Error | null): string | null {
-  if (!error) return null;
-  const msg = (error.message || "").toLowerCase();
-  if (msg.includes("invalid login") || msg.includes("invalid credentials"))
-    return "Invalid email or password.";
-  if (msg.includes("email not confirmed")) return "Please verify your email before signing in.";
-  if (
-    msg.includes("already registered") ||
-    msg.includes("already been registered") ||
-    msg.includes("user already")
-  )
-    return "An account with this email already exists.";
+async function readSession(): Promise<SessionUser | null> {
+  const response = await fetch("/api/auth/session", { cache: "no-store" });
+  if (!response.ok) return null;
+  const data = (await response.json()) as { user: SessionUser | null };
+  return data.user;
+}
+
+function friendlyMessage(message: string): string {
+  const msg = message.toLowerCase();
+  if (msg.includes("invalid") && msg.includes("password")) return "Invalid email or password.";
+  if (msg.includes("already")) return "An account with this email already exists.";
   if (msg.includes("rate limit") || msg.includes("too many"))
     return "Too many attempts. Please wait a moment and try again.";
-  if (msg.includes("expired") || msg.includes("invalid token") || msg.includes("otp"))
-    return "That code is invalid or has expired. Please request a new one.";
-  if (msg.includes("network") || msg.includes("fetch"))
-    return "Network error. Please check your connection and try again.";
-  if (msg.includes("password") && msg.includes("short")) return "Password is too short.";
-  return error.message || "Something went wrong. Please try again.";
+  return message || "Something went wrong. Please try again.";
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = React.useState<Session | null>(null);
+  const [user, setUser] = React.useState<SessionUser | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const supabase = React.useMemo(() => tryGetAuthSupabase(), []);
+
+  const refreshSession = React.useCallback(async () => {
+    try {
+      const nextUser = await readSession();
+      setUser(nextUser);
+      return nextUser;
+    } catch {
+      setUser(null);
+      return null;
+    }
+  }, []);
 
   React.useEffect(() => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-
-    // Set up listener FIRST
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      setLoading(false);
-    });
-
-    // Then restore existing session
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
-
-    return () => sub.subscription.unsubscribe();
-  }, [supabase]);
+    void refreshSession().finally(() => setLoading(false));
+  }, [refreshSession]);
 
   const value = React.useMemo<AuthContextValue>(
     () => ({
-      session,
-      user: session?.user ?? null,
+      user,
       loading,
-      isVerified: !!session?.user?.email_confirmed_at,
+      isVerified: user?.account_status === "active",
+      refreshSession,
       async signUp({ email, password, fullName, businessName, phone }) {
-        if (!supabase) return { error: SUPABASE_NOT_CONFIGURED };
-        const redirectTo =
-          typeof window !== "undefined"
-            ? `${window.location.origin}${resolveHref("/verify")}`
-            : undefined;
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: redirectTo,
-            data: {
-              full_name: fullName,
-              business_name: businessName,
-              phone,
-            },
-          },
+        const response = await fetch("/api/auth/sign-up", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            password,
+            full_name: fullName,
+            business_name: businessName,
+            phone,
+          }),
         });
-        return { error: friendlyError(error) };
+        const data = (await response.json()) as { message?: string; user?: SessionUser };
+        if (!response.ok) {
+          return { error: friendlyMessage(data.message ?? "Unable to create account.") };
+        }
+        setUser(data.user ?? null);
+        return { error: null };
       },
       async signIn(email, password) {
-        if (!supabase) return { error: SUPABASE_NOT_CONFIGURED };
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          const msg = (error.message || "").toLowerCase();
-          if (msg.includes("email not confirmed")) {
-            return {
-              error: "Please verify your email before signing in.",
-              needsVerification: true,
-            };
+        const response = await fetch("/api/auth/sign-in", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = (await response.json()) as { message?: string; user?: SessionUser };
+        if (!response.ok) {
+          if (data.message?.includes("FORBIDDEN_ROLE")) {
+            return { error: "This account cannot access the merchant app." };
           }
-          return { error: friendlyError(error) };
+          if (data.message?.includes("ACCOUNT_NOT_ACTIVE")) {
+            return { error: "This account is inactive." };
+          }
+          return { error: friendlyMessage(data.message ?? "Invalid email or password.") };
+        }
+        setUser(data.user ?? null);
+        return { error: null, user: data.user ?? null };
+      },
+      async signOut() {
+        await fetch("/api/auth/sign-out", { method: "POST" });
+        setUser(null);
+      },
+      async resendVerification() {
+        return {
+          error:
+            "Email verification is handled by NestJS messaging contracts and is not wired in this slice yet.",
+        };
+      },
+      async verifyEmailOtp() {
+        return { error: AUTH_NOT_CONFIGURED };
+      },
+      async resetPasswordForEmail(email) {
+        const response = await fetch("/api/auth/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        if (!response.ok) {
+          const data = (await response.json()) as { message?: string };
+          return { error: friendlyMessage(data.message ?? "Unable to send reset email.") };
         }
         return { error: null };
       },
-      async signOut() {
-        if (!supabase) return;
-        await supabase.auth.signOut();
-      },
-      async resendVerification(email) {
-        if (!supabase) return { error: SUPABASE_NOT_CONFIGURED };
-        const redirectTo =
-          typeof window !== "undefined"
-            ? `${window.location.origin}${resolveHref("/verify")}`
-            : undefined;
-        const { error } = await supabase.auth.resend({
-          type: "signup",
-          email,
-          options: { emailRedirectTo: redirectTo },
+      async resetPassword(token, password) {
+        const response = await fetch("/api/auth/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, password }),
         });
-        if (!error) return { error: null };
-        const msg = (error.message || "").toLowerCase();
-        const status = (error as { status?: number }).status;
-        const code = (error as { code?: string }).code;
-        const rateLimited =
-          status === 429 ||
-          msg.includes("rate limit") ||
-          msg.includes("for security purposes") ||
-          msg.includes("only request this after");
-        const alreadyVerified =
-          msg.includes("already confirmed") ||
-          msg.includes("already been confirmed") ||
-          msg.includes("already verified") ||
-          code === "email_address_already_confirmed";
-        return {
-          error: friendlyError(error),
-          status,
-          code,
-          rateLimited,
-          alreadyVerified,
-        };
+        const data = (await response.json()) as { message?: string; user?: SessionUser };
+        if (!response.ok) {
+          return { error: friendlyMessage(data.message ?? "Unable to reset password.") };
+        }
+        setUser(data.user ?? null);
+        return { error: null, user: data.user ?? null };
       },
-
-      async verifyEmailOtp(email, token) {
-        if (!supabase) return { error: SUPABASE_NOT_CONFIGURED };
-        const { error } = await supabase.auth.verifyOtp({
-          email,
-          token,
-          type: "signup",
+      async changePassword(currentPassword, newPassword) {
+        const response = await fetch("/api/auth/change-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            current_password: currentPassword,
+            new_password: newPassword,
+          }),
         });
-        return { error: friendlyError(error) };
-      },
-      async resetPasswordForEmail(email) {
-        if (!supabase) return { error: SUPABASE_NOT_CONFIGURED };
-        const redirectTo =
-          typeof window !== "undefined"
-            ? `${window.location.origin}${resolveHref("/reset-password")}`
-            : undefined;
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo,
-        });
-        return { error: friendlyError(error) };
-      },
-      async updatePassword(newPassword) {
-        if (!supabase) return { error: SUPABASE_NOT_CONFIGURED };
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
-        return { error: friendlyError(error) };
+        const data = (await response.json()) as { message?: string; user?: SessionUser };
+        if (!response.ok) {
+          if (data.message?.toLowerCase().includes("current password")) {
+            return { error: "Current password is incorrect." };
+          }
+          return { error: friendlyMessage(data.message ?? "Unable to change password.") };
+        }
+        setUser(data.user ?? null);
+        return { error: null, user: data.user ?? null };
       },
     }),
-    [session, loading, supabase],
+    [user, loading, refreshSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

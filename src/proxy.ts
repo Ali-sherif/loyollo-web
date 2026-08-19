@@ -1,10 +1,10 @@
 import { type NextRequest } from "next/server";
 
-import { updateSession } from "@/integrations/nest/update-session";
+import { updateSession } from "@/integrations/supabase/update-session";
 
 /**
  * Next.js 16 proxy (replaces middleware.ts) — session refresh + coarse `/app` gate.
- * D-28: Nest JWT HTTP-only cookies via Next proxy + RSC session validation.
+ * D-28 cookie/SSR remains BLOCKED until proven with a confirmed session.
  */
 export async function proxy(request: NextRequest) {
   return updateSession(request);

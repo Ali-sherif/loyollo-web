@@ -1,26 +1,17 @@
 "use client";
 
-function useSearchParamsCompat(): Record<string, string | undefined> {
-  if (typeof window === "undefined") return {};
-  const sp = new URLSearchParams(window.location.search);
-  const out: Record<string, string | undefined> = {};
-  sp.forEach((v, k) => {
-    out[k] = v;
-  });
-  return out;
-}
-
-import { Link, useNavigate } from "@/lib/navigation";
+import { Link, useNavigate, useRouterState } from "@/lib/navigation";
 import * as React from "react";
 import { Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { getAuthSupabase } from "@/integrations/supabase/auth-client";
 import loyolloLogoSignup from "@/assets/loyollo-logo-signup.svg";
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
-  const { token: tokenParam } = useSearchParamsCompat();
-  const { resetPassword } = useAuth();
-  const token = tokenParam ?? "";
+  const { updatePassword } = useAuth();
+  const [ready, setReady] = React.useState(false);
+  const [validSession, setValidSession] = React.useState<boolean | null>(null);
   const [password, setPassword] = React.useState("");
   const [confirm, setConfirm] = React.useState("");
   const [showPw, setShowPw] = React.useState(false);
@@ -28,7 +19,28 @@ function ResetPasswordPage() {
   const [success, setSuccess] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
 
-  const validToken = token.length > 0;
+  // Wait for Supabase to detect the recovery token from the URL.
+  React.useEffect(() => {
+    let mounted = true;
+    const { data: sub } = getAuthSupabase().auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      if (event === "PASSWORD_RECOVERY" || session) {
+        setValidSession(true);
+        setReady(true);
+      }
+    });
+    getAuthSupabase()
+      .auth.getSession()
+      .then(({ data }) => {
+        if (!mounted) return;
+        setValidSession(!!data.session);
+        setReady(true);
+      });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
   function validate(): string | null {
     if (password.length < 8) return "Password must be at least 8 characters";
@@ -45,7 +57,7 @@ function ResetPasswordPage() {
       return;
     }
     setLoading(true);
-    const { error: err } = await resetPassword(token, password);
+    const { error: err } = await updatePassword(password);
     setLoading(false);
     if (err) {
       setError(err);
@@ -67,7 +79,9 @@ function ResetPasswordPage() {
           </p>
         </div>
 
-        {!validToken ? (
+        {!ready ? (
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#feb602] border-t-transparent" />
+        ) : validSession === false ? (
           <div className="w-full max-w-[560px] rounded-md bg-red-50 px-4 py-4 text-center text-sm text-red-600">
             <p>This reset link is invalid or has expired.</p>
             <Link
